@@ -91,6 +91,25 @@
   }
 }
 
+/* Printable documents (rate confirmations, etc.) render on a white page
+   regardless of the app's dark theme, and app chrome is hidden. */
+@media print {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --muted-foreground: #4b5563;
+    --border: rgba(0, 0, 0, 0.2);
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    margin: 0.5in;
+  }
+}
+
 /* Custom Gradient Utilities */
 .turvo-gradient-text {
   background: linear-gradient(90deg, #49c2f5 0%, #2b7ee2 100%);
