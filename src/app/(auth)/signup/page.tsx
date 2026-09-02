@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const workspaceTypes = ["shipper", "carrier", "broker"] as const;
+const workspaceTypes = ["freight_brokerage", "truck_dispatch", "hybrid_enterprise"] as const;
 
 const signupSchema = z.object({
   orgName: z.string().min(2, "Organization name is required"),
@@ -42,9 +42,9 @@ const signupSchema = z.object({
 type SignupValues = z.infer<typeof signupSchema>;
 
 const workspaceTypeLabels: Record<(typeof workspaceTypes)[number], string> = {
-  shipper: "Shipper",
-  carrier: "Carrier",
-  broker: "Broker",
+  freight_brokerage: "Freight brokerage",
+  truck_dispatch: "Truck dispatch",
+  hybrid_enterprise: "Hybrid (brokerage + dispatch)",
 };
 
 export default function SignupPage() {
