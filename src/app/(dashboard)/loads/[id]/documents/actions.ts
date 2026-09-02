@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
-import { createLoadDocument } from "@/lib/repositories/documents";
-import type { DocumentType, LoadDocument, UUID } from "../../../../../../types/domain";
+import { createLoadDocument, updateDocumentOcrStatus } from "@/lib/repositories/documents";
+import type {
+  DocumentType,
+  LoadDocument,
+  OcrField,
+  PodExtraction,
+  RateConExtraction,
+  UUID,
+} from "../../../../../../types/domain";
 
 const DOCUMENT_TYPES: DocumentType[] = [
   "POD",
@@ -70,6 +77,38 @@ export async function uploadLoadDocument(
     documentType: documentType as DocumentType,
     fileUrl: objectPath,
   });
+
+  revalidatePath(`/loads/${loadId}/documents`);
+  revalidatePath(`/loads/${loadId}`);
+
+  return document;
+}
+
+function isOcrField(value: unknown): value is OcrField<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "value" in value &&
+    "confidence" in value &&
+    typeof (value as OcrField<unknown>).confidence === "number"
+  );
+}
+
+// Approving persists the (possibly human-edited) extraction as the final
+// record and marks OCR as completed — a reviewer confirming or correcting
+// values is itself the verification step, so there is no separate
+// unresolved-review state after this call.
+export async function approveDocumentExtraction(
+  documentId: UUID,
+  loadId: UUID,
+  extraction: RateConExtraction | PodExtraction | Record<string, unknown>
+): Promise<LoadDocument> {
+  const fields = Object.values(extraction).filter(isOcrField);
+  const confidenceScore = fields.length
+    ? Math.round(fields.reduce((sum, f) => sum + f.confidence, 0) / fields.length)
+    : null;
+
+  const document = await updateDocumentOcrStatus(documentId, "completed", confidenceScore, extraction);
 
   revalidatePath(`/loads/${loadId}/documents`);
   revalidatePath(`/loads/${loadId}`);
