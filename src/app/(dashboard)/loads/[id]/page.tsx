@@ -81,7 +81,7 @@ export default async function LoadDetailPage({
           <CardContent className="flex flex-col gap-1 text-sm">
             {carrier ? (
               <>
-                <span className="font-medium">{carrier.name}</span>
+                <span className="font-medium">{carrier.companyName}</span>
                 <span className="text-muted-foreground">
                   MC {carrier.mcNumber ?? "—"} / DOT {carrier.dotNumber ?? "—"}
                 </span>
