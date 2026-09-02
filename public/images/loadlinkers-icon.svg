@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Circular Emblem -->
+  <circle cx="60" cy="60" r="52" stroke="#ffffff" stroke-width="9" fill="none" />
+  
+  <!-- Stylized Monogram LL / Linkers Glyph -->
+  <path 
+    d="M40 84 L58 42 C59.5 38.5 63 38.5 64.5 42 L70 56 L61 76 L46 76 L46 84 L80 84 C82 84 83.5 82 82.5 80 L75 64 L84 42 C85.5 38.5 89 38.5 90.5 42 L100 84" 
+    stroke="#ffffff" 
+    stroke-width="8" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <path 
+    d="M44 76 L52 76 L66 42 C67 39.5 70 39.5 71 42 L78 58" 
+    stroke="#ffffff" 
+    stroke-width="7" 
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+</svg>
