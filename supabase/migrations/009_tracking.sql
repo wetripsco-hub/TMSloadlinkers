@@ -100,3 +100,10 @@ end;
 $$;
 
 grant execute on function record_tracking_ping(uuid, numeric, numeric) to anon, authenticated;
+
+-- Required for the dispatcher live tracking panel's Supabase Realtime
+-- postgres_changes subscription (loads.last_known_lat/lng updates and new
+-- gps_pings rows). Realtime still enforces the RLS policies above, so this
+-- does not widen anon access.
+alter publication supabase_realtime add table gps_pings;
+alter publication supabase_realtime add table loads;

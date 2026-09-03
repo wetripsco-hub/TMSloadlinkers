@@ -3,9 +3,10 @@ import { parseCents, formatCents } from "@/lib/money";
 import type { Cents, Load, LoadStatus, LoadStop, UUID } from "../../../types/domain";
 
 // The `loads` table does not yet persist every field on the Load domain
-// interface (loadNumber, equipmentType, trackingToken, driver/GPS fields,
-// dispatcherCommissionEarned, structured stop details, etc). Those fields
-// are filled with safe defaults below until the schema catches up.
+// interface (loadNumber, equipmentType, dispatcherCommissionEarned,
+// structured stop details, etc). Those fields are filled with safe defaults
+// below until the schema catches up. Tracking/driver/GPS fields are real
+// columns as of migrations/009_tracking.sql.
 
 interface LoadRow {
   id: string;
@@ -20,12 +21,20 @@ interface LoadRow {
   shipper_rate: number;
   carrier_pay: number;
   broker_margin: number;
+  tracking_token: string;
+  driver_name: string | null;
+  driver_phone: string | null;
+  truck_number: string | null;
+  trailer_number: string | null;
+  last_known_lat: number | null;
+  last_known_lng: number | null;
+  last_ping_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
 const LOAD_COLUMNS =
-  "id, org_id, customer_id, carrier_id, status, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, created_at, updated_at";
+  "id, org_id, customer_id, carrier_id, status, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, created_at, updated_at";
 
 function moneyToCents(value: number): Cents {
   return parseCents(String(value));
@@ -71,14 +80,14 @@ function mapRowToLoad(row: LoadRow): Load {
     origin: toStop(row.origin, row.pickup_date),
     destination: toStop(row.destination, row.delivery_date),
 
-    trackingToken: "",
-    driverName: null,
-    driverPhone: null,
-    truckNumber: null,
-    trailerNumber: null,
-    lastKnownLat: null,
-    lastKnownLng: null,
-    lastPingAt: null,
+    trackingToken: row.tracking_token,
+    driverName: row.driver_name,
+    driverPhone: row.driver_phone,
+    truckNumber: row.truck_number,
+    trailerNumber: row.trailer_number,
+    lastKnownLat: row.last_known_lat,
+    lastKnownLng: row.last_known_lng,
+    lastPingAt: row.last_ping_at,
 
     createdAt: row.created_at,
     updatedAt: row.updated_at,
