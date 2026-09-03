@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -28,6 +28,14 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
@@ -48,7 +56,7 @@ export default function LoginPage() {
       return;
     }
 
-    const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
+    const redirectTo = searchParams.get("redirectTo") ?? "/loads";
     router.push(redirectTo);
     router.refresh();
   }

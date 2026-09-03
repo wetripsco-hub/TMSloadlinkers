@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { LoadStatusBadge } from "@/components/loads/load-status-badge";
 import { StatusProgressionBar } from "@/components/loads/status-progression-bar";
 import { LoadFinancialBreakdown } from "@/components/loads/load-financial-breakdown";
@@ -56,6 +58,23 @@ export default async function LoadDetailPage({
             {load.loadNumber || load.id.slice(0, 8)}
           </h1>
           <LoadStatusBadge status={load.status} />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={`/loads/${load.id}/documents`}>Documents</Link>}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={`/loads/${load.id}/rate-con`}>Rate Confirmation</Link>}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={`/loads/${load.id}/tracking`}>Live Tracking</Link>}
+          />
         </div>
       </div>
 
