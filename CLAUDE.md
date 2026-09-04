@@ -47,6 +47,25 @@ Use isolated worktrees/branches for independent parallel implementation. Give ea
 - Keep the established `src/app`, `src/components`, `src/hooks`, `src/lib`, `src/types`, and `public` structure. Prefer existing components and utilities.
 - For frontend work, preserve the target design language; use responsive mobile-first layouts, stable dimensions, accessible controls, Lucide icons, and meaningful motion. Avoid generic marketing layouts, purple-on-white defaults, nested cards, decorative blobs, and text that explains the UI instead of being the UI.
 
+## Graphify coverage limits
+
+- graphifyy[sql] is installed; SQL files, tables, functions and triggers appear as nodes.
+- RLS policies are NOT represented in the graph. Any task touching policies must read the migration files directly — GRAPH_REPORT.md will not show them.
+- There are no cross-layer edges between SQL objects and their TypeScript callers. The graph answers "does this exist and where", not "what depends on this".
+- Therefore: for schema/RLS tasks, read GRAPH_REPORT.md for structure AND read the relevant supabase/migrations/*.sql files in full.
+
+## Deferred: org_id in JWT
+
+- `middleware.ts` cannot see `org_id`; it is only available via a `profiles` query, which would add a DB round trip to every authenticated request.
+- The proper fix is a Supabase custom access-token hook that puts `org_id` into `app_metadata` at session issuance.
+- Deferred until P7-T7 (team invites), which needs JWT-level org membership handling anyway. Do both together, not separately.
+
+## Deferred: carrier compliance
+
+- `carriers` (002) has no compliance columns; `carriers.ts` hardcodes inert fallbacks for every field `deriveComplianceBadge()` needs.
+- `v_carrier_compliance_summary` and the dashboard compliance tile are blocked on this.
+- Unblocking requires either compliance columns on `carriers` or a `carrier_verifications` table, plus an application path that writes them.
+
 ## Completion Gate
 
 Do not claim completion without executable evidence. Confirm the requested behavior, run the narrowest relevant test or check, then run `npm run check` when the environment permits. Mention unavailable checks explicitly. Update the graph after code changes so the next task starts with current architecture context.
