@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Local temp files
 temp/
+
+# Graphify output (regenerated locally, not part of the source tree)
+graphify-out/
