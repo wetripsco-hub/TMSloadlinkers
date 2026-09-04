@@ -146,11 +146,17 @@ async function getCurrentOrgId(
     .eq("id", user.id)
     .single();
 
-  if (error || !data) {
-    throw new Error("No profile found for the current user");
+  if (!error && data?.org_id) {
+    return data.org_id;
   }
 
-  return data.org_id;
+  const { ensureUserOrganization } = await import("@/lib/services/ensure-user-organization");
+  const fallbackOrgId = await ensureUserOrganization(supabase);
+  if (fallbackOrgId) {
+    return fallbackOrgId;
+  }
+
+  throw new Error("No organization found for current user profile");
 }
 
 export async function listInvoices(
@@ -226,7 +232,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
       customer_id: input.customerId ?? null,
       carrier_id: input.carrierId ?? null,
       invoice_type: domainInvoiceTypeToDb(input.invoiceType),
-      amount_total: centsToMoney(input.amountTotal),
+      amount_total: Number(centsToMoney(input.amountTotal)),
       due_date: input.dueDate ?? null,
     })
     .select(INVOICE_COLUMNS)

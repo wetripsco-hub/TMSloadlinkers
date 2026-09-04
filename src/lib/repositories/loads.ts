@@ -144,11 +144,17 @@ async function getCurrentOrgId(
     .eq("id", user.id)
     .single();
 
-  if (error || !data) {
-    throw new Error("No profile found for the current user");
+  if (!error && data?.org_id) {
+    return data.org_id;
   }
 
-  return data.org_id;
+  const { ensureUserOrganization } = await import("@/lib/services/ensure-user-organization");
+  const fallbackOrgId = await ensureUserOrganization(supabase);
+  if (fallbackOrgId) {
+    return fallbackOrgId;
+  }
+
+  throw new Error("No organization found for current user profile");
 }
 
 export async function listLoads(
@@ -223,8 +229,8 @@ export async function createLoad(input: CreateLoadInput): Promise<Load> {
       destination: input.destination ?? null,
       pickup_date: input.pickupDate ?? null,
       delivery_date: input.deliveryDate ?? null,
-      shipper_rate: centsToMoney(input.shipperRate),
-      carrier_pay: centsToMoney(input.carrierPay),
+      shipper_rate: Number(centsToMoney(input.shipperRate)),
+      carrier_pay: Number(centsToMoney(input.carrierPay)),
     })
     .select(LOAD_COLUMNS)
     .single();
