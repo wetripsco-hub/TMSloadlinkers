@@ -29,7 +29,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const DASHBOARD_PREFIXES = ["/loads", "/carriers", "/invoices", "/settlements"];
+  const DASHBOARD_PREFIXES = [
+    "/loads",
+    "/carriers",
+    "/customers",
+    "/invoices",
+    "/settlements",
+    "/documents",
+  ];
   const isDashboardRoute = DASHBOARD_PREFIXES.some(
     (prefix) => request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`)
   );
@@ -44,5 +51,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/loads/:path*", "/carriers/:path*", "/invoices/:path*", "/settlements/:path*"],
+  matcher: [
+    "/loads/:path*",
+    "/carriers/:path*",
+    "/customers/:path*",
+    "/invoices/:path*",
+    "/settlements/:path*",
+    "/documents/:path*",
+  ],
 };
