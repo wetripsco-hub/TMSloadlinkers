@@ -178,6 +178,7 @@ export type Database = {
       invitations: {
         Row: {
           accepted_at: string | null
+          accepted_by: string | null
           created_at: string
           email: string
           expires_at: string
@@ -190,6 +191,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          accepted_by?: string | null
           created_at?: string
           email: string
           expires_at?: string
@@ -202,6 +204,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          accepted_by?: string | null
           created_at?: string
           email?: string
           expires_at?: string
@@ -213,6 +216,13 @@ export type Database = {
           token_hash?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "invitations_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invitations_invited_by_fkey"
             columns: ["invited_by"]

@@ -2,6 +2,8 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureUserOrganization } from "@/lib/services/ensure-user-organization";
+import { getAccessStatus } from "@/lib/subscription/guard";
+import { AccessBanner } from "@/components/billing/access-banner";
 import { SidebarProvider } from "@/context/SidebarContext";
 import DashboardShell from "@/layout/DashboardShell";
 
@@ -31,9 +33,16 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
+  const access = await getAccessStatus();
+
   return (
     <SidebarProvider>
-      <DashboardShell>{children}</DashboardShell>
+      <DashboardShell>
+        <div className="space-y-6">
+          <AccessBanner status={access} />
+          {children}
+        </div>
+      </DashboardShell>
     </SidebarProvider>
   );
 }
