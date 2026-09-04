@@ -57,7 +57,10 @@ export default function SignupPage() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignupValues>({ resolver: zodResolver(signupSchema) });
+  } = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { workspaceType: "freight_brokerage" },
+  });
 
   async function onSubmit(values: SignupValues) {
     setFormError(null);
@@ -145,7 +148,7 @@ export default function SignupPage() {
                 name="workspaceType"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select value={field.value ?? ""} onValueChange={field.onChange}>
                     <SelectTrigger id="workspaceType" className="w-full">
                       <SelectValue placeholder="Select a workspace type" />
                     </SelectTrigger>

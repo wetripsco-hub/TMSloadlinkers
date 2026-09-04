@@ -33,7 +33,7 @@ export function TopBar({ onOpenSearch }: TopBarProps) {
           </button>
           <span className="text-white/20">|</span>
           <Link
-            href="#login"
+            href="/login"
             className="text-white/80 hover:text-[#49c2f5] transition-colors"
           >
             Login

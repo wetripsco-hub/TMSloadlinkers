@@ -144,7 +144,7 @@ export function Navbar() {
               <Search className="w-4 h-4" />
             </button>
             <Link
-              href="#schedule-demo"
+              href="/signup"
               className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider turvo-gradient-btn"
             >
               Schedule A Demo

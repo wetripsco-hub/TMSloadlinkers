@@ -4,12 +4,18 @@ import { getCarrierById } from "@/lib/repositories/carriers";
 import { SettlementTable } from "@/components/settlements/settlement-table";
 import { GenerateSettlementDialog } from "@/components/settlements/generate-settlement-dialog";
 import { ExportCsvButton } from "@/components/settlements/export-csv-button";
+import { PageBreadcrumb } from "@/components/common/PageBreadCrumb";
+import { MetricCard } from "@/components/ui/tailadmin/metric-card";
+import { formatCents } from "@/lib/money";
+import { Landmark, CheckCircle2, Clock, Truck } from "lucide-react";
 import type { Load } from "../../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettlementsPage() {
   const [{ data: invoices }, deliveredLoads, podUploadedLoads] = await Promise.all([
-    listInvoices({}, { page: 1, pageSize: 50 }),
+    listInvoices({}, { page: 1, pageSize: 100 }),
     listLoads({ status: "delivered" }, { page: 1, pageSize: 50 }),
     listLoads({ status: "pod_uploaded" }, { page: 1, pageSize: 50 }),
   ]);
@@ -44,17 +50,75 @@ export default async function SettlementsPage() {
     if (carrier) carriersById[carrier.id] = carrier;
   }
 
+  // Calculate voucher totals
+  let totalDisbursedCents = 0;
+  let totalPendingCents = 0;
+  let paidVouchersCount = 0;
+
+  settlements.forEach((s) => {
+    if (s.status === "paid") {
+      totalDisbursedCents += s.amountTotal || 0;
+      paidVouchersCount++;
+    } else {
+      totalPendingCents += s.amountTotal || 0;
+    }
+  });
+
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-lg font-medium">Carrier settlements</h1>
+    <div className="space-y-6">
+      {/* Breadcrumb Header with Actions */}
+      <PageBreadcrumb pageTitle="Carrier Pay & Settlements">
         <div className="flex items-center gap-2">
           <ExportCsvButton />
           <GenerateSettlementDialog eligibleLoads={eligibleLoads} />
         </div>
+      </PageBreadcrumb>
+
+      {/* KPI Ribbon Metric Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title="Disbursed Pay"
+          value={formatCents(totalDisbursedCents)}
+          icon={<CheckCircle2 className="h-6 w-6 text-emerald-500" />}
+          badgeText="Paid"
+          badgeColor="success"
+          subtitle={`${paidVouchersCount} vouchers completed`}
+        />
+
+        <MetricCard
+          title="Pending Carrier Pay"
+          value={formatCents(totalPendingCents)}
+          icon={<Clock className="h-6 w-6 text-amber-500" />}
+          badgeText={totalPendingCents > 0 ? "Payable" : "0"}
+          badgeColor={totalPendingCents > 0 ? "warning" : "light"}
+          subtitle="Awaiting ACH / QuickPay release"
+        />
+
+        <MetricCard
+          title="Eligible Loads to Settle"
+          value={eligibleLoads.length}
+          icon={<Truck className="h-6 w-6 text-brand-500" />}
+          badgeText={eligibleLoads.length > 0 ? "Ready" : "None"}
+          badgeColor="primary"
+          subtitle="Delivered with assigned carriers"
+        />
+
+        <MetricCard
+          title="Total Vouchers"
+          value={settlements.length}
+          icon={<Landmark className="h-6 w-6 text-sky-500" />}
+          badgeText="All Time"
+          badgeColor="info"
+          subtitle="Carrier pay settlement history"
+        />
       </div>
 
-      <SettlementTable settlements={settlements} loadsById={loadsById} carriersById={carriersById} />
+      {/* Settlement Table */}
+      <SettlementTable
+        settlements={settlements}
+        loadsById={loadsById}
+        carriersById={carriersById}
+      />
     </div>
   );
 }

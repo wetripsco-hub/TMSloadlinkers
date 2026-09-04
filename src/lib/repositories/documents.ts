@@ -71,11 +71,17 @@ async function getCurrentOrgId(
     .eq("id", user.id)
     .single();
 
-  if (error || !data) {
-    throw new Error("No profile found for the current user");
+  if (!error && data?.org_id) {
+    return data.org_id;
   }
 
-  return data.org_id;
+  const { ensureUserOrganization } = await import("@/lib/services/ensure-user-organization");
+  const fallbackOrgId = await ensureUserOrganization(supabase);
+  if (fallbackOrgId) {
+    return fallbackOrgId;
+  }
+
+  throw new Error("No organization found for current user profile");
 }
 
 export async function listDocumentsByLoadId(loadId: UUID): Promise<LoadDocument[]> {
@@ -92,6 +98,30 @@ export async function listDocumentsByLoadId(loadId: UUID): Promise<LoadDocument[
   }
 
   return (data as unknown as LoadDocumentRow[]).map(mapRowToLoadDocument);
+}
+
+export async function listAllDocuments(
+  pagination: { page: number; pageSize: number } = { page: 1, pageSize: 50 }
+): Promise<{ data: LoadDocument[]; total: number }> {
+  const supabase = await createClient();
+  const { page, pageSize } = pagination;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from("load_documents")
+    .select(DOCUMENT_COLUMNS, { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    data: (data as unknown as LoadDocumentRow[]).map(mapRowToLoadDocument),
+    total: count ?? 0,
+  };
 }
 
 export async function createLoadDocument(
@@ -132,7 +162,7 @@ export async function updateDocumentOcrStatus(
     .update({
       ocr_status: status,
       ocr_confidence_score: confidence,
-      ocr_extracted_json: extractedJson,
+      ocr_extracted_json: extractedJson === null ? null : JSON.parse(JSON.stringify(extractedJson)),
     })
     .eq("id", id)
     .select(DOCUMENT_COLUMNS)

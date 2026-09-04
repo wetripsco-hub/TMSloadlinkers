@@ -1,44 +1,49 @@
+import React from "react";
 import { deriveComplianceBadge } from "@/lib/domain/carrier-compliance";
-import { cn } from "@/lib/utils";
+import { Badge, type BadgeColor } from "@/components/ui/tailadmin/badge";
+import { CheckCircle, AlertTriangle, ShieldX, HelpCircle } from "lucide-react";
 import type {
   Carrier,
   CarrierVerificationResult,
   ComplianceBadge as ComplianceBadgeValue,
 } from "../../../types/domain";
 
-const BADGE_LABELS: Record<ComplianceBadgeValue, string> = {
-  verified: "Verified",
-  expiring: "Expiring",
-  blocked: "Blocked",
-  unverified: "Unverified",
-};
-
-const BADGE_COLORS: Record<ComplianceBadgeValue, string> = {
-  verified: "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300",
-  expiring: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
-  blocked: "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300",
-  unverified: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
+const BADGE_CONFIG: Record<
+  ComplianceBadgeValue,
+  { label: string; color: BadgeColor; icon: React.ReactNode }
+> = {
+  verified: {
+    label: "Verified",
+    color: "success",
+    icon: <CheckCircle className="h-3 w-3" />,
+  },
+  expiring: {
+    label: "Expiring",
+    color: "warning",
+    icon: <AlertTriangle className="h-3 w-3" />,
+  },
+  blocked: {
+    label: "Blocked",
+    color: "error",
+    icon: <ShieldX className="h-3 w-3" />,
+  },
+  unverified: {
+    label: "Unverified",
+    color: "light",
+    icon: <HelpCircle className="h-3 w-3" />,
+  },
 };
 
 export function ComplianceStatusBadge({ badge }: { badge: ComplianceBadgeValue }) {
+  const config = BADGE_CONFIG[badge] || BADGE_CONFIG.unverified;
+
   return (
-    <span
-      className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium",
-        BADGE_COLORS[badge]
-      )}
-    >
-      {BADGE_LABELS[badge]}
-    </span>
+    <Badge color={config.color} size="sm" startIcon={config.icon}>
+      {config.label}
+    </Badge>
   );
 }
 
-// The carriers table only persists identification/contact fields (see
-// CarrierRecord in lib/repositories/carriers.ts) — there is no stored
-// CarrierVerificationResult to derive a badge from. This synthesizes one from
-// the Carrier's own fallback fields so deriveComplianceBadge stays the single
-// source of truth for the badge rules, yielding an honest "unverified" until
-// a real verification is run and persisted.
 export function deriveStoredComplianceBadge(carrier: Carrier): ComplianceBadgeValue {
   const verificationResult: CarrierVerificationResult = {
     authorityActive: carrier.authorityStatus === "active",

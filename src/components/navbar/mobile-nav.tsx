@@ -210,14 +210,14 @@ export function MobileNav({ isOpen, onClose, onOpenSearch }: MobileNavProps) {
         {/* Bottom actions */}
         <div className="pt-6 border-t border-white/10 space-y-3">
           <Link
-            href="#schedule-demo"
+            href="/signup"
             onClick={onClose}
             className="w-full block py-3 text-center rounded-full font-bold text-sm turvo-gradient-btn"
           >
             Schedule A Demo
           </Link>
           <div className="flex items-center justify-center gap-4 text-xs text-[#a0a0aa]">
-            <Link href="#login" className="hover:text-white">
+            <Link href="/login" onClick={onClose} className="hover:text-white">
               Login
             </Link>
             <span>•</span>

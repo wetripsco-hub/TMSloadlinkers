@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { LoadStatus } from "../../../types/domain";
 
-const STATUS_LABELS: Record<LoadStatus, string> = {
+export const STATUS_LABELS: Record<LoadStatus, string> = {
   quoted: "Quoted",
   posted_to_boards: "Posted",
   covered: "Covered",
