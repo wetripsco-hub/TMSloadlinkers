@@ -38,13 +38,13 @@ function TooltipContent({
   const row = payload[0].payload;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-lg dark:border-gray-700 dark:bg-gray-900">
-      <p className="font-semibold text-gray-900 dark:text-white">{label}</p>
-      <p className="mt-1 text-gray-500 dark:text-gray-400">
-        Revenue: <span className="font-medium text-gray-900 dark:text-white">{formatCents(row.revenue)}</span>
+    <div className="rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-slate-900">{label}</p>
+      <p className="mt-1 text-slate-500">
+        Revenue: <span className="font-medium text-slate-900">{formatCents(row.revenue)}</span>
       </p>
-      <p className="text-gray-500 dark:text-gray-400">
-        Margin: <span className="font-medium text-gray-900 dark:text-white">{row.marginPercent.toFixed(1)}%</span>
+      <p className="text-slate-500">
+        Margin: <span className="font-medium text-slate-900">{row.marginPercent.toFixed(1)}%</span>
       </p>
     </div>
   );
@@ -60,19 +60,17 @@ export function RevenueMarginChart({ data }: { data: RevenueWeek[] }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-100 dark:text-gray-800" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
         <XAxis
           dataKey="weekLabel"
-          tick={{ fontSize: 11 }}
-          className="text-gray-500 dark:text-gray-400"
+          tick={{ fontSize: 11, fill: "#64748b" }}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
           yAxisId="revenue"
           tickFormatter={(value: number) => `$${Math.round(value / 100_00)}k`}
-          tick={{ fontSize: 11 }}
-          className="text-gray-500 dark:text-gray-400"
+          tick={{ fontSize: 11, fill: "#64748b" }}
           tickLine={false}
           axisLine={false}
           width={44}
@@ -81,8 +79,7 @@ export function RevenueMarginChart({ data }: { data: RevenueWeek[] }) {
           yAxisId="margin"
           orientation="right"
           tickFormatter={(value: number) => `${value}%`}
-          tick={{ fontSize: 11 }}
-          className="text-gray-500 dark:text-gray-400"
+          tick={{ fontSize: 11, fill: "#64748b" }}
           tickLine={false}
           axisLine={false}
           width={40}

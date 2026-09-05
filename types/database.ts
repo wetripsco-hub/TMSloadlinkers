@@ -686,6 +686,10 @@ export type Database = {
       }
     }
     Functions: {
+      complete_onboarding: {
+        Args: { p_org_name: string; p_workspace_type: string; p_full_name?: string | null }
+        Returns: string
+      }
       default_trial_interval: { Args: never; Returns: string }
       get_auth_user_org_id: { Args: never; Returns: string }
       get_load_by_tracking_token: {

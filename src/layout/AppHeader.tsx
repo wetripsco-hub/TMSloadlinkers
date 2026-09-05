@@ -15,6 +15,7 @@ import {
   Shield,
   Layers,
   Sparkles,
+  CreditCard,
 } from "lucide-react";
 import { seedDemoDataAction } from "@/app/(dashboard)/loads/actions";
 
@@ -23,11 +24,10 @@ interface UserProfile {
   email: string | null;
   fullName: string | null;
   role: string | null;
-  orgName?: string | null;
 }
 
 export const AppHeader: React.FC = () => {
-  const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { isMobileOpen, toggleSidebar, toggleMobileSidebar, orgName } = useSidebar();
   const router = useRouter();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -44,57 +44,38 @@ export const AppHeader: React.FC = () => {
         } = await supabase.auth.getUser();
 
         if (user) {
+          // Try to fetch profile details
           const { data: profileData } = await supabase
             .from("profiles")
-            .select("id, full_name, email, role, org_id")
+            .select("full_name, role")
             .eq("id", user.id)
-            .maybeSingle();
-
-          let orgName = "Freight Tenant";
-          if (profileData?.org_id) {
-            const { data: orgData } = await supabase
-              .from("organizations")
-              .select("name")
-              .eq("id", profileData.org_id)
-              .maybeSingle();
-            if (orgData?.name) {
-              orgName = orgData.name;
-            }
-          }
+            .single();
 
           setProfile({
             id: user.id,
-            email: user.email ?? profileData?.email ?? null,
-            fullName: profileData?.full_name ?? user.email?.split("@")[0] ?? "Dispatcher",
-            role: profileData?.role ?? "Broker",
-            orgName,
+            email: user.email || null,
+            fullName: profileData?.full_name || user.user_metadata?.full_name || null,
+            role: profileData?.role || "Member",
           });
         }
       } catch (err) {
-        console.error("Error loading user profile in header:", err);
+        console.error("Error fetching user profile:", err);
       }
     }
 
     fetchUser();
   }, []);
 
-  const handleToggle = () => {
-    if (window.innerWidth >= 1024) {
-      toggleSidebar();
-    } else {
-      toggleMobileSidebar();
-    }
-  };
-
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
-      setIsSigningOut(true);
       const supabase = createClient();
       await supabase.auth.signOut();
       router.push("/login");
       router.refresh();
     } catch (err) {
-      console.error("Error signing out:", err);
+      console.error("Sign out error:", err);
+    } finally {
       setIsSigningOut(false);
     }
   };
@@ -111,53 +92,64 @@ export const AppHeader: React.FC = () => {
     }
   };
 
-  const initials = profile?.fullName
-    ? profile.fullName
+  // Initials for avatar fallback
+  const getInitials = () => {
+    if (profile?.fullName) {
+      return profile.fullName
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase()
-        .slice(0, 2)
-    : "TL";
+        .slice(0, 2);
+    }
+    if (profile?.email) {
+      return profile.email.slice(0, 2).toUpperCase();
+    }
+    return "BA";
+  };
+
+  const initials = getInitials();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-gray-200 bg-white/95 px-4 backdrop-blur-md dark:border-gray-800 dark:bg-[#18171d]/95 sm:px-6">
-      {/* Left side: Toggle button and Search */}
-      <div className="flex items-center gap-3 sm:gap-4">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6 dark:border-gray-800 dark:bg-[#18171d]/95 backdrop-blur-sm">
+      {/* Left: Sidebar toggles & search */}
+      <div className="flex items-center gap-3 sm:gap-4 flex-1 max-w-md">
+        {/* Mobile menu toggle */}
         <button
           type="button"
-          onClick={handleToggle}
-          aria-label="Toggle Sidebar"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white transition-colors lg:hidden"
+          onClick={toggleMobileSidebar}
+          aria-label={isMobileOpen ? "Close menu" : "Open menu"}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 lg:hidden dark:border-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white transition-colors"
         >
-          {isMobileOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
+          {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
 
-        {/* Global Search Input */}
-        <div className="relative hidden md:block w-64 lg:w-80">
+        {/* Desktop collapse/expand toggle */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Toggle sidebar"
+          className="hidden h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 lg:flex dark:border-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Global Search Bar */}
+        <div className="relative w-full max-w-xs">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
             <Search className="h-4 w-4" />
           </div>
           <input
             type="text"
-            placeholder="Search loads, carriers, bills..."
-            className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50/70 pl-9 pr-10 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:border-brand-500 focus:bg-white focus:outline-hidden dark:border-gray-800 dark:bg-white/[0.03] dark:text-white dark:focus:border-brand-500"
+            placeholder="Search loads, carriers, docs..."
+            className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-9 pr-3 text-xs text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 dark:border-gray-800 dark:bg-[#23222a] dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-500 transition-all"
           />
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-            <kbd className="rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
-              ⌘K
-            </kbd>
-          </div>
         </div>
       </div>
 
-      {/* Right side: Notifications & User Profile */}
+      {/* Right Action Icons & User Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Quick Sample Data Seed Trigger in Header */}
+        {/* Seed Demo Data Button */}
         <button
           type="button"
           onClick={handleSeedDemoData}
@@ -194,7 +186,7 @@ export const AppHeader: React.FC = () => {
                 {profile?.fullName || "Broker Agent"}
               </p>
               <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                {profile?.orgName || "Enterprise"}
+                {orgName || "Workspace"}
               </p>
             </div>
           </button>
@@ -219,7 +211,7 @@ export const AppHeader: React.FC = () => {
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                   <Layers className="h-3 w-3" />
-                  {profile?.orgName || "Default Org"}
+                  {orgName || "Workspace"}
                 </span>
               </div>
             </div>
@@ -236,11 +228,11 @@ export const AppHeader: React.FC = () => {
               </DropdownItem>
               <DropdownItem
                 tag="a"
-                href="/invoices"
+                href="/settings/billing"
                 onItemClick={() => setIsUserMenuOpen(false)}
               >
-                <Layers className="h-4 w-4" />
-                Billing & Invoices
+                <CreditCard className="h-4 w-4" />
+                Billing
               </DropdownItem>
               <DropdownItem
                 onClick={() => {

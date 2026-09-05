@@ -13,9 +13,9 @@ export function TrialBanner({ subscription }: { subscription: CurrentSubscriptio
 
   if (subscription.state === "past_due") {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/30 dark:bg-rose-500/10">
-        <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
-        <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
+      <div className="flex items-center gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 shadow-sm">
+        <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
+        <p className="text-sm font-medium text-rose-800">
           Your last payment failed. Update your billing details to avoid losing access.
         </p>
       </div>
@@ -27,20 +27,20 @@ export function TrialBanner({ subscription }: { subscription: CurrentSubscriptio
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl border p-4 ${
+      className={`flex items-center gap-3 rounded-md border p-4 shadow-sm ${
         urgent
-          ? "border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
-          : "border-brand-200 bg-brand-50/70 dark:border-brand-500/30 dark:bg-brand-500/10"
+          ? "border-amber-200 bg-amber-50/90"
+          : "border-indigo-100 bg-indigo-50/70"
       }`}
     >
       <Clock
         className={`h-5 w-5 shrink-0 ${
-          urgent ? "text-amber-600 dark:text-amber-400" : "text-brand-600 dark:text-brand-400"
+          urgent ? "text-amber-600" : "text-indigo-600"
         }`}
       />
       <p
         className={`text-sm font-medium ${
-          urgent ? "text-amber-800 dark:text-amber-300" : "text-brand-800 dark:text-brand-300"
+          urgent ? "text-amber-900" : "text-indigo-900"
         }`}
       >
         {remaining === 0

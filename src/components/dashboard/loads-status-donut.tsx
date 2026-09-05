@@ -32,9 +32,9 @@ function TooltipContent({ active, payload }: { active?: boolean; payload?: { pay
   const row = payload[0].payload;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-lg dark:border-gray-700 dark:bg-gray-900">
-      <p className="font-semibold text-gray-900 dark:text-white">{row.label}</p>
-      <p className="text-gray-500 dark:text-gray-400">{row.count} loads</p>
+    <div className="rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-slate-900">{row.label}</p>
+      <p className="text-slate-500">{row.count} loads</p>
     </div>
   );
 }
@@ -72,15 +72,15 @@ export function LoadsStatusDonut({ data }: { data: LoadsByStatus[] }) {
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">{total}</span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">loads</span>
+        <span className="text-2xl font-bold text-slate-900">{total}</span>
+        <span className="text-xs text-slate-500">loads</span>
       </div>
       <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {slices.map((slice) => (
-          <li key={slice.status} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+          <li key={slice.status} className="flex items-center gap-1.5 text-xs text-slate-600">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: slice.fill }} />
-            <span className="truncate">{slice.label}</span>
-            <span className="ml-auto font-medium text-gray-900 dark:text-white">{slice.count}</span>
+            <span className="truncate font-medium">{slice.label}</span>
+            <span className="ml-auto font-semibold text-slate-900">{slice.count}</span>
           </li>
         ))}
       </ul>

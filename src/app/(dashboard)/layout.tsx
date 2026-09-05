@@ -23,20 +23,29 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Ensure user has an organization assigned or auto-create LoadLinkers Logistics
+  // Resolve the user's organization, if one is already linked and still exists.
   const orgId = await ensureUserOrganization(supabase);
 
-  // profiles.org_id is null (no org assigned, auto-creation failed, or the
-  // user is waiting on a team invite) -> send them to /onboarding rather
-  // than deeper into the dashboard.
+  // profiles.org_id is null (no org assigned, the linked org row is missing,
+  // or the user is waiting on a team invite) -> send them to /onboarding
+  // rather than deeper into the dashboard.
   if (!orgId) {
     redirect("/onboarding");
   }
 
   const access = await getAccessStatus();
 
+  const { data: organization } = await supabase
+    .from("organizations")
+    .select("name, workspace_type")
+    .eq("id", orgId)
+    .maybeSingle();
+
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      orgName={organization?.name ?? null}
+      workspaceType={organization?.workspace_type ?? null}
+    >
       <DashboardShell>
         <div className="space-y-6">
           <AccessBanner status={access} />

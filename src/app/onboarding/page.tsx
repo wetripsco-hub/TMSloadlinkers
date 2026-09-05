@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CreateOrganizationForm } from "./create-organization-form";
 
 export const dynamic = "force-dynamic";
 
@@ -27,22 +28,21 @@ export default async function OnboardingPage() {
     .maybeSingle();
 
   if (profile?.org_id) {
-    redirect("/loads");
+    redirect("/overview");
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>You&apos;re not linked to a company yet</CardTitle>
+          <CardTitle>Set up your company</CardTitle>
           <CardDescription>
-            Ask your team admin to send you an invite, or check the email you
-            signed up with for an invitation link.
+            You&apos;re not linked to a company yet. Create one now, or ask
+            your team admin to send you an invite instead.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Once you accept an invite, you&apos;ll be able to access loads,
-          carriers, and the rest of your workspace.
+        <CardContent>
+          <CreateOrganizationForm />
         </CardContent>
       </Card>
     </div>

@@ -8,6 +8,8 @@ type SidebarContextType = {
   isHovered: boolean;
   activeItem: string | null;
   openSubmenu: string | null;
+  orgName: string | null;
+  workspaceType: string | null;
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
   setIsHovered: (isHovered: boolean) => void;
@@ -25,9 +27,11 @@ export const useSidebar = () => {
   return context;
 };
 
-export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const SidebarProvider: React.FC<{
+  children: React.ReactNode;
+  orgName?: string | null;
+  workspaceType?: string | null;
+}> = ({ children, orgName = null, workspaceType = null }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -72,6 +76,8 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
         isHovered,
         activeItem,
         openSubmenu,
+        orgName,
+        workspaceType,
         toggleSidebar,
         toggleMobileSidebar,
         setIsHovered,

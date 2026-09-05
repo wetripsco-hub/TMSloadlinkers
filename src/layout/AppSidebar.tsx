@@ -56,7 +56,7 @@ const navSections: NavSection[] = [
 ];
 
 export const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, orgName } = useSidebar();
   const pathname = usePathname();
 
   const isVisibleExpanded = isExpanded || isHovered || isMobileOpen;
@@ -88,8 +88,8 @@ export const AppSidebar: React.FC = () => {
           </div>
           {isVisibleExpanded && (
             <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-gray-900 dark:text-white">
-                LOADLINKERS
+              <span className="truncate text-base font-bold tracking-tight text-gray-900 dark:text-white">
+                {orgName ?? "Workspace"}
               </span>
               <span className="text-[10px] font-semibold tracking-widest text-brand-500 uppercase">
                 Freight TMS
