@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { PageBreadcrumb } from "@/components/common/PageBreadCrumb";
+import { PageHeader } from "@/components/layout/page-header";
 import { OrgTable, type PlatformOrganizationRow } from "@/components/platform-admin/org-table";
+import { ErrorState } from "@/components/ui/error-state";
 import type { Database } from "../../../../../types/database";
 
 export const dynamic = "force-dynamic";
@@ -27,14 +28,36 @@ export default async function PlatformAdminOrganizationsPage() {
   const { data, error } = await supabase.rpc("get_platform_organizations");
 
   if (error) {
-    throw new Error(`Failed to load platform organizations: ${error.message}`);
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Tenant Organizations"
+          subtitle="Directory of all provisioned organizations, subscription tiers, and seat allocations."
+          breadcrumbs={[
+            { label: "Platform Admin", href: "/platform-admin" },
+            { label: "Organizations", href: "/platform-admin/organizations" },
+          ]}
+        />
+        <ErrorState
+          title="Failed to load platform organizations"
+          description={error.message}
+        />
+      </div>
+    );
   }
 
   const organizations = (data ?? []).map(mapRpcRowToOrganizationRow);
 
   return (
-    <div className="space-y-6 p-6">
-      <PageBreadcrumb pageTitle="Organizations" />
+    <div className="space-y-6">
+      <PageHeader
+        title="Tenant Organizations"
+        subtitle="Directory of all provisioned organizations, subscription tiers, and seat allocations."
+        breadcrumbs={[
+          { label: "Platform Admin", href: "/platform-admin" },
+          { label: "Organizations", href: "/platform-admin/organizations" },
+        ]}
+      />
       <OrgTable organizations={organizations} />
     </div>
   );

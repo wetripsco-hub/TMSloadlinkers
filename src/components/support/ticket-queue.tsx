@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, Building2 } from "lucide-react";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/tailadmin/table";
 import { Badge, type BadgeColor } from "@/components/ui/tailadmin/badge";
 import { assignTicketToMe, updateTicketStatus } from "@/app/actions/tickets";
@@ -9,6 +9,7 @@ import { TicketThread, type TicketThreadMessage } from "@/components/support/tic
 
 export interface PlatformTicketRow {
   id: string;
+  orgId: string;
   orgName: string;
   subject: string;
   description: string;
@@ -109,7 +110,17 @@ export function TicketQueue({ tickets }: { tickets: PlatformTicketRow[] }) {
           ) : (
             filtered.map((ticket) => (
               <TableRow key={ticket.id} onClick={() => setSelectedId(ticket.id)}>
-                <TableCell className="font-medium text-slate-900">{ticket.orgName}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium text-slate-900">{ticket.orgName}</span>
+                    <span
+                      title="Tenant Org UUID (click to select and copy)"
+                      className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-700 select-all w-fit border border-slate-200/60"
+                    >
+                      {ticket.orgId}
+                    </span>
+                  </div>
+                </TableCell>
                 <TableCell>{ticket.subject}</TableCell>
                 <TableCell className="capitalize">{ticket.priority}</TableCell>
                 <TableCell>
@@ -150,10 +161,28 @@ export function TicketQueue({ tickets }: { tickets: PlatformTicketRow[] }) {
       </Table>
 
       {selected && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-          <h3 className="mb-1 text-sm font-semibold text-slate-900">{selected.subject}</h3>
-          <p className="mb-3 text-xs text-slate-500">{selected.orgName}</p>
-          <p className="mb-3 text-sm text-slate-600">{selected.description}</p>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-4">
+          {/* Persistent Top Banner showing Org Name + Org UUID */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 border border-slate-200/80 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Building2 className="h-4 w-4 text-indigo-600" />
+              <span className="text-sm font-semibold text-slate-900">{selected.orgName}</span>
+              <span
+                title="Tenant Org UUID (click to select and copy)"
+                className="font-mono text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-700 select-all"
+              >
+                {selected.orgId}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
+              <span>Ticket ID: {selected.id}</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-1 text-base font-semibold text-slate-900">{selected.subject}</h3>
+            <p className="text-sm text-slate-600">{selected.description}</p>
+          </div>
           <TicketThread ticketId={selected.id} messages={selected.messages} />
         </div>
       )}

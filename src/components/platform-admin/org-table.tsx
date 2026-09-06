@@ -162,14 +162,24 @@ export function OrgTable({ organizations }: { organizations: PlatformOrganizatio
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-slate-400">
-                No organizations match your filters.
+              <TableCell colSpan={7} className="py-8 text-center text-slate-400">
+                No tenant organizations match your search filters.
               </TableCell>
             </TableRow>
           ) : (
             rows.map((org) => (
               <TableRow key={org.orgId}>
-                <TableCell className="font-semibold text-slate-900">{org.name}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-slate-900">{org.name}</span>
+                    <span
+                      title="Tenant Org UUID (click to select and copy)"
+                      className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-700 select-all w-fit border border-slate-200/60"
+                    >
+                      {org.orgId}
+                    </span>
+                  </div>
+                </TableCell>
                 <TableCell>{org.workspaceType}</TableCell>
                 <TableCell className="capitalize">{org.planTier ?? "—"}</TableCell>
                 <TableCell>

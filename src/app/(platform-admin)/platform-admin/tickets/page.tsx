@@ -1,13 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { requirePlatformAdmin } from "@/lib/auth/platform-admin";
-import { PageBreadcrumb } from "@/components/common/PageBreadCrumb";
+import { PageHeader } from "@/components/layout/page-header";
 import { TicketQueue, type PlatformTicketRow } from "@/components/support/ticket-queue";
 import type { TicketThreadMessage } from "@/components/support/ticket-thread";
+import { ErrorState } from "@/components/ui/error-state";
 
 export const dynamic = "force-dynamic";
 
 interface TicketWithOrgAndMessages {
   id: string;
+  org_id: string;
   subject: string;
   description: string;
   priority: string;
@@ -31,12 +33,27 @@ export default async function PlatformAdminTicketsPage() {
   const { data, error } = await supabase
     .from("support_tickets")
     .select(
-      "id, subject, description, priority, status, assigned_to, created_at, organizations(name), support_ticket_messages(id, sender_type, message, created_at)"
+      "id, org_id, subject, description, priority, status, assigned_to, created_at, organizations(name), support_ticket_messages(id, sender_type, message, created_at)"
     )
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to load support tickets: ${error.message}`);
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Support Tickets"
+          subtitle="Triage and resolve customer tickets across all platform tenants."
+          breadcrumbs={[
+            { label: "Platform Admin", href: "/platform-admin" },
+            { label: "Support Tickets", href: "/platform-admin/tickets" },
+          ]}
+        />
+        <ErrorState
+          title="Failed to load support tickets"
+          description={error.message}
+        />
+      </div>
+    );
   }
 
   const rows: PlatformTicketRow[] = ((data ?? []) as unknown as TicketWithOrgAndMessages[]).map(
@@ -52,6 +69,7 @@ export default async function PlatformAdminTicketsPage() {
 
       return {
         id: ticket.id,
+        orgId: ticket.org_id,
         orgName: ticket.organizations?.name ?? "Unknown organization",
         subject: ticket.subject,
         description: ticket.description,
@@ -65,8 +83,15 @@ export default async function PlatformAdminTicketsPage() {
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <PageBreadcrumb pageTitle="Support Tickets" />
+    <div className="space-y-6">
+      <PageHeader
+        title="Support Tickets"
+        subtitle="Triage and resolve customer tickets across all platform tenants."
+        breadcrumbs={[
+          { label: "Platform Admin", href: "/platform-admin" },
+          { label: "Support Tickets", href: "/platform-admin/tickets" },
+        ]}
+      />
       <TicketQueue tickets={rows} />
     </div>
   );
