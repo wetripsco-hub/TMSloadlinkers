@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   Truck,
   Building2,
@@ -15,12 +16,15 @@ import {
   ShieldCheck,
   Package,
   LayoutDashboard,
+  BarChart3,
+  Settings,
+  HelpCircle,
 } from "lucide-react";
 
 interface NavItem {
   name: string;
   path: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   badge?: string;
 }
 
@@ -44,35 +48,99 @@ const navSections: NavSection[] = [
     items: [
       { name: "Invoices", path: "/invoices", icon: Receipt },
       { name: "Settlements", path: "/settlements", icon: Landmark },
+      { name: "Reports", path: "/reports", icon: BarChart3 },
     ],
   },
   {
     title: "MANAGEMENT",
     items: [
       { name: "Documents", path: "/documents", icon: FileText },
-      { name: "Driver Tracking", path: "/track", icon: Navigation },
+      { name: "Driver Tracking", path: "/driver-tracking", icon: Navigation },
+    ],
+  },
+  {
+    title: "SYSTEM",
+    items: [
+      { name: "Settings", path: "/settings/organization", icon: Settings },
+      { name: "Help & Support", path: "/support", icon: HelpCircle },
     ],
   },
 ];
 
+interface UserProfile {
+  id: string;
+  email: string | null;
+  fullName: string | null;
+  role: string | null;
+}
+
 export const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered, orgName } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, orgName, orgLogoUrl } = useSidebar();
   const pathname = usePathname();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("full_name, role")
+            .eq("id", user.id)
+            .single();
+
+          setProfile({
+            id: user.id,
+            email: user.email || null,
+            fullName: profileData?.full_name || user.user_metadata?.full_name || null,
+            role: profileData?.role || "Member",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching user profile in sidebar:", err);
+      }
+    }
+
+    fetchUser();
+  }, []);
 
   const isVisibleExpanded = isExpanded || isHovered || isMobileOpen;
 
   const isActive = (path: string) => {
-    if (path === "/loads" && (pathname === "/loads" || pathname.startsWith("/loads/"))) {
-      return true;
+    if (path === "/overview") {
+      return pathname === "/overview";
+    }
+    if (path.startsWith("/settings")) {
+      return pathname.startsWith("/settings");
     }
     return pathname === path || pathname.startsWith(`${path}/`);
+  };
+
+  const getInitials = () => {
+    if (profile?.fullName) {
+      return profile.fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (profile?.email) {
+      return profile.email.slice(0, 2).toUpperCase();
+    }
+    return "BA";
   };
 
   return (
     <aside
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-[#18171d] ${
+      className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-200/80 bg-white transition-all duration-300 ease-in-out ${
         isMobileOpen
           ? "translate-x-0 w-[270px]"
           : "-translate-x-full lg:translate-x-0"
@@ -81,17 +149,22 @@ export const AppSidebar: React.FC = () => {
       }`}
     >
       {/* Brand Header */}
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 px-5 dark:border-gray-800/80">
-        <Link href="/loads" className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-sky-400 text-white shadow-md shadow-brand-500/20">
-            <ShieldCheck className="h-5 w-5" />
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 px-5">
+        <Link href="/overview" className="flex items-center gap-3 overflow-hidden">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-tr from-blue-600 to-sky-500 text-white shadow-xs">
+            {orgLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={orgLogoUrl} alt={orgName ?? "Organization logo"} className="h-full w-full object-cover" />
+            ) : (
+              <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
+            )}
           </div>
           {isVisibleExpanded && (
             <div className="flex flex-col">
-              <span className="truncate text-base font-bold tracking-tight text-gray-900 dark:text-white">
+              <span className="truncate text-base font-bold tracking-tight text-slate-900">
                 {orgName ?? "Workspace"}
               </span>
-              <span className="text-[10px] font-semibold tracking-widest text-brand-500 uppercase">
+              <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
                 Freight TMS
               </span>
             </div>
@@ -104,11 +177,11 @@ export const AppSidebar: React.FC = () => {
         {navSections.map((section) => (
           <div key={section.title}>
             {isVisibleExpanded ? (
-              <h3 className="px-3 mb-2 text-[11px] font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+              <h3 className="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
                 {section.title}
               </h3>
             ) : (
-              <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
+              <div className="my-2 border-t border-slate-100" />
             )}
             <ul className="space-y-1">
               {section.items.map((item) => {
@@ -120,24 +193,25 @@ export const AppSidebar: React.FC = () => {
                     <Link
                       href={item.path}
                       title={!isVisibleExpanded ? item.name : undefined}
-                      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                      className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                         active
-                          ? "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400 shadow-xs"
-                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
-                      } ${!isVisibleExpanded ? "justify-center px-2" : ""}`}
+                          ? "bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-600 rounded-r-lg"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+                      } ${!isVisibleExpanded ? "justify-center px-2 border-l-0 rounded-lg" : ""}`}
                     >
                       <IconComponent
+                        strokeWidth={1.75}
                         className={`h-5 w-5 shrink-0 transition-colors ${
                           active
-                            ? "text-brand-500 dark:text-brand-400"
-                            : "text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300"
+                            ? "text-blue-600"
+                            : "text-slate-400 group-hover:text-slate-600"
                         }`}
                       />
                       {isVisibleExpanded && (
                         <span className="truncate">{item.name}</span>
                       )}
                       {isVisibleExpanded && active && (
-                        <ChevronRight className="ml-auto h-4 w-4 text-brand-500 opacity-80" />
+                        <ChevronRight className="ml-auto h-4 w-4 text-blue-600 opacity-80" />
                       )}
                     </Link>
                   </li>
@@ -148,25 +222,52 @@ export const AppSidebar: React.FC = () => {
         ))}
       </div>
 
-      {/* Bottom SaaS Trial Status */}
-      {isVisibleExpanded && (
-        <div className="border-t border-gray-100 p-3.5 dark:border-gray-800">
-          <div className="rounded-xl border border-brand-200/60 bg-gradient-to-br from-brand-50/70 to-indigo-50/40 p-3 dark:border-brand-900/40 dark:bg-brand-950/20">
+      {/* Bottom SaaS Trial & User Initials Avatar Widget */}
+      <div className="border-t border-slate-200/80 p-3.5 space-y-3 mt-auto shrink-0 bg-white">
+        {isVisibleExpanded ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-700">
             <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-brand-700 dark:text-brand-300">
-                <span className="h-2 w-2 rounded-full bg-brand-500 animate-pulse" />
+              <span className="flex items-center gap-1.5 text-slate-800">
+                <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
                 14-Day Free Trial
               </span>
-              <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[10px] font-bold text-brand-600 dark:text-brand-400">
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                 Active
               </span>
             </div>
-            <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
+            <p className="mt-1 text-[11px] text-slate-500 leading-tight">
               Self-serve TMS edition with unlimited dispatch & rate cons.
             </p>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex justify-center py-1" title="14-Day Free Trial Active">
+            <span className="h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
+          </div>
+        )}
+
+        {/* Cleanly Stacked User Profile Link */}
+        <Link
+          href="/settings/organization"
+          className={`flex items-center gap-2.5 rounded-xl p-1.5 hover:bg-slate-100 transition-colors ${
+            !isVisibleExpanded ? "justify-center" : ""
+          }`}
+          title={!isVisibleExpanded ? profile?.fullName || "User Profile" : undefined}
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-xs font-bold text-white shadow-xs">
+            {getInitials()}
+          </div>
+          {isVisibleExpanded && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-slate-800">
+                {profile?.fullName || "Broker User"}
+              </p>
+              <p className="truncate text-[10px] text-slate-500">
+                {profile?.email || "user@loadlinkers.com"}
+              </p>
+            </div>
+          )}
+        </Link>
+      </div>
     </aside>
   );
 };

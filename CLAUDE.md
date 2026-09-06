@@ -66,6 +66,13 @@ Use isolated worktrees/branches for independent parallel implementation. Give ea
 - `v_carrier_compliance_summary` and the dashboard compliance tile are blocked on this.
 - Unblocking requires either compliance columns on `carriers` or a `carrier_verifications` table, plus an application path that writes them.
 
+## Intentional exception: platform-admin cross-tenant RLS
+
+- Every RLS policy elsewhere in this schema scopes reads/writes by `org_id` (via `get_auth_user_org_id()`), because every table before Phase 8 belongs to exactly one tenant.
+- `platform_admins`, `support_tickets`/`support_ticket_messages` (admin-side read/reply), `get_platform_organizations()`, and `platform_audit_log` are the deliberate exception: they read or act across *every* org, gated by `is_platform_admin(auth.uid())` (021_platform_admin.sql) instead of an `org_id` match.
+- Do not "fix" this by adding org_id scoping to these tables or functions — a platform admin is not a member of any tenant org, so org-scoping would break the feature. `is_platform_admin()` is itself the authorization boundary here, and it is `SECURITY DEFINER` specifically so it can be evaluated inside these policies without recursing into `profiles`.
+- `platform_audit_log` is intentionally separate from each org's own `audit_events` (004_audit.sql): a future data-reset flow (P8-T6) wipes an org's `audit_events`, and the platform-side log of that action must survive the wipe.
+
 ## Completion Gate
 
 Do not claim completion without executable evidence. Confirm the requested behavior, run the narrowest relevant test or check, then run `npm run check` when the environment permits. Mention unavailable checks explicitly. Update the graph after code changes so the next task starts with current architecture context.

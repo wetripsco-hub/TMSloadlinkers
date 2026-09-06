@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 
-import { Button } from "@/components/ui/button";
 import { LoadStatusBadge } from "@/components/loads/load-status-badge";
 import { advanceLoadStatus } from "@/app/(dashboard)/loads/[id]/actions";
 import { LOAD_STATUS_FORWARD_CHAIN, getNextStatus } from "@/lib/domain/load-status";
@@ -51,7 +50,7 @@ export function StatusProgressionBar({ load }: { load: Load }) {
     return (
       <div className="flex items-center gap-2">
         <LoadStatusBadge status={status} />
-        <span className="text-sm text-muted-foreground">This load has been cancelled.</span>
+        <span className="text-sm text-slate-500">This load has been cancelled.</span>
       </div>
     );
   }
@@ -63,10 +62,10 @@ export function StatusProgressionBar({ load }: { load: Load }) {
           <span
             key={step}
             className={cn(
-              "whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium",
-              index < currentIndex && "bg-muted text-muted-foreground",
-              index === currentIndex && "bg-primary text-primary-foreground",
-              index > currentIndex && "bg-muted/40 text-muted-foreground/60"
+              "whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+              index < currentIndex && "bg-emerald-50 text-emerald-700 border border-emerald-200",
+              index === currentIndex && "bg-blue-600 text-white font-semibold shadow-xs",
+              index > currentIndex && "bg-slate-50 text-slate-400 border border-slate-200/70"
             )}
           >
             {STEP_LABELS[step]}
@@ -74,15 +73,20 @@ export function StatusProgressionBar({ load }: { load: Load }) {
         ))}
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button type="button" size="sm" disabled={!next || isPending} onClick={handleAdvance}>
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="button"
+          disabled={!next || isPending}
+          onClick={handleAdvance}
+          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+        >
           {isPending
             ? "Advancing..."
             : next
               ? `Advance to ${STEP_LABELS[next]}`
-              : "No further status"}
-        </Button>
-        {error && <span className="text-sm text-destructive">{error}</span>}
+              : "Completed Lifecycle"}
+        </button>
+        {error && <span className="text-xs font-medium text-rose-600">{error}</span>}
       </div>
     </div>
   );

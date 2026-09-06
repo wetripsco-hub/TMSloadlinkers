@@ -51,15 +51,58 @@ const workspaceTypeLabels: Record<(typeof workspaceTypes)[number], string> = {
   hybrid_enterprise: "Hybrid (brokerage + dispatch)",
 };
 
+function SignupSkeleton() {
+  return (
+    <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white">
+      <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 lg:px-8">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />
+          <div className="h-5 w-32 rounded bg-white/10 animate-pulse" />
+        </div>
+      </header>
+      <div className="relative flex flex-1 flex-col lg:flex-row">
+        <div className="flex w-full flex-col justify-center border-r border-white/10 bg-[#0E131F] px-6 py-8 sm:px-10 lg:w-[480px] xl:w-[520px]">
+          <div className="w-full max-w-md mx-auto space-y-5 animate-pulse">
+            <div className="space-y-2">
+              <div className="h-7 w-48 rounded-lg bg-white/10" />
+              <div className="h-4 w-64 rounded bg-white/5" />
+            </div>
+            <div className="space-y-3.5">
+              <div className="space-y-1">
+                <div className="h-3 w-28 rounded bg-white/10" />
+                <div className="h-10 w-full rounded-xl bg-white/5" />
+              </div>
+              <div className="space-y-1">
+                <div className="h-3 w-24 rounded bg-white/10" />
+                <div className="h-10 w-full rounded-xl bg-white/5" />
+              </div>
+              <div className="space-y-1">
+                <div className="h-3 w-20 rounded bg-white/10" />
+                <div className="h-10 w-full rounded-xl bg-white/5" />
+              </div>
+              <div className="space-y-1">
+                <div className="h-3 w-20 rounded bg-white/10" />
+                <div className="h-10 w-full rounded-xl bg-white/5" />
+              </div>
+              <div className="space-y-1">
+                <div className="h-3 w-20 rounded bg-white/10" />
+                <div className="h-10 w-full rounded-xl bg-white/5" />
+              </div>
+              <div className="h-11 w-full rounded-xl bg-white/10 pt-2" />
+            </div>
+          </div>
+        </div>
+        <div className="hidden flex-1 items-center justify-center bg-[#0B0F17] lg:flex">
+          <div className="h-24 w-64 rounded-2xl bg-white/5 animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SignupPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0B0F17]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#49c2f5]" />
-        </div>
-      }
-    >
+    <Suspense fallback={<SignupSkeleton />}>
       <SignupForm />
     </Suspense>
   );
@@ -345,10 +388,10 @@ function SignupForm() {
             {formError && (
               <div
                 role="alert"
-                className="mb-4 flex items-start gap-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300"
+                className="mb-4 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
               >
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-400" />
-                <div className="flex-1 font-normal leading-relaxed">{formError}</div>
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-600" />
+                <div className="flex-1 font-medium leading-relaxed">{formError}</div>
               </div>
             )}
 
@@ -596,10 +639,10 @@ function SignupForm() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>Setting up your organization...</span>
+                      <span>Creating dispatcher account...</span>
                     </>
                   ) : (
-                    <span>Start 14-Day Free Trial</span>
+                    <span>Create Dispatcher Account</span>
                   )}
                 </button>
               </div>

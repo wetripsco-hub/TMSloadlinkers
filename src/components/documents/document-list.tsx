@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { OcrReviewPanel } from "@/components/documents/ocr-review-panel";
 import type { DocumentType, LoadDocument, OcrStatus } from "../../../types/domain";
@@ -25,18 +24,18 @@ const OCR_STATUS_LABELS: Record<OcrStatus, string> = {
 };
 
 const OCR_STATUS_COLORS: Record<OcrStatus, string> = {
-  pending: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-  processing: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300",
-  completed: "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300",
-  failed: "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300",
-  review_required: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
+  pending: "bg-slate-50 text-slate-700 border border-slate-200",
+  processing: "bg-blue-50 text-blue-700 border border-blue-200",
+  completed: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  failed: "bg-rose-50 text-rose-700 border border-rose-200",
+  review_required: "bg-amber-50 text-amber-700 border border-amber-200",
 };
 
 function OcrStatusBadge({ status }: { status: OcrStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold",
         OCR_STATUS_COLORS[status]
       )}
     >
@@ -49,7 +48,7 @@ export function DocumentList({ documents }: { documents: LoadDocument[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   if (documents.length === 0) {
-    return <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>;
+    return <p className="text-sm text-slate-500">No documents uploaded yet.</p>;
   }
 
   return (
@@ -58,34 +57,35 @@ export function DocumentList({ documents }: { documents: LoadDocument[] }) {
         const isSelected = document.id === selectedId;
 
         return (
-          <Card key={document.id}>
-            <CardContent className="flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedId(isSelected ? null : document.id)}
-                className="flex w-full items-center justify-between gap-3 text-left"
-              >
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-medium">
-                    {DOCUMENT_TYPE_LABELS[document.documentType]}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Uploaded {new Date(document.uploadedAt).toLocaleString()}
-                    {document.ocrConfidenceScore !== null
-                      ? ` · ${document.ocrConfidenceScore}% confidence`
-                      : ""}
-                  </span>
-                </div>
-                <OcrStatusBadge status={document.ocrStatus} />
-              </button>
+          <div
+            key={document.id}
+            className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm hover:border-slate-300 transition-colors"
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedId(isSelected ? null : document.id)}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-semibold text-slate-900">
+                  {DOCUMENT_TYPE_LABELS[document.documentType]}
+                </span>
+                <span className="text-xs text-slate-500">
+                  Uploaded {new Date(document.uploadedAt).toLocaleString()}
+                  {document.ocrConfidenceScore !== null
+                    ? ` · ${document.ocrConfidenceScore}% confidence`
+                    : ""}
+                </span>
+              </div>
+              <OcrStatusBadge status={document.ocrStatus} />
+            </button>
 
-              {isSelected && (
-                <div className="border-t pt-3">
-                  <OcrReviewPanel document={document} />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {isSelected && (
+              <div className="border-t border-slate-100 mt-3 pt-3">
+                <OcrReviewPanel document={document} />
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

@@ -12,19 +12,19 @@ export function AccessBanner({ status }: { status: AccessStatus }) {
     <div
       className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4 ${
         isSevere
-          ? "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10"
-          : "border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
+          ? "border-rose-200 bg-rose-50"
+          : "border-amber-300 bg-amber-50"
       }`}
     >
       <div className="flex items-center gap-3">
         {isSevere ? (
-          <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
+          <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
         ) : (
-          <Clock className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <Clock className="h-5 w-5 shrink-0 text-amber-600" />
         )}
         <p
           className={`text-sm font-medium ${
-            isSevere ? "text-rose-800 dark:text-rose-300" : "text-amber-800 dark:text-amber-300"
+            isSevere ? "text-rose-800" : "text-amber-800"
           }`}
         >
           {status.message}

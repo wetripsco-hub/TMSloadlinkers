@@ -48,7 +48,6 @@ export async function createOrganizationAction(
   const { error } = await supabase.rpc("complete_onboarding", {
     p_org_name: orgName,
     p_workspace_type: input.workspaceType,
-    p_full_name: null,
   });
 
   if (error) {

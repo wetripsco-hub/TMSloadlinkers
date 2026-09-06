@@ -47,6 +47,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  const isPlatformAdminRoute =
+    request.nextUrl.pathname === "/platform-admin" ||
+    request.nextUrl.pathname.startsWith("/platform-admin/");
+
+  if (isPlatformAdminRoute) {
+    if (!user) {
+      const redirectUrl = new URL("/login", request.url);
+      redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // A platform admin is not necessarily a member of any tenant org, so
+    // this checks the separate platform_admins table (021_platform_admin.sql)
+    // via is_platform_admin(), not profiles.role.
+    const { data: isPlatformAdmin } = await supabase.rpc("is_platform_admin", {
+      uid: user.id,
+    });
+
+    if (!isPlatformAdmin) {
+      return NextResponse.redirect(new URL("/overview", request.url));
+    }
+  }
+
   return response;
 }
 
@@ -58,5 +81,6 @@ export const config = {
     "/invoices/:path*",
     "/settlements/:path*",
     "/documents/:path*",
+    "/platform-admin/:path*",
   ],
 };

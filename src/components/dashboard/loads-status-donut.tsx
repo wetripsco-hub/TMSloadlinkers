@@ -51,6 +51,23 @@ export function LoadsStatusDonut({ data }: { data: LoadsByStatus[] }) {
 
   const total = slices.reduce((sum, row) => sum + row.count, 0);
 
+  if (slices.length === 0 || total === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="relative mb-3 flex h-28 w-28 items-center justify-center rounded-full border-4 border-dashed border-slate-200">
+          <div className="flex flex-col items-center justify-center">
+            <span className="text-xl font-bold text-slate-400">0</span>
+            <span className="text-[11px] font-medium text-slate-400">loads</span>
+          </div>
+        </div>
+        <p className="text-xs font-semibold text-slate-700">No active load statuses</p>
+        <p className="mt-0.5 max-w-[220px] text-xs text-slate-500">
+          Loads will appear here segmented by lifecycle status once dispatched or covered.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <ResponsiveContainer width="100%" height={220}>

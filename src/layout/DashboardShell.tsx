@@ -20,7 +20,7 @@ export default function DashboardShell({
     : "lg:ml-[80px]";
 
   return (
-    <div className="min-h-screen bg-gray-50/60 dark:bg-[#111015]">
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100 selection:text-blue-900">
       {/* App Sidebar & Mobile Drawer Backdrop */}
       <AppSidebar />
       <Backdrop />

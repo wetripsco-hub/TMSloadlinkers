@@ -62,6 +62,7 @@ export interface Load {
   commodity: string | null;
   temperatureSetting: string | null;
   specialInstructions: string | null;
+  customerPoNumber: string | null;
 
   origin: LoadStop;
   destination: LoadStop;
@@ -111,6 +112,8 @@ export interface CarrierVerificationResult {
   source: string;             // which provider answered
   fetchedAt: ISODateTime;
   raw: unknown;               // provider payload, stored for audit
+  companyName?: string | null;
+  physicalAddress?: string | null;
 }
 
 export interface CarrierVerificationProvider {

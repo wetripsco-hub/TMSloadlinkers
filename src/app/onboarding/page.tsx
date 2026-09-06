@@ -32,11 +32,11 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+      <Card className="w-full max-w-md border-slate-200/80 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle>Set up your company</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl font-bold text-slate-900">Set up your company</CardTitle>
+          <CardDescription className="text-sm text-slate-500">
             You&apos;re not linked to a company yet. Create one now, or ask
             your team admin to send you an invite instead.
           </CardDescription>

@@ -14,8 +14,27 @@ interface FmcsaCarrierResponse {
       safetyRating?: string;
       oosDate?: string | null;
       bipdInsuranceOnFile?: string;
+      legalName?: string;
+      dbaName?: string;
+      phyStreet?: string;
+      phyCity?: string;
+      phyState?: string;
+      phyZipcode?: string;
+      phyCountry?: string;
     };
   };
+}
+
+type FmcsaCarrier = NonNullable<NonNullable<FmcsaCarrierResponse["content"]>["carrier"]>;
+
+// Builds a single-line address from the QCMobile carrier snapshot's phy*
+// fields. Missing pieces are simply omitted rather than left as blank commas.
+function buildPhysicalAddress(carrier: FmcsaCarrier | undefined): string | null {
+  if (!carrier) return null;
+  const cityStateZip = [carrier.phyCity, carrier.phyState].filter(Boolean).join(", ");
+  const line2 = [cityStateZip, carrier.phyZipcode].filter(Boolean).join(" ");
+  const parts = [carrier.phyStreet, line2, carrier.phyCountry].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 function normalizeSafetyRating(raw: string | null | undefined): SafetyRating {
@@ -66,6 +85,8 @@ export class FmcsaCarrierVerificationProvider implements CarrierVerificationProv
       source: "fmcsa",
       fetchedAt: new Date().toISOString(),
       raw: payload,
+      companyName: carrier?.legalName ?? carrier?.dbaName ?? null,
+      physicalAddress: buildPhysicalAddress(carrier),
     };
   }
 }
@@ -115,6 +136,8 @@ export class MockCarrierVerificationProvider implements CarrierVerificationProvi
             ? "Unsatisfactory"
             : "None";
 
+    const last4 = digits.slice(-4).padStart(4, "0");
+
     return {
       authorityActive: bucket !== 3,
       safetyRating,
@@ -123,6 +146,8 @@ export class MockCarrierVerificationProvider implements CarrierVerificationProvi
       source: "mock",
       fetchedAt: new Date().toISOString(),
       raw: { identifier, bucket, mock: true },
+      companyName: `Mock Carrier ${last4} LLC`,
+      physicalAddress: `${numeric % 9000 + 100} Mock Freight Way, Mockville, TX ${last4}`,
     };
   }
 }

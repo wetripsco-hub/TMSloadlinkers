@@ -1,9 +1,21 @@
+import { PageHeader } from "@/components/layout/page-header";
 import { LoadWizard } from "@/components/loads/load-wizard";
 
 export default function NewLoadPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <LoadWizard />
+    <div className="space-y-6">
+      <PageHeader
+        title="Create Freight Load"
+        subtitle="Step-by-step wizard to configure routing, equipment, financial terms, and dispatch schedule."
+        breadcrumbs={[
+          { label: "Operations", href: "/overview" },
+          { label: "Loads", href: "/loads" },
+          { label: "New Load" },
+        ]}
+      />
+      <div className="flex justify-center pb-8">
+        <LoadWizard />
+      </div>
     </div>
   );
 }

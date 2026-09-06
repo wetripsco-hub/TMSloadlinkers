@@ -26,10 +26,12 @@ const workspaceTypeLabels: Record<(typeof workspaceTypes)[number], string> = {
 };
 
 const createOrgSchema = z.object({
-  orgName: z.string().min(2, "Organization name is required"),
+  orgName: z.string().min(2, "Company name is required"),
   workspaceType: z.enum(workspaceTypes, {
     errorMap: () => ({ message: "Select a workspace type" }),
   }),
+  dotNumber: z.string().optional(),
+  mcNumber: z.string().optional(),
 });
 
 type CreateOrgValues = z.infer<typeof createOrgSchema>;
@@ -49,7 +51,10 @@ export function CreateOrganizationForm() {
 
   async function onSubmit(values: CreateOrgValues) {
     setFormError(null);
-    const result = await createOrganizationAction(values);
+    const result = await createOrganizationAction({
+      orgName: values.orgName,
+      workspaceType: values.workspaceType,
+    });
     // A successful call redirects server-side and never returns here.
     if (result?.error) {
       setFormError(result.error);
@@ -59,25 +64,57 @@ export function CreateOrganizationForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="orgName">Organization name</Label>
+        <Label htmlFor="orgName" className="flex items-center gap-1 font-medium text-slate-700">
+          Company Name <span className="text-rose-500">*</span>
+        </Label>
         <Input
           id="orgName"
           autoComplete="organization"
+          placeholder="e.g. Acme Freight Logistics"
           aria-invalid={!!errors.orgName}
+          className="bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500"
           {...register("orgName")}
         />
         {errors.orgName && (
           <p className="text-sm text-destructive">{errors.orgName.message}</p>
         )}
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="dotNumber" className="flex items-center gap-1 font-medium text-slate-700">
+            DOT Number <span className="text-rose-500">*</span>
+          </Label>
+          <Input
+            id="dotNumber"
+            placeholder="e.g. 1234567"
+            className="bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500"
+            {...register("dotNumber")}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="mcNumber" className="flex items-center gap-1 font-medium text-slate-700">
+            MC Number <span className="text-rose-500">*</span>
+          </Label>
+          <Input
+            id="mcNumber"
+            placeholder="e.g. 987654"
+            className="bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500"
+            {...register("mcNumber")}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="workspaceType">Workspace type</Label>
+        <Label htmlFor="workspaceType" className="flex items-center gap-1 font-medium text-slate-700">
+          Workspace Type <span className="text-rose-500">*</span>
+        </Label>
         <Controller
           name="workspaceType"
           control={control}
           render={({ field }) => (
             <Select value={field.value ?? ""} onValueChange={field.onChange}>
-              <SelectTrigger id="workspaceType" className="w-full">
+              <SelectTrigger id="workspaceType" className="w-full bg-white border-slate-200 text-slate-900 focus:ring-2 focus:ring-blue-500">
                 <SelectValue placeholder="Select a workspace type" />
               </SelectTrigger>
               <SelectContent>
@@ -94,9 +131,19 @@ export function CreateOrganizationForm() {
           <p className="text-sm text-destructive">{errors.workspaceType.message}</p>
         )}
       </div>
-      {formError && <p className="text-sm text-destructive">{formError}</p>}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Creating company..." : "Create company"}
+
+      {formError && (
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {formError}
+        </p>
+      )}
+
+      <Button
+        type="submit"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-60"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Creating company..." : "Create Company"}
       </Button>
     </form>
   );

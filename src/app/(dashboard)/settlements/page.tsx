@@ -1,17 +1,22 @@
+import type { Metadata } from "next";
 import { listInvoices } from "@/lib/repositories/invoices";
 import { listLoads, getLoadById } from "@/lib/repositories/loads";
 import { getCarrierById } from "@/lib/repositories/carriers";
 import { SettlementTable } from "@/components/settlements/settlement-table";
 import { GenerateSettlementDialog } from "@/components/settlements/generate-settlement-dialog";
 import { ExportCsvButton } from "@/components/settlements/export-csv-button";
-import { PageBreadcrumb } from "@/components/common/PageBreadCrumb";
+import { PageHeader } from "@/components/layout/page-header";
 import { MetricCard } from "@/components/ui/tailadmin/metric-card";
-import { formatCents } from "@/lib/money";
+import { formatMoney } from "@/lib/format";
 import { Landmark, CheckCircle2, Clock, Truck } from "lucide-react";
 import type { Load } from "../../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Settlements (AP) | FreightLink TMS",
+};
 
 export default async function SettlementsPage() {
   const [{ data: invoices }, deliveredLoads, podUploadedLoads] = await Promise.all([
@@ -66,50 +71,62 @@ export default async function SettlementsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb Header with Actions */}
-      <PageBreadcrumb pageTitle="Carrier Pay & Settlements">
-        <div className="flex items-center gap-2">
-          <ExportCsvButton />
-          <GenerateSettlementDialog eligibleLoads={eligibleLoads} />
-        </div>
-      </PageBreadcrumb>
+      {/* Standardized Page Header with Actions */}
+      <PageHeader
+        title="Carrier Settlements (Payables)"
+        subtitle="Audit completed trips, process carrier remittances, and generate ACH batch payouts."
+        breadcrumbs={[
+          { label: "Financials", href: "/settlements" },
+          { label: "Settlements", href: "/settlements" },
+        ]}
+        action={
+          <div className="flex items-center gap-2">
+            <ExportCsvButton />
+            <GenerateSettlementDialog eligibleLoads={eligibleLoads} />
+          </div>
+        }
+      />
 
       {/* KPI Ribbon Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Disbursed Pay"
-          value={formatCents(totalDisbursedCents)}
-          icon={<CheckCircle2 className="h-6 w-6 text-emerald-500" />}
+          value={formatMoney(totalDisbursedCents)}
+          icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
           badgeText="Paid"
           badgeColor="success"
           subtitle={`${paidVouchersCount} vouchers completed`}
+          variant="plausible"
         />
 
         <MetricCard
           title="Pending Carrier Pay"
-          value={formatCents(totalPendingCents)}
-          icon={<Clock className="h-6 w-6 text-amber-500" />}
+          value={formatMoney(totalPendingCents)}
+          icon={<Clock className="h-5 w-5 text-amber-600" />}
           badgeText={totalPendingCents > 0 ? "Payable" : "0"}
           badgeColor={totalPendingCents > 0 ? "warning" : "light"}
           subtitle="Awaiting ACH / QuickPay release"
+          variant="plausible"
         />
 
         <MetricCard
           title="Eligible Loads to Settle"
           value={eligibleLoads.length}
-          icon={<Truck className="h-6 w-6 text-brand-500" />}
+          icon={<Truck className="h-5 w-5 text-blue-600" />}
           badgeText={eligibleLoads.length > 0 ? "Ready" : "None"}
           badgeColor="primary"
           subtitle="Delivered with assigned carriers"
+          variant="plausible"
         />
 
         <MetricCard
           title="Total Vouchers"
           value={settlements.length}
-          icon={<Landmark className="h-6 w-6 text-sky-500" />}
+          icon={<Landmark className="h-5 w-5 text-sky-600" />}
           badgeText="All Time"
           badgeColor="info"
           subtitle="Carrier pay settlement history"
+          variant="plausible"
         />
       </div>
 

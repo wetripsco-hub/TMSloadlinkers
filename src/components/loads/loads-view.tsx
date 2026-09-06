@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { MetricCard } from "@/components/ui/tailadmin/metric-card";
 import { LoadTable } from "@/components/loads/load-table";
 import { CreateLoadModal } from "@/components/loads/create-load-modal";
-import { PageBreadcrumb } from "@/components/common/PageBreadCrumb";
+import { UploadRateConButton } from "@/components/loads/upload-ratecon-button";
+import { PageHeader } from "@/components/layout/page-header";
 import { TailAdminButton } from "@/components/ui/tailadmin/form-elements";
 import { seedDemoDataAction } from "@/app/(dashboard)/loads/actions";
 import {
@@ -16,8 +17,7 @@ import {
   Clock,
   Sparkles,
   RefreshCw,
-  Building2,
-  ShieldCheck,
+  Plus,
 } from "lucide-react";
 import type { Load } from "../../../types/domain";
 import type { CustomerRecord } from "@/lib/repositories/customers";
@@ -32,7 +32,9 @@ export interface LoadsViewProps {
 
 export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsViewProps) {
   const router = useRouter();
+  const [selectedStatus, setSelectedStatus] = useState<string | undefined>(initialStatus);
   const [isPending, startTransition] = useTransition();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [seedSuccessMessage, setSeedSuccessMessage] = useState<string | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
 
@@ -109,33 +111,61 @@ export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsVi
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb Header with Actions */}
-      <PageBreadcrumb pageTitle="Freight Loads">
-        <div className="flex items-center gap-2">
-          <TailAdminButton
-            variant="outline"
-            size="md"
-            onClick={handleSeedData}
-            loading={isPending}
-            startIcon={<Sparkles className="h-4 w-4 text-amber-500" />}
-            title="Inject sample shippers, carriers, loads & invoices"
-          >
-            {isPending ? "Loading..." : "Load Sample Data"}
-          </TailAdminButton>
-          <CreateLoadModal customers={customers} carriers={carriers} />
-        </div>
-      </PageBreadcrumb>
+      {/* Standardized Page Header with Actions */}
+      <PageHeader
+        title="Freight Loads"
+        subtitle="Manage bookings, carrier dispatch, lifecycle statuses, and margins."
+        breadcrumbs={[
+          { label: "Operations", href: "/overview" },
+          { label: "Loads", href: "/loads" },
+        ]}
+        action={
+          <div className="flex items-center gap-2">
+            <TailAdminButton
+              variant="outline"
+              size="md"
+              onClick={handleSeedData}
+              loading={isPending}
+              startIcon={<Sparkles className="h-4 w-4 text-amber-500" />}
+              title="Inject sample shippers, carriers, loads & invoices"
+            >
+              {isPending ? "Loading..." : "Load Sample Data"}
+            </TailAdminButton>
+            <UploadRateConButton />
+            <TailAdminButton
+              variant="primary"
+              size="md"
+              onClick={() => setIsCreateModalOpen(true)}
+              startIcon={<Plus className="h-4 w-4" />}
+            >
+              + New Load
+            </TailAdminButton>
+          </div>
+        }
+      />
+
+      <CreateLoadModal
+        customers={customers}
+        carriers={carriers}
+        isOpen={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSuccess={() => {
+          setSeedSuccessMessage("Load created successfully");
+          router.refresh();
+        }}
+        trigger={null}
+      />
 
       {/* Success Notification */}
       {seedSuccessMessage && (
-        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <span>{seedSuccessMessage}</span>
           </div>
           <button
             onClick={() => setSeedSuccessMessage(null)}
-            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400"
+            className="text-emerald-600 hover:text-emerald-800"
           >
             ✕
           </button>
@@ -144,14 +174,14 @@ export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsVi
 
       {/* Error Notification */}
       {seedError && (
-        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-rose-600" />
             <span>{seedError}</span>
           </div>
           <button
             onClick={() => setSeedError(null)}
-            className="text-rose-600 hover:text-rose-800 dark:text-rose-400"
+            className="text-rose-600 hover:text-rose-800"
           >
             ✕
           </button>
@@ -160,22 +190,22 @@ export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsVi
 
       {/* 14-Day Free Trial Onboarding Banner (When empty or new) */}
       {loads.length === 0 && (
-        <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-r from-brand-50 via-white to-sky-50 p-6 shadow-sm dark:border-brand-900/50 dark:from-[#1e1d27] dark:via-[#191822] dark:to-[#16202c]">
+        <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/50 via-white to-sky-50/50 p-6 shadow-sm">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-1.5 max-w-2xl">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-2.5 py-0.5 text-[11px] font-bold text-brand-600 dark:text-brand-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
                   <Sparkles className="h-3 w-3" />
                   14-DAY FREE TRIAL ACTIVE
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <span className="text-xs text-slate-500 font-medium">
                   Self-Serve Onboarding
                 </span>
               </div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
+              <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
                 Start Exploring with 1-Click Operational Freight Data
               </h2>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+              <p className="text-xs sm:text-sm text-slate-600">
                 Populate your new workspace with 3 realistic shippers, 4 compliant carriers, 9 active shipments across various stages, and live billing invoices.
               </p>
             </div>
@@ -197,58 +227,95 @@ export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsVi
 
       {/* KPI Ribbon Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <MetricCard
-          title="Active Loads"
-          value={metrics.active}
-          icon={<Package className="h-6 w-6 text-brand-500" />}
-          badgeText={metrics.active > 0 ? "In Pipeline" : "Empty"}
-          badgeColor="primary"
-          subtitle="Currently running shipments"
-        />
+        <button
+          type="button"
+          onClick={() => setSelectedStatus((prev) => (prev === "active" ? "ALL" : "active"))}
+          className="text-left focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-xl transition-all"
+        >
+          <MetricCard
+            title="Active Loads"
+            value={metrics.active}
+            icon={<Package className="h-5 w-5 text-blue-600" />}
+            badgeText={metrics.active > 0 ? "In Pipeline" : "Empty"}
+            badgeColor="primary"
+            subtitle="Currently running shipments"
+            variant="plausible"
+          />
+        </button>
 
-        <MetricCard
-          title="In-Transit"
-          value={metrics.inTransit}
-          icon={<Truck className="h-6 w-6 text-sky-500" />}
-          badgeText="On Highway"
-          badgeColor="info"
-          subtitle="GPS tracking & rolling"
-        />
+        <button
+          type="button"
+          onClick={() => setSelectedStatus((prev) => (prev === "in_transit" ? "ALL" : "in_transit"))}
+          className="text-left focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-xl transition-all"
+        >
+          <MetricCard
+            title="In-Transit"
+            value={metrics.inTransit}
+            icon={<Truck className="h-5 w-5 text-sky-600" />}
+            badgeText="On Highway"
+            badgeColor="info"
+            subtitle="GPS tracking & rolling"
+            variant="plausible"
+          />
+        </button>
 
-        <MetricCard
-          title="Needs Carrier"
-          value={metrics.needsCarrier}
-          icon={<Clock className="h-6 w-6 text-amber-500" />}
-          badgeText={metrics.needsCarrier > 0 ? "Needs Coverage" : "Covered"}
-          badgeColor={metrics.needsCarrier > 0 ? "warning" : "success"}
-          subtitle="Quoted or open loads"
-        />
+        <button
+          type="button"
+          onClick={() => setSelectedStatus((prev) => (prev === "OPEN" ? "ALL" : "OPEN"))}
+          className="text-left focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-xl transition-all"
+        >
+          <MetricCard
+            title="Needs Carrier"
+            value={metrics.needsCarrier}
+            icon={<Clock className="h-5 w-5 text-amber-600" />}
+            badgeText={metrics.needsCarrier > 0 ? "Needs Coverage" : "Covered"}
+            badgeColor={metrics.needsCarrier > 0 ? "warning" : "success"}
+            subtitle="Quoted or open loads"
+            variant="plausible"
+          />
+        </button>
 
-        <MetricCard
-          title="Delivered"
-          value={metrics.delivered}
-          icon={<CheckCircle2 className="h-6 w-6 text-emerald-500" />}
-          badgeText="Completed"
-          badgeColor="success"
-          subtitle="POD & delivered freight"
-        />
+        <button
+          type="button"
+          onClick={() => setSelectedStatus((prev) => (prev === "delivered" ? "ALL" : "delivered"))}
+          className="text-left focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-xl transition-all"
+        >
+          <MetricCard
+            title="Delivered"
+            value={metrics.delivered}
+            icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
+            badgeText="Completed"
+            badgeColor="success"
+            subtitle="POD & delivered freight"
+            variant="plausible"
+          />
+        </button>
 
-        <MetricCard
-          title="Delayed / Exception"
-          value={metrics.delayedOrException}
-          icon={<AlertCircle className="h-6 w-6 text-rose-500" />}
-          badgeText={metrics.delayedOrException > 0 ? "Attention" : "Clear"}
-          badgeColor={metrics.delayedOrException > 0 ? "error" : "light"}
-          subtitle="Cancelled or flagged"
-        />
+        <button
+          type="button"
+          onClick={() => setSelectedStatus((prev) => (prev === "cancelled" ? "ALL" : "cancelled"))}
+          className="text-left focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-xl transition-all"
+        >
+          <MetricCard
+            title="Delayed / Exception"
+            value={metrics.delayedOrException}
+            icon={<AlertCircle className="h-5 w-5 text-rose-600" />}
+            badgeText={metrics.delayedOrException > 0 ? "Attention" : "Clear"}
+            badgeColor={metrics.delayedOrException > 0 ? "error" : "light"}
+            subtitle="Cancelled or flagged"
+            variant="plausible"
+          />
+        </button>
       </div>
 
       {/* Core Data Table */}
       <LoadTable
+        key={selectedStatus ?? "all"}
         loads={loads}
         customers={customers}
         carriers={carriers}
-        initialStatus={initialStatus}
+        initialStatus={selectedStatus}
+        onCreateLoad={() => setIsCreateModalOpen(true)}
       />
     </div>
   );

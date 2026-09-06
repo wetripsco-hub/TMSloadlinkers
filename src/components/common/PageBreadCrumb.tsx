@@ -16,15 +16,15 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           {pageTitle}
         </h1>
         <nav className="mt-1">
-          <ol className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <ol className="flex items-center gap-1.5 text-xs text-slate-500">
             <li>
               <Link
-                href="/loads"
-                className="inline-flex items-center gap-1 hover:text-brand-500 transition-colors"
+                href="/overview"
+                className="inline-flex items-center gap-1 hover:text-blue-600 transition-colors"
               >
                 <Home className="h-3.5 w-3.5" />
                 TMS
@@ -33,16 +33,16 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
             {items ? (
               items.map((item, idx) => (
                 <li key={idx} className="inline-flex items-center gap-1.5">
-                  <ChevronRight className="h-3 w-3 text-gray-400" />
+                  <ChevronRight className="h-3 w-3 text-slate-400" />
                   {item.href ? (
                     <Link
                       href={item.href}
-                      className="hover:text-brand-500 transition-colors"
+                      className="hover:text-blue-600 transition-colors"
                     >
                       {item.label}
                     </Link>
                   ) : (
-                    <span className="text-gray-800 font-medium dark:text-white">
+                    <span className="text-slate-800 font-medium">
                       {item.label}
                     </span>
                   )}
@@ -50,8 +50,8 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
               ))
             ) : (
               <li className="inline-flex items-center gap-1.5">
-                <ChevronRight className="h-3 w-3 text-gray-400" />
-                <span className="text-gray-800 font-medium dark:text-white">
+                <ChevronRight className="h-3 w-3 text-slate-400" />
+                <span className="text-slate-800 font-medium">
                   {pageTitle}
                 </span>
               </li>

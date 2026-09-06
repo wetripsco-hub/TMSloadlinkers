@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCents } from "@/lib/money";
+import { formatMoney } from "@/lib/format";
 import { generateSettlementAction } from "@/app/(dashboard)/settlements/actions";
 import type { Load } from "../../../types/domain";
 
@@ -56,7 +56,11 @@ export function GenerateSettlementDialog({ eligibleLoads }: { eligibleLoads: Loa
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button type="button" disabled={eligibleLoads.length === 0}>
+          <Button
+            type="button"
+            disabled={eligibleLoads.length === 0}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm shadow-sm transition-colors"
+          >
             Generate settlement
           </Button>
         }
@@ -79,7 +83,7 @@ export function GenerateSettlementDialog({ eligibleLoads }: { eligibleLoads: Loa
             <SelectContent>
               {eligibleLoads.map((load) => (
                 <SelectItem key={load.id} value={load.id}>
-                  {(load.loadNumber || load.id.slice(0, 8))} — {formatCents(load.carrierPay)}
+                  {(load.loadNumber || load.id.slice(0, 8))} — {formatMoney(load.carrierPay)}
                 </SelectItem>
               ))}
             </SelectContent>

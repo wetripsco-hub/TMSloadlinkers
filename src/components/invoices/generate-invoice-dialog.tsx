@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCents } from "@/lib/money";
+import { formatMoney } from "@/lib/format";
 import { generateInvoiceAction } from "@/app/(dashboard)/invoices/actions";
 import type { Load } from "../../../types/domain";
 
@@ -56,7 +56,11 @@ export function GenerateInvoiceDialog({ eligibleLoads }: { eligibleLoads: Load[]
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button type="button" disabled={eligibleLoads.length === 0}>
+          <Button
+            type="button"
+            disabled={eligibleLoads.length === 0}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm shadow-sm transition-colors"
+          >
             Generate invoice
           </Button>
         }
@@ -78,7 +82,7 @@ export function GenerateInvoiceDialog({ eligibleLoads }: { eligibleLoads: Load[]
             <SelectContent>
               {eligibleLoads.map((load) => (
                 <SelectItem key={load.id} value={load.id}>
-                  {(load.loadNumber || load.id.slice(0, 8))} — {formatCents(load.shipperRate)}
+                  {(load.loadNumber || load.id.slice(0, 8))} — {formatMoney(load.shipperRate)}
                 </SelectItem>
               ))}
             </SelectContent>

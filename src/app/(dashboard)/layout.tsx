@@ -37,13 +37,14 @@ export default async function DashboardLayout({
 
   const { data: organization } = await supabase
     .from("organizations")
-    .select("name, workspace_type")
+    .select("name, workspace_type, logo_url")
     .eq("id", orgId)
     .maybeSingle();
 
   return (
     <SidebarProvider
       orgName={organization?.name ?? null}
+      orgLogoUrl={organization?.logo_url ?? null}
       workspaceType={organization?.workspace_type ?? null}
     >
       <DashboardShell>

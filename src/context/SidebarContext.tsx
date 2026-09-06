@@ -9,6 +9,7 @@ type SidebarContextType = {
   activeItem: string | null;
   openSubmenu: string | null;
   orgName: string | null;
+  orgLogoUrl: string | null;
   workspaceType: string | null;
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
@@ -30,8 +31,9 @@ export const useSidebar = () => {
 export const SidebarProvider: React.FC<{
   children: React.ReactNode;
   orgName?: string | null;
+  orgLogoUrl?: string | null;
   workspaceType?: string | null;
-}> = ({ children, orgName = null, workspaceType = null }) => {
+}> = ({ children, orgName = null, orgLogoUrl = null, workspaceType = null }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -77,6 +79,7 @@ export const SidebarProvider: React.FC<{
         activeItem,
         openSubmenu,
         orgName,
+        orgLogoUrl,
         workspaceType,
         toggleSidebar,
         toggleMobileSidebar,

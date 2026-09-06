@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { InvoiceStatusBadge } from "@/components/invoices/invoice-status-badge";
-import { formatCents } from "@/lib/money";
+import { formatMoney, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableHeader,
@@ -11,7 +12,6 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { TailAdminInput, TailAdminSelect } from "@/components/ui/tailadmin/form-elements";
 import { Search, Receipt, ArrowRight, Calendar } from "lucide-react";
 import type { Invoice, Load } from "../../../types/domain";
 
@@ -60,77 +60,78 @@ export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
       {/* Search & Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-3">
-          <div className="w-full sm:max-w-xs">
-            <TailAdminInput
+          <div className="relative w-full sm:max-w-xs">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <Search className="h-4 w-4" />
+            </div>
+            <input
+              type="text"
               placeholder="Search invoice #, load #, billing..."
+              aria-label="Search invoices by number, load, or billing"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              startIcon={<Search className="h-4 w-4" />}
+              className="h-10 w-full pl-9 pr-3.5 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
             />
           </div>
 
           <div className="w-40">
-            <TailAdminSelect
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              options={[
-                { value: "ALL", label: "All Statuses" },
-                { value: "paid", label: "Paid" },
-                { value: "unpaid", label: "Unpaid / Due" },
-                { value: "partially_paid", label: "Partial" },
-                { value: "void", label: "Void" },
-              ]}
-            />
+              className="h-10 w-full px-3 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid / Due</option>
+              <option value="partially_paid">Partial</option>
+              <option value="void">Void</option>
+            </select>
           </div>
 
           <div className="w-44">
-            <TailAdminSelect
+            <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              options={[
-                { value: "ALL", label: "All Types" },
-                { value: "shipper_invoice", label: "Shipper Invoices" },
-                { value: "carrier_settlement_voucher", label: "Carrier Settlements" },
-              ]}
-            />
+              className="h-10 w-full px-3 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+            >
+              <option value="ALL">All Types</option>
+              <option value="shipper_invoice">Shipper Invoices</option>
+              <option value="carrier_settlement_voucher">Carrier Settlements</option>
+            </select>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-          <span>Showing</span>
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 font-bold text-gray-800 dark:bg-white/10 dark:text-white">
-            {filteredInvoices.length}
-          </span>
-          <span>of {invoices.length} invoices</span>
+        <div className="text-xs text-slate-500 font-medium">
+          Showing {filteredInvoices.length} of {invoices.length} invoices
         </div>
       </div>
 
       {filteredInvoices.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-800 dark:bg-[#18171d]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">
-            <Receipt className="h-6 w-6" />
-          </div>
-          <h3 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">
-            No invoices found
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {searchTerm || statusFilter !== "ALL" || typeFilter !== "ALL"
-              ? "Try adjusting your search criteria or invoice filters."
-              : "Generate an invoice from delivered loads to initiate billing."}
-          </p>
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title="No invoices generated yet"
+          description={
+            searchTerm || statusFilter !== "ALL" || typeFilter !== "ALL"
+              ? "No invoice matches your search criteria or invoice filters. Try adjusting your search."
+              : "Delivered shipments ready for customer billing will automatically appear here."
+          }
+          action={{
+            label: "View Delivered Loads",
+            href: "/loads?status=delivered",
+          }}
+        />
       ) : (
         <Table>
           <TableHeader>
-            <tr>
-              <TableCell isHeader>Invoice #</TableCell>
-              <TableCell isHeader>Category</TableCell>
-              <TableCell isHeader>Payment Status</TableCell>
-              <TableCell isHeader>Linked Load</TableCell>
-              <TableCell isHeader>Due Date</TableCell>
-              <TableCell isHeader className="text-right">Total</TableCell>
-              <TableCell isHeader className="text-right">Paid</TableCell>
-              <TableCell isHeader className="text-right">Balance Due</TableCell>
+            <tr className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600">Invoice #</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600">Category</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600">Payment Status</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600">Linked Load</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600">Due Date</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Total Amount</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Paid Amount</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Balance Due</TableCell>
             </tr>
           </TableHeader>
           <TableBody>
@@ -140,70 +141,66 @@ export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
                 invoice.invoiceNumber || `INV-${invoice.id.slice(0, 6).toUpperCase()}`;
 
               return (
-                <TableRow key={invoice.id}>
+                <TableRow key={invoice.id} className="hover:bg-slate-50/70 transition-colors">
                   {/* Invoice # */}
-                  <TableCell>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                  <TableCell className="py-3.5 px-4">
+                    <span className="font-semibold text-slate-900 text-sm">
                       {formattedInvNum}
                     </span>
                   </TableCell>
 
                   {/* Type */}
-                  <TableCell className="text-xs text-gray-600 dark:text-gray-400">
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 font-medium dark:bg-white/5">
+                  <TableCell className="py-3.5 px-4 text-xs text-slate-600">
+                    <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 font-medium">
                       {INVOICE_TYPE_LABELS[invoice.invoiceType]}
                     </span>
                   </TableCell>
 
                   {/* Status */}
-                  <TableCell>
+                  <TableCell className="py-3.5 px-4">
                     <InvoiceStatusBadge status={invoice.status} />
                   </TableCell>
 
                   {/* Load ID */}
-                  <TableCell>
+                  <TableCell className="py-3.5 px-4">
                     {invoice.loadId ? (
                       <Link
                         href={`/loads/${invoice.loadId}`}
-                        className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline dark:text-brand-400"
+                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700 text-xs transition-colors"
                       >
-                        {load?.loadNumber || `LD-${invoice.loadId.slice(0, 6).toUpperCase()}`}
+                        <span>{load?.loadNumber || `LD-${invoice.loadId.slice(0, 6).toUpperCase()}`}</span>
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     ) : (
-                      <span className="text-gray-400 italic">Unlinked</span>
+                      <span className="text-slate-400 italic text-xs">Unlinked</span>
                     )}
                   </TableCell>
 
                   {/* Due Date */}
-                  <TableCell className="text-xs text-gray-600 dark:text-gray-400">
+                  <TableCell className="py-3.5 px-4 text-sm text-slate-600">
                     {invoice.dueDate ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-gray-400" />
-                        {new Date(invoice.dueDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{formatDate(invoice.dueDate)}</span>
                       </span>
                     ) : (
-                      <span className="text-gray-400 italic">Net 30</span>
+                      <span className="text-slate-400">{"—"}</span>
                     )}
                   </TableCell>
 
-                  {/* Total */}
-                  <TableCell className="text-right font-medium text-gray-900 dark:text-white tabular-nums">
-                    {formatCents(invoice.amountTotal)}
+                  {/* Total Amount */}
+                  <TableCell className="py-3.5 px-4 text-right font-mono font-medium text-slate-900 text-sm tabular-nums">
+                    {formatMoney(invoice.amountTotal)}
                   </TableCell>
 
-                  {/* Paid */}
-                  <TableCell className="text-right text-emerald-600 dark:text-emerald-400 font-medium tabular-nums">
-                    {formatCents(invoice.amountPaid)}
+                  {/* Paid Amount */}
+                  <TableCell className="py-3.5 px-4 text-right font-mono text-emerald-700 font-medium text-sm tabular-nums">
+                    {formatMoney(invoice.amountPaid)}
                   </TableCell>
 
-                  {/* Due */}
-                  <TableCell className="text-right font-bold text-gray-900 dark:text-white tabular-nums">
-                    {formatCents(invoice.amountDue)}
+                  {/* Balance Due */}
+                  <TableCell className="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 text-sm tabular-nums">
+                    {formatMoney(invoice.amountDue)}
                   </TableCell>
                 </TableRow>
               );

@@ -17,7 +17,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useWorkspaceMode } from "@/hooks/use-workspace-mode";
-import { parseCents, formatCents } from "@/lib/money";
+import { parseCents } from "@/lib/money";
+import { formatMoney } from "@/lib/format";
 import { calculateBrokerMargin, calculateDispatcherCommission } from "@/lib/domain/margin";
 import {
   loadWizardSchema,
@@ -64,7 +65,7 @@ function LiveEconomicsSummary({
     return (
       <div className="rounded-lg bg-muted/50 px-3 py-2 text-sm">
         <span className="text-muted-foreground">Estimated commission ({DISPATCHER_COMMISSION_PERCENTAGE}%): </span>
-        <span className="font-medium">{formatCents(commission)}</span>
+        <span className="font-medium">{formatMoney(commission)}</span>
       </div>
     );
   }
@@ -74,7 +75,7 @@ function LiveEconomicsSummary({
     <div className="rounded-lg bg-muted/50 px-3 py-2 text-sm">
       <span className="text-muted-foreground">Live margin: </span>
       <span className={margin < 0 ? "font-medium text-destructive" : "font-medium"}>
-        {formatCents(margin)}
+        {formatMoney(margin)}
       </span>
     </div>
   );
@@ -167,7 +168,9 @@ export function LoadWizard() {
           {step.id === "customer-rate" && (
             <>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="customerId">Customer</Label>
+                <Label htmlFor="customerId">
+                  Customer <span className="text-rose-500">*</span>
+                </Label>
                 <Input
                   id="customerId"
                   placeholder="Customer ID"
@@ -187,7 +190,9 @@ export function LoadWizard() {
                 <FieldError message={errors.carrierId?.message} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="shipperRate">Shipper rate ($)</Label>
+                <Label htmlFor="shipperRate">
+                  Shipper rate ($) <span className="text-rose-500">*</span>
+                </Label>
                 <Input
                   id="shipperRate"
                   inputMode="decimal"
@@ -214,7 +219,9 @@ export function LoadWizard() {
           {(step.id === "origin" || step.id === "destination") && (
             <>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={`${step.id}.facilityName`}>Facility name</Label>
+                <Label htmlFor={`${step.id}.facilityName`}>
+                  Facility name <span className="text-rose-500">*</span>
+                </Label>
                 <Input
                   id={`${step.id}.facilityName`}
                   aria-invalid={!!errors[step.id]?.facilityName}
@@ -223,7 +230,9 @@ export function LoadWizard() {
                 <FieldError message={errors[step.id]?.facilityName?.message} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={`${step.id}.address`}>Address</Label>
+                <Label htmlFor={`${step.id}.address`}>
+                  Address <span className="text-rose-500">*</span>
+                </Label>
                 <Input
                   id={`${step.id}.address`}
                   aria-invalid={!!errors[step.id]?.address}
@@ -233,7 +242,9 @@ export function LoadWizard() {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`${step.id}.city`}>City</Label>
+                  <Label htmlFor={`${step.id}.city`}>
+                    City <span className="text-rose-500">*</span>
+                  </Label>
                   <Input
                     id={`${step.id}.city`}
                     aria-invalid={!!errors[step.id]?.city}
@@ -242,7 +253,9 @@ export function LoadWizard() {
                   <FieldError message={errors[step.id]?.city?.message} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`${step.id}.state`}>State</Label>
+                  <Label htmlFor={`${step.id}.state`}>
+                    State <span className="text-rose-500">*</span>
+                  </Label>
                   <Input
                     id={`${step.id}.state`}
                     maxLength={2}
@@ -252,7 +265,9 @@ export function LoadWizard() {
                   <FieldError message={errors[step.id]?.state?.message} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`${step.id}.zip`}>ZIP</Label>
+                  <Label htmlFor={`${step.id}.zip`}>
+                    ZIP <span className="text-rose-500">*</span>
+                  </Label>
                   <Input
                     id={`${step.id}.zip`}
                     aria-invalid={!!errors[step.id]?.zip}
@@ -263,7 +278,8 @@ export function LoadWizard() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={`${step.id}.windowStart`}>
-                  {step.id === "origin" ? "Pickup date" : "Delivery date"}
+                  {step.id === "origin" ? "Pickup date" : "Delivery date"}{" "}
+                  <span className="text-rose-500">*</span>
                 </Label>
                 <Controller
                   name={`${step.id}.windowStart`}
@@ -322,7 +338,9 @@ export function LoadWizard() {
               </div>
               <div>
                 <p className="text-muted-foreground">Rates</p>
-                <p>Shipper ${values.shipperRate} · Carrier ${values.carrierPay}</p>
+                <p>
+                  Shipper {formatMoney(Number(values.shipperRate || 0) * 100)} · Carrier {formatMoney(Number(values.carrierPay || 0) * 100)}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Origin</p>
@@ -357,7 +375,7 @@ export function LoadWizard() {
           </Button>
           {isLastStep ? (
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating load..." : "Create load"}
+              {isSubmitting ? "Creating..." : "Create Load"}
             </Button>
           ) : (
             <Button type="button" onClick={goNext}>

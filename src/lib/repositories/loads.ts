@@ -21,6 +21,10 @@ interface LoadRow {
   shipper_rate: number;
   carrier_pay: number;
   broker_margin: number;
+  equipment_type: string | null;
+  commodity: string | null;
+  weight_lbs: number | null;
+  customer_po_number: string | null;
   tracking_token: string;
   driver_name: string | null;
   driver_phone: string | null;
@@ -34,7 +38,7 @@ interface LoadRow {
 }
 
 const LOAD_COLUMNS =
-  "id, org_id, customer_id, carrier_id, status, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, created_at, updated_at";
+  "id, org_id, customer_id, carrier_id, status, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, equipment_type, commodity, weight_lbs, customer_po_number, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, created_at, updated_at";
 
 function moneyToCents(value: number): Cents {
   return parseCents(String(value));
@@ -71,11 +75,12 @@ function mapRowToLoad(row: LoadRow): Load {
     brokerMargin: moneyToCents(row.broker_margin),
     dispatcherCommissionEarned: 0,
 
-    equipmentType: "",
-    weightLbs: null,
-    commodity: null,
+    equipmentType: row.equipment_type ?? "",
+    weightLbs: row.weight_lbs,
+    commodity: row.commodity,
     temperatureSetting: null,
     specialInstructions: null,
+    customerPoNumber: row.customer_po_number,
 
     origin: toStop(row.origin, row.pickup_date),
     destination: toStop(row.destination, row.delivery_date),
@@ -121,6 +126,11 @@ export interface CreateLoadInput {
   deliveryDate?: string | null;
   shipperRate: Cents;
   carrierPay: Cents;
+  equipmentType?: string | null;
+  commodity?: string | null;
+  weightLbs?: number | null;
+  needsShipperRate?: boolean;
+  customerPoNumber?: string | null;
 }
 
 // All queries below rely on Postgres RLS (policies scoped to
@@ -231,6 +241,14 @@ export async function createLoad(input: CreateLoadInput): Promise<Load> {
       delivery_date: input.deliveryDate ?? null,
       shipper_rate: Number(centsToMoney(input.shipperRate)),
       carrier_pay: Number(centsToMoney(input.carrierPay)),
+      equipment_type: input.equipmentType ?? null,
+      commodity: input.commodity ?? null,
+      weight_lbs: input.weightLbs ?? null,
+      customer_po_number: input.customerPoNumber ?? null,
+      // Left undefined (and therefore omitted from the insert payload) when
+      // the caller doesn't pass it, so the column's own default (false)
+      // applies -- the load wizard's existing call site is unaffected.
+      needs_shipper_rate: input.needsShipperRate,
     })
     .select(LOAD_COLUMNS)
     .single();
@@ -240,6 +258,36 @@ export async function createLoad(input: CreateLoadInput): Promise<Load> {
   }
 
   return mapRowToLoad(data as unknown as LoadRow);
+}
+
+// Additive: for bulk POD auto-matching. Compares trimmed + case-insensitive
+// (PO numbers commonly arrive with inconsistent casing/whitespace across
+// documents) -- deliberately not fuzzy, so a near-miss never silently
+// links a document to the wrong load. If more than one load shares a PO#,
+// the most recently created one is returned rather than erroring.
+export async function findLoadByCustomerPoNumber(poNumber: string): Promise<Load | null> {
+  const trimmed = poNumber.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("loads")
+    .select(LOAD_COLUMNS)
+    .ilike("customer_po_number", trimmed)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return mapRowToLoad(data[0] as unknown as LoadRow);
 }
 
 export async function updateLoadStatus(id: UUID, nextStatus: LoadStatus): Promise<Load> {
@@ -265,6 +313,29 @@ export async function assignCarrier(loadId: UUID, carrierId: UUID): Promise<Load
   const { data, error } = await supabase
     .from("loads")
     .update({ carrier_id: carrierId })
+    .eq("id", loadId)
+    .select(LOAD_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToLoad(data as unknown as LoadRow);
+}
+
+// Additive: fills in the shipper_rate a load created from a RateCon
+// extraction was missing (see createLoadFromDocument), clearing the
+// needs_shipper_rate flag in the same update.
+export async function completeShipperRate(loadId: UUID, shipperRateCents: Cents): Promise<Load> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("loads")
+    .update({
+      shipper_rate: Number(centsToMoney(shipperRateCents)),
+      needs_shipper_rate: false,
+    })
     .eq("id", loadId)
     .select(LOAD_COLUMNS)
     .single();

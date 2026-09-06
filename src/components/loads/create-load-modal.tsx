@@ -18,6 +18,9 @@ export interface CreateLoadModalProps {
   customers: CustomerRecord[];
   carriers: CarrierRecord[];
   onSuccess?: () => void;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
 }
 
 const EQUIPMENT_OPTIONS = [
@@ -34,8 +37,21 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
   customers,
   carriers,
   onSuccess,
+  isOpen: controlledIsOpen,
+  onOpenChange,
+  trigger,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isControlled = typeof controlledIsOpen === "boolean";
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = (val: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(val);
+    } else {
+      setInternalIsOpen(val);
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -62,7 +78,7 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
     }
 
     if (!originCityState.trim()) {
-      setError("Origin City/State is required (e.g. Dallas, TX).");
+      setError("Origin City/State is required (e.g. Chicago, IL).");
       return;
     }
 
@@ -110,14 +126,18 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
 
   return (
     <>
-      <TailAdminButton
-        onClick={() => setIsOpen(true)}
-        variant="primary"
-        size="md"
-        startIcon={<Plus className="h-4 w-4" />}
-      >
-        Create Load
-      </TailAdminButton>
+      {trigger !== undefined ? (
+        trigger
+      ) : (
+        <TailAdminButton
+          onClick={() => setIsOpen(true)}
+          variant="primary"
+          size="md"
+          startIcon={<Plus className="h-4 w-4" />}
+        >
+          Create Load
+        </TailAdminButton>
+      )}
 
       <Modal
         isOpen={isOpen}
@@ -271,7 +291,9 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <TailAdminLabel htmlFor="shipper-rate">Customer Rate ($)</TailAdminLabel>
+                <TailAdminLabel htmlFor="shipper-rate" required>
+                  Customer Rate ($)
+                </TailAdminLabel>
                 <TailAdminInput
                   id="shipper-rate"
                   type="number"
@@ -280,6 +302,7 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
                   value={customerRate}
                   onChange={(e) => setCustomerRate(e.target.value)}
                   startIcon={<span className="text-sm font-bold">$</span>}
+                  required
                 />
               </div>
               <div>
@@ -323,7 +346,7 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
               size="md"
               loading={isSubmitting}
             >
-              Create Load
+              {isSubmitting ? "Creating Load..." : "Create Load"}
             </TailAdminButton>
           </div>
         </form>

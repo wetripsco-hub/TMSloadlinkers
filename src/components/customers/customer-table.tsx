@@ -9,21 +9,28 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { TailAdminInput } from "@/components/ui/tailadmin/form-elements";
-import { Badge } from "@/components/ui/tailadmin/badge";
-import { Search, Building2, Mail, Phone, MapPin, Package, ArrowRight } from "lucide-react";
+import { Search, Building2, Mail, Phone, MapPin, Package, ArrowRight, CheckCircle2 } from "lucide-react";
+import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AddCustomerModal } from "@/components/customers/add-customer-modal";
 import type { CustomerRecord } from "@/lib/repositories/customers";
 
 export interface CustomerTableProps {
   customers: CustomerRecord[];
   activeLoadsCountByCustomer: Record<string, number>;
+  onAddCustomer?: () => void;
 }
 
 export function CustomerTable({
   customers,
   activeLoadsCountByCustomer,
+  onAddCustomer,
 }: CustomerTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleAddCustomer = onAddCustomer || (() => setIsAddModalOpen(true));
 
   const filteredCustomers = useMemo(() => {
     if (!searchTerm.trim()) return customers;
@@ -40,50 +47,79 @@ export function CustomerTable({
 
   return (
     <div className="space-y-4">
+      {/* Success Notification */}
+      {successMessage && (
+        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <span>{successMessage}</span>
+          </div>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="text-emerald-600 hover:text-emerald-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Search Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full sm:max-w-xs">
-          <TailAdminInput
+        <div className="relative w-full sm:max-w-xs">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <Search className="h-4 w-4" />
+          </div>
+          <input
+            type="text"
             placeholder="Search shippers by name, email, address..."
+            aria-label="Search shippers by name, email, or address"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            startIcon={<Search className="h-4 w-4" />}
+            className="h-10 w-full pl-9 pr-3.5 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-          <span>Showing</span>
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 font-bold text-gray-800 dark:bg-white/10 dark:text-white">
-            {filteredCustomers.length}
-          </span>
-          <span>of {customers.length} shippers</span>
+        <div className="text-xs text-slate-500 font-medium">
+          Showing {filteredCustomers.length} of {customers.length} shippers
         </div>
       </div>
 
       {filteredCustomers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-800 dark:bg-[#18171d]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">
-            <Building2 className="h-6 w-6" />
-          </div>
-          <h3 className="mt-4 text-base font-semibold text-gray-900 dark:text-white">
-            No customers found
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {searchTerm
-              ? "No customer matches your search term."
-              : "Register your first shipper to begin issuing loads and quotes."}
-          </p>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="No shipper accounts found"
+          description={
+            searchTerm
+              ? "No customer matches your search term. Try adjusting your query."
+              : "Add your first commercial shipper to start booking freight loads and invoicing."
+          }
+          action={{
+            label: "New Customer",
+            onClick: handleAddCustomer,
+          }}
+        />
       ) : (
         <Table>
           <TableHeader>
-            <tr>
-              <TableCell isHeader>Shipper / Customer</TableCell>
-              <TableCell isHeader>Billing Contact</TableCell>
-              <TableCell isHeader>Billing Address</TableCell>
-              <TableCell isHeader>Active Loads</TableCell>
-              <TableCell isHeader>Created On</TableCell>
-              <TableCell isHeader className="text-right">Actions</TableCell>
+            <tr className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+              <TableCell isHeader className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+                Shipper / Customer
+              </TableCell>
+              <TableCell isHeader className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+                Billing Contact
+              </TableCell>
+              <TableCell isHeader className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+                Billing Address
+              </TableCell>
+              <TableCell isHeader className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+                Active Loads
+              </TableCell>
+              <TableCell isHeader className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4">
+                Created On
+              </TableCell>
+              <TableCell isHeader className="border-y border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold uppercase tracking-wider py-3.5 px-4 text-right">
+                Actions
+              </TableCell>
             </tr>
           </TableHeader>
           <TableBody>
@@ -91,86 +127,83 @@ export function CustomerTable({
               const activeCount = activeLoadsCountByCustomer[customer.id] || 0;
 
               return (
-                <TableRow key={customer.id}>
-                  {/* Name */}
-                  <TableCell>
+                <TableRow key={customer.id} className="hover:bg-slate-50/80 transition-colors">
+                  {/* Customer / Shipper Name */}
+                  <TableCell className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400 font-bold text-xs">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 font-bold text-xs">
                         {customer.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">
+                        <p className="text-slate-900 font-semibold text-sm">
                           {customer.name}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs font-mono text-slate-500">
                           ID: {customer.id.slice(0, 8)}
                         </p>
                       </div>
                     </div>
                   </TableCell>
 
-                  {/* Contact */}
-                  <TableCell>
-                    <div className="flex flex-col gap-1 text-xs">
+                  {/* Billing Contact */}
+                  <TableCell className="py-3.5 px-4">
+                    <div className="flex flex-col gap-1 text-sm text-slate-600">
                       {customer.email ? (
                         <a
                           href={`mailto:${customer.email}`}
-                          className="flex items-center gap-1 text-brand-600 hover:underline dark:text-brand-400"
+                          className="inline-flex items-center gap-1.5 text-slate-600 hover:text-blue-600 text-sm transition-colors"
                         >
-                          <Mail className="h-3 w-3" />
-                          {customer.email}
+                          <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span>{customer.email}</span>
                         </a>
                       ) : (
-                        <span className="text-gray-400 italic">No email</span>
+                        <span className="text-slate-400 italic text-xs">No email</span>
                       )}
                       {customer.phone ? (
-                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300 font-mono">
-                          <Phone className="h-3 w-3 text-gray-400" />
-                          {customer.phone}
+                        <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm font-mono">
+                          <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span>{customer.phone}</span>
                         </span>
                       ) : (
-                        <span className="text-gray-400 italic">No phone</span>
+                        <span className="text-slate-400 italic text-xs">No phone</span>
                       )}
                     </div>
                   </TableCell>
 
                   {/* Billing Address */}
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                      <span>{customer.billingAddress || "—"}</span>
+                  <TableCell className="py-3.5 px-4">
+                    <div className="flex items-center gap-1.5 text-slate-600 text-sm max-w-xs truncate">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate">{customer.billingAddress || "—"}</span>
                     </div>
                   </TableCell>
 
-                  {/* Active Loads Count */}
-                  <TableCell>
+                  {/* Active Loads Badge */}
+                  <TableCell className="py-3.5 px-4">
                     {activeCount > 0 ? (
-                      <Badge color="success" size="sm" startIcon={<Package className="h-3 w-3" />}>
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-xs px-2.5 py-1 rounded-full">
+                        <Package className="h-3 w-3 text-emerald-600" />
                         {activeCount} Active {activeCount === 1 ? "Load" : "Loads"}
-                      </Badge>
+                      </span>
                     ) : (
-                      <Badge color="light" size="sm">
+                      <span className="inline-flex items-center bg-slate-100 text-slate-500 border border-slate-200 font-medium text-xs px-2.5 py-1 rounded-full">
                         0 Active Loads
-                      </Badge>
+                      </span>
                     )}
                   </TableCell>
 
                   {/* Created On */}
-                  <TableCell className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(customer.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                  <TableCell className="py-3.5 px-4 text-slate-600 text-sm">
+                    {formatDate(customer.createdAt)}
                   </TableCell>
 
-                  {/* Actions */}
-                  <TableCell className="text-right">
+                  {/* Actions Link */}
+                  <TableCell className="py-3.5 px-4 text-right">
                     <Link
                       href={`/loads?customerId=${customer.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline dark:text-brand-400"
+                      className="text-blue-600 hover:text-blue-700 font-medium text-xs inline-flex items-center gap-1 transition-colors"
                     >
-                      View Loads
+                      <span>View Loads</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </TableCell>
@@ -180,6 +213,17 @@ export function CustomerTable({
           </TableBody>
         </Table>
       )}
+
+      {/* Controlled Add Customer Modal for Empty State action */}
+      <AddCustomerModal
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onSuccess={() => {
+          setSuccessMessage("Customer created successfully");
+          setTimeout(() => setSuccessMessage(null), 4000);
+        }}
+        trigger={null}
+      />
     </div>
   );
 }

@@ -149,6 +149,78 @@ export async function createLoadDocument(
   return mapRowToLoadDocument(data as unknown as LoadDocumentRow);
 }
 
+// Additive: creates a load_documents row with no load_id yet, for the
+// upload-before-a-load-exists path (e.g. RateCon -> new load). Kept
+// separate from createLoadDocument rather than widening its input type,
+// so the existing load-attached upload flow is untouched.
+export interface CreateUnassignedLoadDocumentInput {
+  documentType: DocumentType;
+  fileUrl: string;
+}
+
+export async function createUnassignedLoadDocument(
+  input: CreateUnassignedLoadDocumentInput
+): Promise<LoadDocument> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId(supabase);
+
+  const { data, error } = await supabase
+    .from("load_documents")
+    .insert({
+      org_id: orgId,
+      load_id: null,
+      document_type: input.documentType,
+      file_url: input.fileUrl,
+      ocr_status: "pending",
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToLoadDocument(data as unknown as LoadDocumentRow);
+}
+
+export async function getDocumentById(id: UUID): Promise<LoadDocument | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("load_documents")
+    .select(DOCUMENT_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  if (!data) {
+    return null;
+  }
+
+  return mapRowToLoadDocument(data as unknown as LoadDocumentRow);
+}
+
+// Additive: links a previously-unassigned document to a load once one has
+// been created from its OCR extraction. Only touches load_id.
+export async function linkDocumentToLoad(documentId: UUID, loadId: UUID): Promise<LoadDocument> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("load_documents")
+    .update({ load_id: loadId })
+    .eq("id", documentId)
+    .select(DOCUMENT_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToLoadDocument(data as unknown as LoadDocumentRow);
+}
+
 export async function updateDocumentOcrStatus(
   id: UUID,
   status: OcrStatus,

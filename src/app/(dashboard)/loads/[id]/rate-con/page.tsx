@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
-
+import Link from "next/link";
 import { RateConfirmationView } from "@/components/documents/rate-confirmation-view";
 import { PrintButton } from "@/components/documents/print-button";
+import { PageHeader } from "@/components/layout/page-header";
 import { getLoadById } from "@/lib/repositories/loads";
 import { getCarrierById } from "@/lib/repositories/carriers";
 import { getOrganizationById } from "@/lib/repositories/organizations";
+import { ArrowLeft } from "lucide-react";
 
 export default async function RateConfirmationPage({
   params,
@@ -23,13 +25,33 @@ export default async function RateConfirmationPage({
     getOrganizationById(load.orgId),
   ]);
 
+  const loadLabel = load.loadNumber || `LD-${load.id.slice(0, 6).toUpperCase()}`;
+
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-8">
-      <div className="no-print flex items-center justify-between">
-        <h1 className="font-heading text-lg font-medium">
-          Rate Confirmation · {load.loadNumber || load.id.slice(0, 8)}
-        </h1>
-        <PrintButton />
+    <div className="space-y-6">
+      <div className="no-print">
+        <PageHeader
+          title={`Rate Confirmation · ${loadLabel}`}
+          subtitle="Official broker-carrier rate agreement and dispatch sheet."
+          breadcrumbs={[
+            { label: "Operations", href: "/overview" },
+            { label: "Loads", href: "/loads" },
+            { label: loadLabel, href: `/loads/${load.id}` },
+            { label: "Rate Confirmation" },
+          ]}
+          action={
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/loads/${load.id}`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Load
+              </Link>
+              <PrintButton />
+            </div>
+          }
+        />
       </div>
 
       <RateConfirmationView load={load} carrier={carrier} organization={organization} />

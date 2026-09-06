@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createLoadDocument, updateDocumentOcrStatus } from "@/lib/repositories/documents";
@@ -21,6 +22,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
   "Lumper_Receipt",
   "Scale_Ticket",
 ];
+
+const OCR_SUPPORTED_DOCUMENT_TYPES: DocumentType[] = ["RateConfirmation_Signed", "POD"];
 
 // Tenant scoping is enforced twice here: the storage object path is prefixed
 // with the caller's own org_id (checked by the load-documents bucket's RLS
@@ -77,6 +80,43 @@ export async function uploadLoadDocument(
     documentType: documentType as DocumentType,
     fileUrl: objectPath,
   });
+
+  // Fire-and-forget: kick off OCR in the background so the upload
+  // confirmation returns immediately instead of waiting on extraction.
+  // Only supported document types are worth invoking the function for;
+  // everything else is left exactly as it lands from createLoadDocument.
+  if (OCR_SUPPORTED_DOCUMENT_TYPES.includes(document.documentType)) {
+    // Wrapped in after() because a bare un-awaited promise here can get
+    // frozen mid-flight once this function returns in a serverless
+    // environment (Vercel) -- after() is guaranteed to run to completion
+    // once the response has been sent, instead of racing termination.
+    after(() => {
+      supabase.functions
+        .invoke("ocr-extract", { body: { documentId: document.id } })
+        .catch(async (invokeError: unknown) => {
+          // The function was never reached at all (network error, function
+          // not found, etc.) -- not a failure the function itself recorded
+          // on the row. Record it here so the document doesn't sit at
+          // 'pending' forever with no explanation. Best-effort: never throw
+          // out of a .catch handler.
+          const message =
+            invokeError instanceof Error ? invokeError.message : String(invokeError);
+
+          try {
+            await supabase
+              .from("load_documents")
+              .update({
+                ocr_status: "failed",
+                ocr_error: `Failed to trigger OCR: ${message}`,
+              })
+              .eq("id", document.id);
+          } catch {
+            // Best-effort correction; swallow so this never becomes an
+            // unhandled rejection on top of the invoke failure itself.
+          }
+        });
+    });
+  }
 
   revalidatePath(`/loads/${loadId}/documents`);
   revalidatePath(`/loads/${loadId}`);

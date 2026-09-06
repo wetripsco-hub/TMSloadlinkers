@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatCents } from "@/lib/money";
+import { formatMoney } from "@/lib/format";
 import type { RevenueWeek } from "@/lib/repositories/dashboard";
 
 function formatWeekLabel(weekStart: string): string {
@@ -41,7 +41,7 @@ function TooltipContent({
     <div className="rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-md">
       <p className="font-semibold text-slate-900">{label}</p>
       <p className="mt-1 text-slate-500">
-        Revenue: <span className="font-medium text-slate-900">{formatCents(row.revenue)}</span>
+        Revenue: <span className="font-medium text-slate-900">{formatMoney(row.revenue)}</span>
       </p>
       <p className="text-slate-500">
         Margin: <span className="font-medium text-slate-900">{row.marginPercent.toFixed(1)}%</span>

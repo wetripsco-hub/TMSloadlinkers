@@ -27,20 +27,20 @@ export function TrialBanner({ subscription }: { subscription: CurrentSubscriptio
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-md border p-4 shadow-sm ${
+      className={`flex items-center gap-3 rounded-md border p-4 shadow-xs ${
         urgent
           ? "border-amber-200 bg-amber-50/90"
-          : "border-indigo-100 bg-indigo-50/70"
+          : "border-blue-200 bg-blue-50/80"
       }`}
     >
       <Clock
         className={`h-5 w-5 shrink-0 ${
-          urgent ? "text-amber-600" : "text-indigo-600"
+          urgent ? "text-amber-600" : "text-blue-600"
         }`}
       />
       <p
         className={`text-sm font-medium ${
-          urgent ? "text-amber-900" : "text-indigo-900"
+          urgent ? "text-amber-900" : "text-blue-800"
         }`}
       >
         {remaining === 0

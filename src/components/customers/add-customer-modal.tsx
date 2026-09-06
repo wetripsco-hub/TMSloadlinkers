@@ -12,8 +12,30 @@ import {
 import { createCustomerAction } from "@/app/(dashboard)/customers/actions";
 import { Plus, Building2, Mail, Phone } from "lucide-react";
 
-export function AddCustomerModal() {
-  const [isOpen, setIsOpen] = useState(false);
+export interface AddCustomerModalProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+  onSuccess?: () => void;
+}
+
+export function AddCustomerModal({
+  isOpen: controlledIsOpen,
+  onOpenChange,
+  trigger,
+  onSuccess,
+}: AddCustomerModalProps = {}) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isControlled = typeof controlledIsOpen === "boolean";
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = (val: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(val);
+    } else {
+      setInternalIsOpen(val);
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -46,7 +68,11 @@ export function AddCustomerModal() {
       setPhone("");
       setBillingAddress("");
       setIsOpen(false);
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.refresh();
+      }
     } catch (err: unknown) {
       console.error("Failed to create customer:", err);
       setError(err instanceof Error ? err.message : "Failed to create customer.");
@@ -57,14 +83,18 @@ export function AddCustomerModal() {
 
   return (
     <>
-      <TailAdminButton
-        onClick={() => setIsOpen(true)}
-        variant="primary"
-        size="md"
-        startIcon={<Plus className="h-4 w-4" />}
-      >
-        Add Customer
-      </TailAdminButton>
+      {trigger !== undefined ? (
+        trigger
+      ) : (
+        <TailAdminButton
+          onClick={() => setIsOpen(true)}
+          variant="primary"
+          size="md"
+          startIcon={<Plus className="h-4 w-4" />}
+        >
+          + New Customer
+        </TailAdminButton>
+      )}
 
       <Modal
         isOpen={isOpen}
@@ -96,7 +126,9 @@ export function AddCustomerModal() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <TailAdminLabel htmlFor="cust-email">Billing Email</TailAdminLabel>
+              <TailAdminLabel htmlFor="cust-email" required>
+                Billing Email
+              </TailAdminLabel>
               <TailAdminInput
                 id="cust-email"
                 type="email"
@@ -145,7 +177,7 @@ export function AddCustomerModal() {
               size="md"
               loading={isSubmitting}
             >
-              Save Customer
+              {isSubmitting ? "Creating Customer..." : "Create Customer"}
             </TailAdminButton>
           </div>
         </form>

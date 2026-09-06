@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 import { ComplianceStatusBadge } from "@/components/carriers/compliance-badge";
 import { deriveComplianceBadge } from "@/lib/domain/carrier-compliance";
 import {
@@ -55,9 +56,24 @@ function previewCarrier(values: CarrierOnboardValues): Carrier {
   };
 }
 
-export function CarrierOnboardDialog() {
+export interface CarrierOnboardDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+  onSuccess?: () => void;
+}
+
+export function CarrierOnboardDialog({
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
+  onSuccess,
+}: CarrierOnboardDialogProps = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = typeof controlledOpen === "boolean";
+  const open = isControlled ? controlledOpen : internalOpen;
+
   const [verification, setVerification] = useState<CarrierVerificationResult | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
@@ -67,6 +83,7 @@ export function CarrierOnboardDialog() {
     register,
     handleSubmit,
     getValues,
+    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CarrierOnboardValues>({
@@ -81,6 +98,15 @@ export function CarrierOnboardDialog() {
     setVerifyError(null);
     setSubmitError(null);
   }
+
+  const setOpen = (nextOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(nextOpen);
+    } else {
+      setInternalOpen(nextOpen);
+    }
+    if (!nextOpen) resetDialogState();
+  };
 
   async function handleVerify() {
     const { dotNumber, mcNumber } = getValues();
@@ -97,6 +123,9 @@ export function CarrierOnboardDialog() {
         mcNumber: mcNumber || undefined,
       });
       setVerification(result);
+      if (result.companyName && !getValues("companyName")) {
+        setValue("companyName", result.companyName);
+      }
     } catch (err) {
       setVerification(null);
       setVerifyError(err instanceof Error ? err.message : "Verification failed");
@@ -111,7 +140,11 @@ export function CarrierOnboardDialog() {
       await onboardCarrier(values);
       setOpen(false);
       resetDialogState();
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.refresh();
+      }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save carrier");
     }
@@ -126,10 +159,23 @@ export function CarrierOnboardDialog() {
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) resetDialogState();
       }}
     >
-      <DialogTrigger render={<Button type="button">Add carrier</Button>} />
+      {trigger !== null && (
+        <DialogTrigger
+          render={
+            (trigger ?? (
+              <Button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-sm transition-colors inline-flex items-center gap-1.5"
+              >
+                <Plus className="h-4 w-4" />
+                + Onboard Carrier
+              </Button>
+            )) as React.ReactElement
+          }
+        />
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Onboard carrier</DialogTitle>
@@ -139,9 +185,12 @@ export function CarrierOnboardDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="companyName">Company name</Label>
+            <Label htmlFor="companyName" className="flex items-center gap-1 font-medium text-slate-700">
+              Company name <span className="text-rose-500">*</span>
+            </Label>
             <Input
               id="companyName"
+              placeholder="e.g. Eagle Express Logistics"
               aria-invalid={!!errors.companyName}
               {...register("companyName")}
             />
@@ -150,22 +199,29 @@ export function CarrierOnboardDialog() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dotNumber">DOT number</Label>
-              <Input id="dotNumber" aria-invalid={!!errors.dotNumber} {...register("dotNumber")} />
+              <Label htmlFor="dotNumber" className="flex items-center gap-1 font-medium text-slate-700">
+                DOT number <span className="text-rose-500">*</span>
+              </Label>
+              <Input id="dotNumber" placeholder="e.g. 1234567" aria-invalid={!!errors.dotNumber} {...register("dotNumber")} />
               <FieldError message={errors.dotNumber?.message} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="mcNumber">MC number</Label>
-              <Input id="mcNumber" aria-invalid={!!errors.mcNumber} {...register("mcNumber")} />
+              <Label htmlFor="mcNumber" className="flex items-center gap-1 font-medium text-slate-700">
+                MC number <span className="text-rose-500">*</span>
+              </Label>
+              <Input id="mcNumber" placeholder="e.g. 987654" aria-invalid={!!errors.mcNumber} {...register("mcNumber")} />
               <FieldError message={errors.mcNumber?.message} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="contactEmail">Contact email</Label>
+            <Label htmlFor="contactEmail" className="flex items-center gap-1 font-medium text-slate-700">
+              Contact email <span className="text-rose-500">*</span>
+            </Label>
             <Input
               id="contactEmail"
               type="email"
+              placeholder="dispatch@eagleexpress.com"
               aria-invalid={!!errors.contactEmail}
               {...register("contactEmail")}
             />
@@ -173,8 +229,8 @@ export function CarrierOnboardDialog() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="contactPhone">Contact phone</Label>
-            <Input id="contactPhone" {...register("contactPhone")} />
+            <Label htmlFor="contactPhone" className="font-medium text-slate-700">Contact phone</Label>
+            <Input id="contactPhone" placeholder="(555) 000-0000" {...register("contactPhone")} />
           </div>
 
           <div className="flex flex-col gap-2 rounded-lg border border-dashed p-3">
@@ -203,8 +259,12 @@ export function CarrierOnboardDialog() {
           {submitError && <FieldError message={submitError} />}
 
           <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save carrier"}
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Onboarding..." : "Onboard Carrier"}
             </Button>
           </DialogFooter>
         </form>

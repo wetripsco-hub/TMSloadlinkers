@@ -2,7 +2,6 @@
 
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TailAdminButton, TailAdminSelect } from "@/components/ui/tailadmin/form-elements";
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
 import { assignCarrierToLoad } from "@/app/(dashboard)/loads/[id]/actions";
@@ -44,12 +43,12 @@ export function CarrierAssignmentCard({
   };
 
   return (
-    <Card className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-          <Truck className="h-4 w-4 text-brand-500" />
+    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+      <div className="flex flex-row items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+          <Truck className="h-4 w-4 text-slate-400" />
           Assigned Transportation Carrier
-        </CardTitle>
+        </h3>
 
         {!isEditing && (
           <div className="flex items-center gap-2">
@@ -60,10 +59,10 @@ export function CarrierAssignmentCard({
                 triggerButton={
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50/80 px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 dark:border-brand-900/60 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/25 transition-colors"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-colors"
                   >
-                    <FileText className="h-3.5 w-3.5" />
-                    <span>Generate Rate Con</span>
+                    <FileText className="h-3.5 w-3.5 text-slate-400" />
+                    <span>Rate Con</span>
                   </button>
                 }
               />
@@ -71,25 +70,25 @@ export function CarrierAssignmentCard({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-400"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700"
             >
               {assignedCarrier ? "Reassign" : "Assign Carrier"}
             </button>
           </div>
         )}
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex flex-col gap-2.5 text-sm pt-0">
+      <div className="flex flex-col gap-2.5 text-sm">
         {error && (
-          <div className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
             <AlertCircle className="h-3.5 w-3.5" />
             <span>{error}</span>
           </div>
         )}
 
         {isEditing ? (
-          <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50/50 p-3.5 dark:border-gray-800 dark:bg-white/[0.02]">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+            <p className="text-xs font-semibold text-slate-700">
               Select an onboarded motor carrier:
             </p>
             <TailAdminSelect
@@ -122,31 +121,31 @@ export function CarrierAssignmentCard({
             </div>
           </div>
         ) : assignedCarrier ? (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-900 dark:text-white text-base">
+              <span className="font-bold text-slate-900 text-base">
                 {assignedCarrier.companyName}
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                <CheckCircle2 className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                 Active Carrier
               </span>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-slate-500">
               MC #{assignedCarrier.mcNumber ?? "—"} · USDOT #{assignedCarrier.dotNumber ?? "—"}
             </p>
-            <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-600 dark:text-gray-400">
-              <p>Email: <span className="font-medium text-gray-900 dark:text-white">{assignedCarrier.contactEmail ?? "—"}</span></p>
-              <p>Phone: <span className="font-medium text-gray-900 dark:text-white">{assignedCarrier.contactPhone ?? "—"}</span></p>
+            <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50/60 border border-slate-100 rounded-lg p-2.5">
+              <p>Email: <span className="font-medium text-slate-900">{assignedCarrier.contactEmail ?? "—"}</span></p>
+              <p>Phone: <span className="font-medium text-slate-900">{assignedCarrier.contactPhone ?? "—"}</span></p>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 p-6 text-center dark:border-gray-800">
-            <Truck className="h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" />
-            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
+            <Truck className="h-8 w-8 text-slate-400 mb-2" />
+            <p className="text-xs font-semibold text-slate-700">
               No carrier assigned to this load yet.
             </p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Assign an onboarded carrier to generate official rate confirmations.
             </p>
             <TailAdminButton
@@ -159,8 +158,8 @@ export function CarrierAssignmentCard({
             </TailAdminButton>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
