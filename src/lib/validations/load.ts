@@ -7,6 +7,8 @@ export const loadStopSchema = z.object({
   state: z.string().trim().min(2, "State is required").max(2, "Use a 2-letter state code"),
   zip: z.string().trim().min(5, "ZIP code is required"),
   windowStart: z.string().min(1, "Pickup/delivery date is required"),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
 });
 
 export const customerRateStepSchema = z.object({
@@ -80,6 +82,8 @@ export const LOAD_WIZARD_DEFAULT_VALUES: LoadWizardValues = {
     state: "",
     zip: "",
     windowStart: "",
+    latitude: null,
+    longitude: null,
   },
   destination: {
     facilityName: "",
@@ -88,6 +92,8 @@ export const LOAD_WIZARD_DEFAULT_VALUES: LoadWizardValues = {
     state: "",
     zip: "",
     windowStart: "",
+    latitude: null,
+    longitude: null,
   },
   equipmentType: "",
   weightLbs: "",

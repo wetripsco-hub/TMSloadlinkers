@@ -12,6 +12,10 @@ export interface CreateLoadFormInput {
   carrierId?: UUID | null;
   originCityState: string;
   destinationCityState: string;
+  originLat?: number | null;
+  originLng?: number | null;
+  destLat?: number | null;
+  destLng?: number | null;
   pickupDate?: string | null;
   deliveryDate?: string | null;
   equipmentType?: string | null;

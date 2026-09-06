@@ -198,17 +198,17 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
 
                   {/* MC / DOT */}
                   <TableCell className="py-3.5 px-4">
-                    <div className="flex flex-col gap-1 text-sm text-slate-600">
+                    <div className="flex flex-col gap-1 text-sm text-slate-700">
                       <span>
                         MC: {carrier.mcNumber ? (
-                          <span className="font-mono font-medium text-slate-800">{carrier.mcNumber}</span>
+                          <span className="font-mono font-semibold text-slate-900">{carrier.mcNumber}</span>
                         ) : (
                           <span className="text-slate-400">{"—"}</span>
                         )}
                       </span>
                       <span>
                         DOT: {carrier.dotNumber ? (
-                          <span className="font-mono font-medium text-slate-800">{carrier.dotNumber}</span>
+                          <span className="font-mono font-semibold text-slate-900">{carrier.dotNumber}</span>
                         ) : (
                           <span className="text-slate-400">{"—"}</span>
                         )}
@@ -218,11 +218,11 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
 
                   {/* Contact */}
                   <TableCell className="py-3.5 px-4">
-                    <div className="flex flex-col gap-1 text-sm text-slate-600">
+                    <div className="flex flex-col gap-1 text-sm text-slate-800">
                       {carrier.contactEmail ? (
                         <a
                           href={`mailto:${carrier.contactEmail}`}
-                          className="inline-flex items-center gap-1.5 text-slate-600 hover:text-blue-600 text-sm transition-colors"
+                          className="inline-flex items-center gap-1.5 text-slate-800 hover:text-blue-600 text-sm transition-colors font-medium"
                         >
                           <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           <span>{carrier.contactEmail}</span>
@@ -231,7 +231,7 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
                         <span className="text-slate-400">{"—"}</span>
                       )}
                       {carrier.contactPhone ? (
-                        <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm font-mono">
+                        <span className="inline-flex items-center gap-1.5 text-slate-800 text-sm font-mono font-medium">
                           <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           <span>{carrier.contactPhone}</span>
                         </span>

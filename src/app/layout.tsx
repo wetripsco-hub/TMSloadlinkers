@@ -60,8 +60,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className={`${figtree.variable} font-sans bg-[#18171d] text-white min-h-screen antialiased selection:bg-[#49c2f5] selection:text-[#18171d]`}>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${figtree.variable} font-sans bg-slate-50 text-slate-900 min-h-screen antialiased selection:bg-[#49c2f5] selection:text-[#18171d]`}>
         {children}
       </body>
     </html>

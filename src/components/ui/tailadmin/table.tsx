@@ -30,9 +30,9 @@ export interface TableCellProps {
 
 export const Table: React.FC<TableProps> = ({ children, className = "" }) => {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xs dark:border-gray-800 dark:bg-gray-900/70">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
       <div className="max-w-full overflow-x-auto">
-        <table className={`min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-800 ${className}`}>
+        <table className={`min-w-full divide-y divide-slate-200 text-left text-sm ${className}`}>
           {children}
         </table>
       </div>
@@ -42,7 +42,7 @@ export const Table: React.FC<TableProps> = ({ children, className = "" }) => {
 
 export const TableHeader: React.FC<TableHeaderProps> = ({ children, className = "" }) => {
   return (
-    <thead className={`bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/60 dark:text-gray-400 ${className}`}>
+    <thead className={`border-b border-slate-200/80 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 ${className}`}>
       {children}
     </thead>
   );
@@ -50,7 +50,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({ children, className = 
 
 export const TableBody: React.FC<TableBodyProps> = ({ children, className = "" }) => {
   return (
-    <tbody className={`divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-transparent ${className}`}>
+    <tbody className={`divide-y divide-slate-100 bg-white ${className}`}>
       {children}
     </tbody>
   );
@@ -60,7 +60,7 @@ export const TableRow: React.FC<TableRowProps> = ({ children, className = "", on
   return (
     <tr
       onClick={onClick}
-      className={`transition-colors hover:bg-gray-50/70 dark:hover:bg-white/[0.03] ${
+      className={`transition-colors hover:bg-slate-50/80 ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
     >
@@ -79,7 +79,7 @@ export const TableCell: React.FC<TableCellProps> = ({
     return (
       <th
         colSpan={colSpan}
-        className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ${className}`}
+        className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 ${className}`}
       >
         {children}
       </th>
@@ -89,9 +89,11 @@ export const TableCell: React.FC<TableCellProps> = ({
   return (
     <td
       colSpan={colSpan}
-      className={`whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300 ${className}`}
+      className={`whitespace-nowrap px-5 py-4 text-sm text-slate-700 ${className}`}
     >
       {children}
     </td>
   );
 };
+
+export default Table;

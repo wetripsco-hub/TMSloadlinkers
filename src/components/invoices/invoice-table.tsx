@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { InvoiceStatusBadge } from "@/components/invoices/invoice-status-badge";
+import { InvoiceModal } from "@/components/invoices/invoice-modal";
 import { formatMoney, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -12,7 +13,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { Search, Receipt, ArrowRight, Calendar } from "lucide-react";
+import { Search, Receipt, ArrowRight, Calendar, Printer, ExternalLink } from "lucide-react";
 import type { Invoice, Load } from "../../../types/domain";
 
 const INVOICE_TYPE_LABELS: Record<Invoice["invoiceType"], string> = {
@@ -129,9 +130,10 @@ export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
               <TableCell isHeader className="py-3.5 px-4 text-slate-600">Payment Status</TableCell>
               <TableCell isHeader className="py-3.5 px-4 text-slate-600">Linked Load</TableCell>
               <TableCell isHeader className="py-3.5 px-4 text-slate-600">Due Date</TableCell>
-              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Total Amount</TableCell>
-              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Paid Amount</TableCell>
-              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Balance Due</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-right">Total Amount</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-right">Paid Amount</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-right">Balance Due</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-right">Actions</TableCell>
             </tr>
           </TableHeader>
           <TableBody>
@@ -144,9 +146,13 @@ export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
                 <TableRow key={invoice.id} className="hover:bg-slate-50/70 transition-colors">
                   {/* Invoice # */}
                   <TableCell className="py-3.5 px-4">
-                    <span className="font-semibold text-slate-900 text-sm">
-                      {formattedInvNum}
-                    </span>
+                    <Link
+                      href={`/invoices/${invoice.id}`}
+                      className="font-semibold text-blue-600 hover:text-blue-800 text-sm inline-flex items-center gap-1 group transition-colors"
+                      title="View & Print Invoice"
+                    >
+                      <span className="group-hover:underline">{formattedInvNum}</span>
+                    </Link>
                   </TableCell>
 
                   {/* Type */}
@@ -201,6 +207,33 @@ export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
                   {/* Balance Due */}
                   <TableCell className="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 text-sm tabular-nums">
                     {formatMoney(invoice.amountDue)}
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell className="py-3.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <InvoiceModal
+                        invoice={invoice}
+                        load={load}
+                        triggerButton={
+                          <button
+                            type="button"
+                            title="Print or Save PDF"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                          >
+                            <Printer className="h-3.5 w-3.5 text-blue-600" />
+                            <span className="hidden sm:inline">Print / PDF</span>
+                          </button>
+                        }
+                      />
+                      <Link
+                        href={`/invoices/${invoice.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                        title="Open full page view"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

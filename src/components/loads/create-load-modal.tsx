@@ -13,6 +13,7 @@ import { createQuickLoadAction } from "@/app/(dashboard)/loads/actions";
 import { Plus, MapPin, DollarSign, Calendar, Truck, User } from "lucide-react";
 import type { CustomerRecord } from "@/lib/repositories/customers";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
+import { AddressAutocomplete, type AddressSuggestion } from "@/components/ui/address-autocomplete";
 
 export interface CreateLoadModalProps {
   customers: CustomerRecord[];
@@ -62,6 +63,8 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
   const [selectedCarrierId, setSelectedCarrierId] = useState<string>("");
   const [originCityState, setOriginCityState] = useState<string>("");
   const [destinationCityState, setDestinationCityState] = useState<string>("");
+  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [pickupDate, setPickupDate] = useState<string>("");
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [equipmentType, setEquipmentType] = useState<string>("53' Dry Van");
@@ -95,6 +98,10 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
         carrierId: selectedCarrierId || null,
         originCityState,
         destinationCityState,
+        originLat: originCoords?.lat || null,
+        originLng: originCoords?.lng || null,
+        destLat: destCoords?.lat || null,
+        destLng: destCoords?.lng || null,
         pickupDate: pickupDate || null,
         deliveryDate: deliveryDate || null,
         equipmentType,
@@ -108,6 +115,8 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
       setSelectedCarrierId("");
       setOriginCityState("");
       setDestinationCityState("");
+      setOriginCoords(null);
+      setDestCoords(null);
       setPickupDate("");
       setDeliveryDate("");
       setCustomerRate("");
@@ -201,21 +210,29 @@ export const CreateLoadModal: React.FC<CreateLoadModalProps> = ({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <TailAdminLabel htmlFor="origin" required>Origin (City, State)</TailAdminLabel>
-                <TailAdminInput
+                <AddressAutocomplete
                   id="origin"
                   placeholder="e.g. Chicago, IL"
                   value={originCityState}
-                  onChange={(e) => setOriginCityState(e.target.value)}
+                  onChange={(val) => setOriginCityState(val)}
+                  onSelect={(suggestion: AddressSuggestion) => {
+                    setOriginCityState(suggestion.formattedText);
+                    setOriginCoords({ lat: suggestion.lat, lng: suggestion.lng });
+                  }}
                   required
                 />
               </div>
               <div>
                 <TailAdminLabel htmlFor="destination" required>Destination (City, State)</TailAdminLabel>
-                <TailAdminInput
+                <AddressAutocomplete
                   id="destination"
                   placeholder="e.g. Atlanta, GA"
                   value={destinationCityState}
-                  onChange={(e) => setDestinationCityState(e.target.value)}
+                  onChange={(val) => setDestinationCityState(val)}
+                  onSelect={(suggestion: AddressSuggestion) => {
+                    setDestinationCityState(suggestion.formattedText);
+                    setDestCoords({ lat: suggestion.lat, lng: suggestion.lng });
+                  }}
                   required
                 />
               </div>

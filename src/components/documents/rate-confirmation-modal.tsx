@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal } from "@/components/ui/tailadmin/modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { TailAdminButton } from "@/components/ui/tailadmin/form-elements";
 import { formatCents } from "@/lib/money";
 import {
@@ -70,7 +75,7 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
   return (
     <>
       {triggerButton ? (
-        <span onClick={() => setIsOpen(true)} className="cursor-pointer">
+        <span onClick={() => setIsOpen(true)} className="cursor-pointer inline-flex">
           {triggerButton}
         </span>
       ) : (
@@ -85,59 +90,59 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
         </button>
       )}
 
-      <Modal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        maxWidth="4xl"
-        className="print:border-none print:shadow-none print:p-0 print:m-0"
-      >
-        {/* Action Header in Modal */}
-        <div className="no-print flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
-              <FileText className="h-5 w-5" />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-4xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-slate-900/60 backdrop-blur-md border border-slate-800">
+          {/* Action Header in Modal */}
+          <div className="no-print flex items-center justify-between px-6 py-3 border-b border-slate-800 shrink-0 bg-slate-900/90 z-10 sticky top-0">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-white tracking-tight">
+                  Carrier Rate Confirmation
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-400">
+                  Load {loadNum} · Agreement with {carrier?.companyName || "Assigned Carrier"}
+                </DialogDescription>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900">
-                Carrier Rate Confirmation
-              </h2>
-              <p className="text-xs text-slate-500">
-                Load {loadNum} · Agreement with {carrier?.companyName || "Assigned Carrier"}
-              </p>
+
+            <div className="flex items-center gap-2.5 pr-14">
+              <TailAdminButton
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                startIcon={<Printer className="h-4 w-4" />}
+                className="border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
+              >
+                Print / Save PDF
+              </TailAdminButton>
+              <TailAdminButton
+                variant="primary"
+                size="sm"
+                onClick={handlePrint}
+                startIcon={<Download className="h-4 w-4" />}
+                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+              >
+                Export PDF
+              </TailAdminButton>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <TailAdminButton
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              startIcon={<Printer className="h-4 w-4" />}
+          {/* Scrollable Document Viewport */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-950/40">
+            {/* Printable Rate Confirmation Document Sheet */}
+            <div
+              id={`rate-con-${load.id}`}
+              className="rate-con-document w-full max-w-[800px] bg-white text-slate-900 rounded-lg shadow-xl p-8 border border-slate-200 print:border-none print:shadow-none print:p-2 print:text-black print:bg-white"
             >
-              Print / Save PDF
-            </TailAdminButton>
-            <TailAdminButton
-              variant="primary"
-              size="sm"
-              onClick={handlePrint}
-              startIcon={<Download className="h-4 w-4" />}
-            >
-              Export PDF
-            </TailAdminButton>
-          </div>
-        </div>
-
-        {/* Printable Rate Confirmation Document Sheet */}
-        <div
-          id={`rate-con-${load.id}`}
-          className="rate-con-document rounded-xl border border-slate-200 bg-white p-6 sm:p-8 text-slate-900 shadow-sm print:border-none print:shadow-none print:p-2 print:text-black print:bg-white"
-        >
-          {/* Document Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b-2 border-slate-900 pb-4 print:border-black">
-            <div>
-              <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-blue-600 print:text-black">
-                Official Freight Contract
-              </span>
+              {/* Document Header */}
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b-2 border-slate-900 pb-4 print:border-black">
+                <div>
+                  <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-blue-600 print:text-black">
+                    Official Freight Contract
+                  </span>
               <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black">
                 {organizationName}
               </h1>
@@ -332,8 +337,10 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
             </div>
           </div>
         </div>
-      </Modal>
-    </>
+      </div>
+    </DialogContent>
+  </Dialog>
+</>
   );
 };
 

@@ -353,12 +353,32 @@
   aside,
   header,
   nav,
-  .dropdown-toggle {
+  .dropdown-toggle,
+  [data-slot="dialog-overlay"],
+  button[data-dialog-close],
+  button[aria-label="Close"] {
     display: none !important;
+  }
+  [data-slot="dialog-content"] {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
   }
   main {
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
   }
+}
+
+
+/* Watermark-free Leaflet Maps */
+.leaflet-control-attribution {
+  display: none !important;
 }

@@ -264,8 +264,8 @@ export function LoadTable({ loads, customers, carriers, initialStatus, onCreateL
                     <span
                       className={`inline-flex items-center gap-1 ${
                         load.carrierId
-                          ? "text-slate-600"
-                          : "italic text-amber-600 font-normal"
+                          ? "font-semibold text-slate-900"
+                          : "italic text-amber-700 font-medium"
                       }`}
                     >
                       {carrierName}
@@ -273,23 +273,23 @@ export function LoadTable({ loads, customers, carriers, initialStatus, onCreateL
                   </TableCell>
 
                   {/* Equipment */}
-                  <TableCell className="py-3.5 px-4 text-sm text-slate-600">
+                  <TableCell className="py-3.5 px-4 text-sm font-medium text-slate-700">
                     {load.equipmentType || "53' Dry Van"}
                   </TableCell>
 
                   {/* Origin -> Destination */}
                   <TableCell className="py-3.5 px-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <span className="font-medium text-slate-800">
+                    <div className="flex items-center gap-2 text-sm text-slate-700">
+                      <span className="font-semibold text-slate-900">
                         {load.origin?.address || "Pending Origin"}
                       </span>
                       <ArrowRight className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="font-medium text-slate-800">
+                      <span className="font-semibold text-slate-900">
                         {load.destination?.address || "Pending Dest"}
                       </span>
                     </div>
                     {(load.origin?.windowStart || load.destination?.windowStart) && (
-                      <div className="mt-0.5 text-[11px] text-slate-400">
+                      <div className="mt-0.5 text-[11px] font-medium text-slate-500">
                         {load.origin?.windowStart ? formatDate(load.origin.windowStart) : "—"} →{" "}
                         {load.destination?.windowStart ? formatDate(load.destination.windowStart) : "—"}
                       </div>
@@ -332,7 +332,7 @@ export function LoadTable({ loads, customers, carriers, initialStatus, onCreateL
                             title="Generate Rate Con"
                             className={`flex h-8 items-center gap-1.5 px-2.5 rounded-lg border text-xs font-medium transition-colors ${
                               load.carrierId
-                                ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-xs"
+                                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs"
                                 : "border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100"
                             }`}
                           >

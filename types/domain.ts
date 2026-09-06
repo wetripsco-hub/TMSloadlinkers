@@ -193,6 +193,8 @@ export interface Invoice {
   status: PaymentStatus;
   threeWayMatched: boolean;
   pdfDownloadUrl: string | null;
+  customerId?: UUID | null;
+  carrierId?: UUID | null;
 }
 
 export interface ThreeWayMatchResult {

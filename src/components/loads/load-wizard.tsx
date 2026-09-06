@@ -28,6 +28,7 @@ import {
   type LoadWizardValues,
 } from "@/lib/validations/load";
 import { createLoadFromWizard } from "@/app/(dashboard)/loads/new/actions";
+import { AddressAutocomplete, type AddressSuggestion } from "@/components/ui/address-autocomplete";
 
 const DISPATCHER_COMMISSION_PERCENTAGE = 10;
 
@@ -94,6 +95,7 @@ export function LoadWizard() {
     trigger,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoadWizardValues>({
     resolver: zodResolver(loadWizardSchema),
@@ -218,6 +220,31 @@ export function LoadWizard() {
 
           {(step.id === "origin" || step.id === "destination") && (
             <>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`${step.id}.autocomplete`}>
+                  {step.id === "origin" ? "Search Origin (City, State)" : "Search Destination (City, State)"}
+                </Label>
+                <AddressAutocomplete
+                  id={`${step.id}.autocomplete`}
+                  placeholder="Type 3+ letters to search (e.g. Chicago, IL)..."
+                  onSelect={(suggestion: AddressSuggestion) => {
+                    setValue(`${step.id}.city`, suggestion.city, { shouldValidate: true, shouldDirty: true });
+                    setValue(`${step.id}.state`, suggestion.stateCode.slice(0, 2).toUpperCase(), { shouldValidate: true, shouldDirty: true });
+                    if (suggestion.postcode) {
+                      setValue(`${step.id}.zip`, suggestion.postcode, { shouldValidate: true, shouldDirty: true });
+                    }
+                    if (suggestion.street) {
+                      setValue(`${step.id}.address`, suggestion.street, { shouldValidate: true, shouldDirty: true });
+                    }
+                    setValue(`${step.id}.latitude`, suggestion.lat, { shouldDirty: true });
+                    setValue(`${step.id}.longitude`, suggestion.lng, { shouldDirty: true });
+                  }}
+                />
+                <span className="text-[11px] text-muted-foreground">
+                  Select a live suggestion to auto-fill City, State, ZIP, and coordinates.
+                </span>
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={`${step.id}.facilityName`}>
                   Facility name <span className="text-rose-500">*</span>

@@ -147,11 +147,11 @@ export function CustomerTable({
 
                   {/* Billing Contact */}
                   <TableCell className="py-3.5 px-4">
-                    <div className="flex flex-col gap-1 text-sm text-slate-600">
+                    <div className="flex flex-col gap-1 text-sm text-slate-800">
                       {customer.email ? (
                         <a
                           href={`mailto:${customer.email}`}
-                          className="inline-flex items-center gap-1.5 text-slate-600 hover:text-blue-600 text-sm transition-colors"
+                          className="inline-flex items-center gap-1.5 text-slate-800 hover:text-blue-600 text-sm transition-colors font-medium"
                         >
                           <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           <span>{customer.email}</span>
@@ -160,7 +160,7 @@ export function CustomerTable({
                         <span className="text-slate-400 italic text-xs">No email</span>
                       )}
                       {customer.phone ? (
-                        <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm font-mono">
+                        <span className="inline-flex items-center gap-1.5 text-slate-800 text-sm font-mono font-medium">
                           <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           <span>{customer.phone}</span>
                         </span>
@@ -172,7 +172,7 @@ export function CustomerTable({
 
                   {/* Billing Address */}
                   <TableCell className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5 text-slate-600 text-sm max-w-xs truncate">
+                    <div className="flex items-center gap-1.5 text-slate-800 text-sm max-w-xs truncate font-medium">
                       <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                       <span className="truncate">{customer.billingAddress || "—"}</span>
                     </div>
@@ -181,19 +181,19 @@ export function CustomerTable({
                   {/* Active Loads Badge */}
                   <TableCell className="py-3.5 px-4">
                     {activeCount > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-xs px-2.5 py-1 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-xs px-2.5 py-1 rounded-full">
                         <Package className="h-3 w-3 text-emerald-600" />
                         {activeCount} Active {activeCount === 1 ? "Load" : "Loads"}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center bg-slate-100 text-slate-500 border border-slate-200 font-medium text-xs px-2.5 py-1 rounded-full">
+                      <span className="inline-flex items-center bg-slate-100 text-slate-600 border border-slate-200 font-medium text-xs px-2.5 py-1 rounded-full">
                         0 Active Loads
                       </span>
                     )}
                   </TableCell>
 
                   {/* Created On */}
-                  <TableCell className="py-3.5 px-4 text-slate-600 text-sm">
+                  <TableCell className="py-3.5 px-4 text-slate-700 text-sm font-medium">
                     {formatDate(customer.createdAt)}
                   </TableCell>
 

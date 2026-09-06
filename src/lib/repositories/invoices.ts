@@ -86,6 +86,8 @@ function mapRowToInvoice(row: InvoiceRow): Invoice {
     status: dbPaymentStatusToDomain(row.payment_status),
     threeWayMatched: false,
     pdfDownloadUrl: null,
+    customerId: row.customer_id,
+    carrierId: row.carrier_id,
   };
 }
 
