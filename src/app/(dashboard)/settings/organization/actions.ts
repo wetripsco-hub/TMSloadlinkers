@@ -66,6 +66,12 @@ export async function updateOrganizationSettings(
     address: parsed.data.address || null,
     contactEmail: parsed.data.contactEmail || null,
     contactPhone: parsed.data.contactPhone || null,
+    bankName: parsed.data.bankName || null,
+    routingNumber: parsed.data.routingNumber || null,
+    accountNumber: parsed.data.accountNumber || null,
+    remittanceNotes: parsed.data.remittanceNotes || null,
+    mcNumber: parsed.data.mcNumber || null,
+    dotNumber: parsed.data.dotNumber || null,
     logoUrl,
   });
 

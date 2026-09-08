@@ -37,6 +37,12 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
       address: organization.address ?? "",
       contactEmail: organization.contactEmail ?? "",
       contactPhone: organization.contactPhone ?? "",
+      bankName: organization.bankName ?? "",
+      routingNumber: organization.routingNumber ?? "",
+      accountNumber: organization.accountNumber ?? "",
+      remittanceNotes: organization.remittanceNotes ?? "",
+      mcNumber: organization.mcNumber ?? "",
+      dotNumber: organization.dotNumber ?? "",
     },
   });
 
@@ -111,12 +117,12 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
 
         <div className="sm:col-span-2">
           <label className={LABEL_CLASS}>Address</label>
-          <input className={FIELD_CLASS} {...register("address")} />
+          <input className={FIELD_CLASS} placeholder="e.g. 100 Main St, Suite 200, City, State ZIP" {...register("address")} />
         </div>
 
         <div>
           <label className={LABEL_CLASS}>Contact email</label>
-          <input className={FIELD_CLASS} type="email" {...register("contactEmail")} />
+          <input className={FIELD_CLASS} type="email" placeholder="billing@yourbrokerage.com" {...register("contactEmail")} />
           {errors.contactEmail && (
             <p className="mt-1 text-xs text-red-600">{errors.contactEmail.message}</p>
           )}
@@ -124,7 +130,67 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
 
         <div>
           <label className={LABEL_CLASS}>Contact phone</label>
-          <input className={FIELD_CLASS} type="tel" {...register("contactPhone")} />
+          <input className={FIELD_CLASS} type="tel" placeholder="(800) 555-0199" {...register("contactPhone")} />
+        </div>
+
+        <div>
+          <label className={LABEL_CLASS}>Motor Carrier Number (MC#)</label>
+          <input className={FIELD_CLASS} placeholder="e.g. 987654" {...register("mcNumber")} />
+        </div>
+
+        <div>
+          <label className={LABEL_CLASS}>US DOT Number</label>
+          <input className={FIELD_CLASS} placeholder="e.g. 1234567" {...register("dotNumber")} />
+        </div>
+      </div>
+
+      {/* Payment & Remittance Information (Optional) */}
+      <div className="border-t border-slate-200 pt-6">
+        <div>
+          <h3 className="text-base font-semibold text-slate-900">
+            Payment & Remittance Information (Optional)
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">
+            These details will automatically print at the bottom of customer invoices so shippers know where to remit ACH / Wire payments.
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label className={LABEL_CLASS}>Bank Name</label>
+            <input
+              className={FIELD_CLASS}
+              placeholder="e.g. JPMorgan Chase, Bank of America"
+              {...register("bankName")}
+            />
+          </div>
+
+          <div>
+            <label className={LABEL_CLASS}>Routing Number (ABA)</label>
+            <input
+              className={FIELD_CLASS}
+              placeholder="e.g. 021000021"
+              {...register("routingNumber")}
+            />
+          </div>
+
+          <div>
+            <label className={LABEL_CLASS}>Account Number</label>
+            <input
+              className={FIELD_CLASS}
+              placeholder="e.g. 1234567890"
+              {...register("accountNumber")}
+            />
+          </div>
+
+          <div>
+            <label className={LABEL_CLASS}>Wire / Payment Notes</label>
+            <input
+              className={FIELD_CLASS}
+              placeholder="e.g. Please reference invoice number on remittance advice"
+              {...register("remittanceNotes")}
+            />
+          </div>
         </div>
       </div>
 

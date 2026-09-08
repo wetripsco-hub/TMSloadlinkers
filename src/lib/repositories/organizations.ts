@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "../../../types/database";
 import type { Organization, UUID, WorkspaceType } from "../../../types/domain";
 
 // The `organizations` table does not persist mcNumber/dotNumber (those live
@@ -9,18 +10,37 @@ interface OrganizationRow {
   name: string;
   workspace_type: WorkspaceType;
   created_at: string;
+  address?: string | null;
+  contact_phone?: string | null;
+  contact_email?: string | null;
+  bank_name?: string | null;
+  routing_number?: string | null;
+  account_number?: string | null;
+  remittance_notes?: string | null;
+  mc_number?: string | null;
+  dot_number?: string | null;
+  logo_url?: string | null;
 }
 
-const ORGANIZATION_COLUMNS = "id, name, workspace_type, created_at";
+const ORGANIZATION_COLUMNS =
+  "id, name, workspace_type, created_at, address, contact_phone, contact_email, bank_name, routing_number, account_number, remittance_notes, mc_number, dot_number, logo_url";
 
 function mapRowToOrganization(row: OrganizationRow): Organization {
   return {
     id: row.id,
     name: row.name,
     workspaceType: row.workspace_type,
-    mcNumber: null,
-    dotNumber: null,
+    mcNumber: row.mc_number ?? null,
+    dotNumber: row.dot_number ?? null,
     createdAt: row.created_at,
+    address: row.address ?? null,
+    contactPhone: row.contact_phone ?? null,
+    contactEmail: row.contact_email ?? null,
+    bankName: row.bank_name ?? null,
+    routingNumber: row.routing_number ?? null,
+    accountNumber: row.account_number ?? null,
+    remittanceNotes: row.remittance_notes ?? null,
+    logoUrl: row.logo_url ?? null,
   };
 }
 
@@ -47,6 +67,25 @@ export async function getOrganizationById(id: UUID): Promise<Organization | null
   return mapRowToOrganization(data as unknown as OrganizationRow);
 }
 
+export async function getCurrentUserOrganization(): Promise<Organization | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("org_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.org_id) return null;
+
+  return getOrganizationById(profile.org_id);
+}
+
 // ============================================================================
 // Organization settings (020_org_settings.sql): contact person, logo,
 // address, contact email/phone. Kept as a separate OrganizationSettings
@@ -62,6 +101,12 @@ export interface OrganizationSettings {
   address: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
+  bankName: string | null;
+  routingNumber: string | null;
+  accountNumber: string | null;
+  remittanceNotes: string | null;
+  mcNumber: string | null;
+  dotNumber: string | null;
 }
 
 interface OrganizationSettingsRow {
@@ -72,10 +117,16 @@ interface OrganizationSettingsRow {
   address: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  bank_name: string | null;
+  routing_number: string | null;
+  account_number: string | null;
+  remittance_notes: string | null;
+  mc_number: string | null;
+  dot_number: string | null;
 }
 
 const ORGANIZATION_SETTINGS_COLUMNS =
-  "id, name, contact_person_name, logo_url, address, contact_email, contact_phone";
+  "id, name, contact_person_name, logo_url, address, contact_email, contact_phone, bank_name, routing_number, account_number, remittance_notes, mc_number, dot_number";
 
 function mapRowToOrganizationSettings(row: OrganizationSettingsRow): OrganizationSettings {
   return {
@@ -86,6 +137,12 @@ function mapRowToOrganizationSettings(row: OrganizationSettingsRow): Organizatio
     address: row.address,
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
+    bankName: row.bank_name,
+    routingNumber: row.routing_number,
+    accountNumber: row.account_number,
+    remittanceNotes: row.remittance_notes,
+    mcNumber: row.mc_number,
+    dotNumber: row.dot_number,
   };
 }
 
@@ -115,6 +172,12 @@ export interface UpdateOrganizationInput {
   address?: string | null;
   contactEmail?: string | null;
   contactPhone?: string | null;
+  bankName?: string | null;
+  routingNumber?: string | null;
+  accountNumber?: string | null;
+  remittanceNotes?: string | null;
+  mcNumber?: string | null;
+  dotNumber?: string | null;
 }
 
 export async function updateOrganization(
@@ -123,16 +186,29 @@ export async function updateOrganization(
 ): Promise<OrganizationSettings> {
   const supabase = await createClient();
 
+  const updatePayload: Database["public"]["Tables"]["organizations"]["Update"] = {
+    name: input.name,
+    contact_person_name: input.contactPersonName ?? null,
+    logo_url: input.logoUrl ?? null,
+    address: input.address ?? null,
+    contact_email: input.contactEmail ?? null,
+    contact_phone: input.contactPhone ?? null,
+    bank_name: input.bankName ?? null,
+    routing_number: input.routingNumber ?? null,
+    account_number: input.accountNumber ?? null,
+    remittance_notes: input.remittanceNotes ?? null,
+  };
+
+  if (input.mcNumber !== undefined) {
+    updatePayload.mc_number = input.mcNumber || null;
+  }
+  if (input.dotNumber !== undefined) {
+    updatePayload.dot_number = input.dotNumber || null;
+  }
+
   const { data, error } = await supabase
     .from("organizations")
-    .update({
-      name: input.name,
-      contact_person_name: input.contactPersonName ?? null,
-      logo_url: input.logoUrl ?? null,
-      address: input.address ?? null,
-      contact_email: input.contactEmail ?? null,
-      contact_phone: input.contactPhone ?? null,
-    })
+    .update(updatePayload)
     .eq("id", orgId)
     .select(ORGANIZATION_SETTINGS_COLUMNS)
     .single();

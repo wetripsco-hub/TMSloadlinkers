@@ -13,6 +13,12 @@ export const organizationSettingsSchema = z.object({
     .or(z.literal(""))
     .refine((v) => !v || EMAIL_PATTERN.test(v), "Enter a valid email"),
   contactPhone: z.string().trim().optional().or(z.literal("")),
+  bankName: z.string().trim().optional().or(z.literal("")),
+  routingNumber: z.string().trim().optional().or(z.literal("")),
+  accountNumber: z.string().trim().optional().or(z.literal("")),
+  remittanceNotes: z.string().trim().optional().or(z.literal("")),
+  mcNumber: z.string().trim().optional().or(z.literal("")),
+  dotNumber: z.string().trim().optional().or(z.literal("")),
 });
 
 export type OrganizationSettingsValues = z.infer<typeof organizationSettingsSchema>;
