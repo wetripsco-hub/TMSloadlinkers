@@ -21,8 +21,8 @@ import { LoadFinancialBreakdown } from "@/components/loads/load-financial-breakd
 import { LoadAuditTrail } from "@/components/loads/load-audit-trail";
 import { StatusProgressionBar } from "@/components/loads/status-progression-bar";
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
-import { formatDateTime, formatMoney } from "@/lib/format";
-import type { Load, LoadStop } from "../../../types/domain";
+import { formatDateTime, formatMoney, parseFacilityStopAddress } from "@/lib/format";
+import type { Load, LoadStop, Organization } from "../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 import type { AuditEvent } from "@/lib/repositories/audit";
 
@@ -35,6 +35,8 @@ export function StopDetailsCard({
   stop: LoadStop;
   isOrigin?: boolean;
 }) {
+  const formatted = parseFacilityStopAddress(stop);
+
   return (
     <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3.5">
@@ -67,10 +69,10 @@ export function StopDetailsCard({
         <span className="font-semibold text-slate-900 text-base">
           {stop.facilityName ?? (isOrigin ? "Origin Facility" : "Destination Facility")}
         </span>
-        <span className="text-slate-600">{stop.address ?? "—"}</span>
-        <span className="text-slate-600">
-          {[stop.city, stop.state, stop.zip].filter(Boolean).join(", ") || "—"}
-        </span>
+        {formatted.street && (
+          <span className="text-slate-700 font-medium">{formatted.street}</span>
+        )}
+        <span className="text-slate-600">{formatted.cityStateZip}</span>
 
         <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-medium text-slate-700">
           <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -89,6 +91,7 @@ export interface LoadDetailTabsProps {
   carrier: CarrierRecord | null;
   availableCarriers: CarrierRecord[];
   auditEvents: AuditEvent[];
+  organization?: Organization | null;
 }
 
 type TabKey = "summary" | "stops" | "financials" | "documents" | "audit";
@@ -112,6 +115,7 @@ export function LoadDetailTabs({
   carrier,
   availableCarriers,
   auditEvents,
+  organization,
 }: LoadDetailTabsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
 
@@ -172,6 +176,7 @@ export function LoadDetailTabs({
               load={load}
               assignedCarrier={carrier}
               availableCarriers={availableCarriers}
+              organization={organization}
             />
             <LoadFinancialBreakdown load={load} />
           </div>
@@ -282,6 +287,7 @@ export function LoadDetailTabs({
                 <RateConfirmationModal
                   load={load}
                   carrier={carrier}
+                  organization={organization}
                   triggerButton={
                     <button
                       type="button"
@@ -310,6 +316,7 @@ export function LoadDetailTabs({
                 <RateConfirmationModal
                   load={load}
                   carrier={carrier}
+                  organization={organization}
                   triggerButton={
                     <button
                       type="button"

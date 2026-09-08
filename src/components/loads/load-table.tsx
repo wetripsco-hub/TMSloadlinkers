@@ -23,7 +23,7 @@ import {
   FileText,
 } from "lucide-react";
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
-import type { Load } from "../../../types/domain";
+import type { Load, Organization } from "../../../types/domain";
 import type { CustomerRecord } from "@/lib/repositories/customers";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
@@ -31,6 +31,7 @@ interface LoadTableProps {
   loads: Load[];
   customers: CustomerRecord[];
   carriers: CarrierRecord[];
+  organization?: Organization | null;
   initialStatus?: string;
   onCreateLoad?: () => void;
 }
@@ -38,7 +39,14 @@ interface LoadTableProps {
 type SortField = "date" | "rate" | "margin" | "number";
 type SortOrder = "asc" | "desc";
 
-export function LoadTable({ loads, customers, carriers, initialStatus, onCreateLoad }: LoadTableProps) {
+export function LoadTable({
+  loads,
+  customers,
+  carriers,
+  organization,
+  initialStatus,
+  onCreateLoad,
+}: LoadTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(initialStatus ?? "ALL");
   const [sortField, setSortField] = useState<SortField>("date");
@@ -326,6 +334,7 @@ export function LoadTable({ loads, customers, carriers, initialStatus, onCreateL
                         load={load}
                         carrier={load.carrierId ? carriers.find((c) => c.id === load.carrierId) : null}
                         customer={load.customerId ? customers.find((c) => c.id === load.customerId) : null}
+                        organization={organization}
                         triggerButton={
                           <button
                             type="button"

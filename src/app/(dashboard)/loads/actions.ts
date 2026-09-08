@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { parseCents } from "@/lib/money";
 import { createLoad } from "@/lib/repositories/loads";
 import { createCustomer } from "@/lib/repositories/customers";
-import type { UUID } from "../../../../types/domain";
+import { getCurrentUserOrganization } from "@/lib/repositories/organizations";
+import type { Organization, UUID } from "../../../../types/domain";
+
+export async function getActiveOrganizationAction(): Promise<Organization | null> {
+  return getCurrentUserOrganization();
+}
 
 export interface CreateLoadFormInput {
   customerId?: UUID | null;

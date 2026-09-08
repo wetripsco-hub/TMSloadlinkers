@@ -19,7 +19,7 @@ import {
   RefreshCw,
   Plus,
 } from "lucide-react";
-import type { Load } from "../../../types/domain";
+import type { Load, Organization } from "../../../types/domain";
 import type { CustomerRecord } from "@/lib/repositories/customers";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
@@ -27,10 +27,17 @@ export interface LoadsViewProps {
   loads: Load[];
   customers: CustomerRecord[];
   carriers: CarrierRecord[];
+  organization?: Organization | null;
   initialStatus?: string;
 }
 
-export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsViewProps) {
+export function LoadsView({
+  loads,
+  customers,
+  carriers,
+  organization,
+  initialStatus,
+}: LoadsViewProps) {
   const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>(initialStatus);
   const [isPending, startTransition] = useTransition();
@@ -314,6 +321,7 @@ export function LoadsView({ loads, customers, carriers, initialStatus }: LoadsVi
         loads={loads}
         customers={customers}
         carriers={carriers}
+        organization={organization}
         initialStatus={selectedStatus}
         onCreateLoad={() => setIsCreateModalOpen(true)}
       />

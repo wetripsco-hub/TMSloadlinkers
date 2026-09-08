@@ -23,7 +23,7 @@ export async function generateMetadata({
     invoice?.invoiceNumber ||
     (invoice ? `INV-${invoice.id.slice(0, 8).toUpperCase()}` : "Invoice");
   return {
-    title: `${invNumber} · Print & Remittance | FreightLink TMS`,
+    title: `${invNumber} · Print & Remittance`,
     description: `Freight invoice and remittance details for ${invNumber}`,
   };
 }

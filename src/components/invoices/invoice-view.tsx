@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Landmark,
 } from "lucide-react";
 
 export interface InvoiceViewProps {
@@ -43,6 +44,24 @@ export function InvoiceView({
   const linehaulAmount = Math.round(totalAmount * 0.88);
   const fuelSurchargeAmount = totalAmount - linehaulAmount;
 
+  const complianceParts: string[] = [];
+  if (organization?.mcNumber) complianceParts.push(`MC# ${organization.mcNumber}`);
+  if (organization?.dotNumber) complianceParts.push(`DOT# ${organization.dotNumber}`);
+  const complianceStr = complianceParts.join(" · ");
+
+  const hasBankDetails = Boolean(
+    organization?.bankName ||
+    organization?.routingNumber ||
+    organization?.accountNumber ||
+    organization?.remittanceNotes
+  );
+
+  const maskedAccountNumber = organization?.accountNumber
+    ? (organization.accountNumber.length > 4
+        ? `••••${organization.accountNumber.slice(-4)}`
+        : organization.accountNumber)
+    : null;
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-8 text-slate-900 shadow-sm print:max-w-none print:border-none print:shadow-none print:p-0 print:text-black print:bg-white">
       {/* Header */}
@@ -52,14 +71,30 @@ export function InvoiceView({
             Freight & Logistics Invoice
           </span>
           <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black">
-            {organization?.name ?? "FreightLink Logistics Brokerage"}
+            {organization?.name || "Freight Brokerage"}
           </h1>
-          <p className="text-xs text-slate-600 print:text-black mt-0.5">
-            MC #{organization?.mcNumber ?? "998812"} · USDOT #{organization?.dotNumber ?? "4109822"}
-          </p>
-          <p className="text-xs text-slate-500 print:text-black mt-0.5">
-            Billing Inquiries: billing@freightlink.com · (800) 555-0199
-          </p>
+          {organization?.address && (
+            <p className="text-xs text-slate-600 print:text-black mt-0.5">
+              {organization.address}
+            </p>
+          )}
+          {complianceStr && (
+            <p className="text-xs text-slate-600 print:text-black mt-0.5 font-medium">
+              {complianceStr}
+            </p>
+          )}
+          {(organization?.contactEmail || organization?.contactPhone) ? (
+            <p className="text-xs text-slate-500 print:text-black mt-0.5">
+              {[
+                organization?.contactEmail ? `Billing: ${organization.contactEmail}` : null,
+                organization?.contactPhone,
+              ].filter(Boolean).join(" · ")}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500 print:text-black mt-0.5">
+              Accounts Receivable & Billing
+            </p>
+          )}
         </div>
 
         <div className="mt-4 sm:mt-0 sm:text-right">
@@ -116,10 +151,10 @@ export function InvoiceView({
             {customer?.name || invoice.billToName || "Direct Shipper Account"}
           </p>
           <p className="text-xs text-slate-600 print:text-black mt-0.5">
-            {customer?.billingAddress || "100 Corporate Parkway, Suite 400, Chicago, IL 60601"}
+            {customer?.billingAddress || "Billing address on file"}
           </p>
           <p className="text-xs text-slate-500 print:text-black mt-1">
-            Accounts Payable: {customer?.email || invoice.billToEmail || "ap@shipper-account.com"}
+            Accounts Payable: {customer?.email || invoice.billToEmail || "ap@customer.com"}
             {customer?.phone ? ` · ${customer.phone}` : ""}
           </p>
         </div>
@@ -131,18 +166,16 @@ export function InvoiceView({
             <span className="text-[11px] font-bold uppercase tracking-wider">Remit Payment To</span>
           </div>
           <p className="text-sm font-bold text-slate-900 print:text-black">
-            {organization?.name ?? "FreightLink Logistics Inc."}
+            {organization?.name || "Corporate Remittance Office"}
           </p>
           <p className="text-xs text-slate-600 print:text-black mt-0.5">
-            Lockbox Processing Center · PO Box 84210
+            {organization?.address || "Address on file"}
           </p>
-          <p className="text-xs text-slate-600 print:text-black">
-            Dallas, TX 75201
-          </p>
-          <div className="mt-2 text-[11px] text-slate-600 print:text-black space-y-0.5">
-            <p><strong>ACH / Wire Routing:</strong> 111000025</p>
-            <p><strong>Account #:</strong> 9840219481 · Bank of America</p>
-          </div>
+          {(organization?.contactPhone || organization?.contactEmail) && (
+            <p className="text-xs text-slate-500 print:text-black mt-1">
+              {[organization?.contactEmail, organization?.contactPhone].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </div>
       </div>
 
@@ -296,6 +329,44 @@ export function InvoiceView({
         </div>
       </div>
 
+      {/* Remittance Instructions (Conditional Bank / Wire Box) */}
+      {hasBankDetails && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 print:border-gray-300 print:bg-white print:p-3">
+          <div className="flex items-center gap-2 mb-2.5 text-slate-800 print:text-black">
+            <Landmark className="h-4 w-4 text-emerald-600 print:text-black" />
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-900 print:text-black">
+              Remittance Instructions (ACH / Wire)
+            </h4>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            {organization?.bankName && (
+              <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400 print:text-gray-600 block">Bank Name</span>
+                <span className="font-semibold text-slate-900 print:text-black">{organization.bankName}</span>
+              </div>
+            )}
+            {organization?.routingNumber && (
+              <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400 print:text-gray-600 block">Routing (ABA)</span>
+                <span className="font-mono font-semibold text-slate-900 print:text-black">{organization.routingNumber}</span>
+              </div>
+            )}
+            {maskedAccountNumber && (
+              <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400 print:text-gray-600 block">Account Number</span>
+                <span className="font-mono font-semibold text-slate-900 print:text-black">{maskedAccountNumber}</span>
+              </div>
+            )}
+            {organization?.remittanceNotes && (
+              <div className="sm:col-span-2 md:col-span-1">
+                <span className="text-[10px] font-bold uppercase text-slate-400 print:text-gray-600 block">Memo / Notes</span>
+                <span className="text-slate-700 print:text-black">{organization.remittanceNotes}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Terms & Conditions / Remittance Notice */}
       <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 text-[11px] text-slate-600 space-y-1.5 print:border-gray-300 print:bg-white print:text-black">
         <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] print:text-black">
@@ -305,7 +376,7 @@ export function InvoiceView({
           Payment is due within 30 days of the invoice date unless contractual credit terms specify otherwise. Please include the Invoice Number ({invNumber}) on all check remittances and electronic wire transfers.
         </p>
         <p className="text-[10px] text-slate-500 print:text-black">
-          FreightLink Logistics operates as an authorized freight property broker under FMCSA authority. All claims or discrepancies must be reported in writing within 15 business days. Thank you for your business!
+          {organization?.name || "Brokerage"} operates as an authorized freight property broker under FMCSA authority. All claims or discrepancies must be reported in writing within 15 business days. Thank you for your business!
         </p>
       </div>
     </div>

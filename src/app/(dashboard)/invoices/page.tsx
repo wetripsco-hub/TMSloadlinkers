@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { listInvoices } from "@/lib/repositories/invoices";
 import { listLoads, getLoadById } from "@/lib/repositories/loads";
+import { getCurrentUserOrganization } from "@/lib/repositories/organizations";
 import { InvoiceTable } from "@/components/invoices/invoice-table";
 import { GenerateInvoiceDialog } from "@/components/invoices/generate-invoice-dialog";
 import { SyncQuickBooksButton } from "@/components/invoices/sync-quickbooks-button";
@@ -13,14 +14,15 @@ import type { Load } from "../../../../types/domain";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Invoices (AR) | FreightLink TMS",
+  title: "Invoices (AR) | Freight Operations",
 };
 
 export default async function InvoicesPage() {
-  const [{ data: invoices }, deliveredLoads, podUploadedLoads] = await Promise.all([
+  const [{ data: invoices }, deliveredLoads, podUploadedLoads, organization] = await Promise.all([
     listInvoices({}, { page: 1, pageSize: 100 }),
     listLoads({ status: "delivered" }, { page: 1, pageSize: 50 }),
     listLoads({ status: "pod_uploaded" }, { page: 1, pageSize: 50 }),
+    getCurrentUserOrganization(),
   ]);
 
   const eligibleLoads = [...deliveredLoads.data, ...podUploadedLoads.data];
@@ -112,7 +114,7 @@ export default async function InvoicesPage() {
       </div>
 
       {/* Main Invoices Table */}
-      <InvoiceTable invoices={invoices} loadsById={loadsById} />
+      <InvoiceTable invoices={invoices} loadsById={loadsById} organization={organization} />
     </div>
   );
 }

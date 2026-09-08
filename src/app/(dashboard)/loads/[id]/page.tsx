@@ -8,6 +8,7 @@ import { getLoadById } from "@/lib/repositories/loads";
 import { getCarrierById, listCarriers } from "@/lib/repositories/carriers";
 import { getCustomerById } from "@/lib/repositories/customers";
 import { listAuditEvents } from "@/lib/repositories/audit";
+import { getOrganizationById } from "@/lib/repositories/organizations";
 import { FileText, Navigation, Printer } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +25,12 @@ export default async function LoadDetailPage({
     notFound();
   }
 
-  const [carrier, customer, auditEvents, { data: availableCarriers }] = await Promise.all([
+  const [carrier, customer, auditEvents, { data: availableCarriers }, organization] = await Promise.all([
     load.carrierId ? getCarrierById(load.carrierId) : Promise.resolve(null),
     load.customerId ? getCustomerById(load.customerId) : Promise.resolve(null),
     listAuditEvents("loads", load.id),
     listCarriers({}, { page: 1, pageSize: 100 }),
+    getOrganizationById(load.orgId),
   ]);
 
   const loadLabel = load.loadNumber || `LD-${load.id.slice(0, 6).toUpperCase()}`;
@@ -57,6 +59,8 @@ export default async function LoadDetailPage({
             <RateConfirmationModal
               load={load}
               carrier={carrier}
+              customer={customer}
+              organization={organization}
               triggerButton={
                 <button
                   type="button"
@@ -88,6 +92,7 @@ export default async function LoadDetailPage({
         carrier={carrier}
         availableCarriers={availableCarriers}
         auditEvents={auditEvents}
+        organization={organization}
       />
     </div>
   );

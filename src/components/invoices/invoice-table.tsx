@@ -14,7 +14,7 @@ import {
   TableCell,
 } from "@/components/ui/tailadmin/table";
 import { Search, Receipt, ArrowRight, Calendar, Printer, ExternalLink } from "lucide-react";
-import type { Invoice, Load } from "../../../types/domain";
+import type { Invoice, Load, Organization } from "../../../types/domain";
 
 const INVOICE_TYPE_LABELS: Record<Invoice["invoiceType"], string> = {
   shipper_invoice: "Shipper Invoice",
@@ -25,9 +25,10 @@ const INVOICE_TYPE_LABELS: Record<Invoice["invoiceType"], string> = {
 interface InvoiceTableProps {
   invoices: Invoice[];
   loadsById: Record<string, Load>;
+  organization?: Organization | null;
 }
 
-export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
+export function InvoiceTable({ invoices, loadsById, organization }: InvoiceTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
@@ -215,6 +216,7 @@ export function InvoiceTable({ invoices, loadsById }: InvoiceTableProps) {
                       <InvoiceModal
                         invoice={invoice}
                         load={load}
+                        organization={organization}
                         triggerButton={
                           <button
                             type="button"

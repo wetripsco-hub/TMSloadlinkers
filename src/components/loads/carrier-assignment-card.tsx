@@ -6,19 +6,21 @@ import { TailAdminButton, TailAdminSelect } from "@/components/ui/tailadmin/form
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
 import { assignCarrierToLoad } from "@/app/(dashboard)/loads/[id]/actions";
 import { Truck, CheckCircle2, UserCheck, FileText, AlertCircle } from "lucide-react";
-import type { Load } from "../../../types/domain";
+import type { Load, Organization } from "../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
 export interface CarrierAssignmentCardProps {
   load: Load;
   assignedCarrier: CarrierRecord | null;
   availableCarriers: CarrierRecord[];
+  organization?: Organization | null;
 }
 
 export function CarrierAssignmentCard({
   load,
   assignedCarrier,
   availableCarriers,
+  organization,
 }: CarrierAssignmentCardProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -56,6 +58,7 @@ export function CarrierAssignmentCard({
               <RateConfirmationModal
                 load={load}
                 carrier={assignedCarrier}
+                organization={organization}
                 triggerButton={
                   <button
                     type="button"
