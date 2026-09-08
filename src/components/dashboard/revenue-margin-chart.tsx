@@ -57,6 +57,17 @@ export function RevenueMarginChart({ data }: { data: RevenueWeek[] }) {
     marginPercent: row.marginPercent,
   }));
 
+  if (chartData.length === 0) {
+    return (
+      <div className="flex h-[280px] flex-col items-center justify-center text-center">
+        <p className="text-xs font-semibold text-slate-700">No revenue data available</p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Weekly revenue and margin trends will plot here as shipments are invoiced.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
