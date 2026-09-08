@@ -4,6 +4,7 @@ import {
   formatDate,
   formatDateTime,
   formatNullableNumber,
+  parseFacilityStopAddress,
 } from "./format";
 
 describe("formatMoney", () => {
@@ -74,5 +75,85 @@ describe("formatNullableNumber", () => {
     expect(formatNullableNumber(null)).toBe("No data");
     expect(formatNullableNumber(undefined)).toBe("No data");
     expect(formatNullableNumber(NaN)).toBe("No data");
+  });
+});
+
+describe("parseFacilityStopAddress", () => {
+  it("formats full facility address (Street, City, State, ZIP) correctly", () => {
+    const result = parseFacilityStopAddress({
+      address: "100 Logistics Way",
+      city: "Dallas",
+      state: "TX",
+      zip: "75001",
+    });
+
+    expect(result.street).toBe("100 Logistics Way");
+    expect(result.cityStateZip).toBe("Dallas, TX 75001");
+    expect(result.fullAddress).toBe("100 Logistics Way, Dallas, TX 75001");
+  });
+
+  it("falls back to City, State when street is not entered", () => {
+    const result = parseFacilityStopAddress({
+      address: null,
+      city: "Atlanta",
+      state: "GA",
+      zip: "",
+    });
+
+    expect(result.street).toBeNull();
+    expect(result.cityStateZip).toBe("Atlanta, GA");
+    expect(result.fullAddress).toBe("Atlanta, GA");
+  });
+
+  it("falls back to City, State when street is an empty string", () => {
+    const result = parseFacilityStopAddress({
+      address: "   ",
+      city: "Chicago",
+      state: "IL",
+      zip: "",
+    });
+
+    expect(result.street).toBeNull();
+    expect(result.cityStateZip).toBe("Chicago, IL");
+    expect(result.fullAddress).toBe("Chicago, IL");
+  });
+
+  it("intelligently parses raw address string containing City, State into a fallback without street", () => {
+    const result = parseFacilityStopAddress({
+      address: "Seattle, WA",
+      city: "",
+      state: "",
+      zip: "",
+    });
+
+    expect(result.street).toBeNull();
+    expect(result.cityStateZip).toBe("Seattle, WA");
+    expect(result.fullAddress).toBe("Seattle, WA");
+  });
+
+  it("intelligently parses raw combined street, city, state, and zip string", () => {
+    const result = parseFacilityStopAddress({
+      address: "500 Harbor Blvd, Long Beach, CA 90802",
+      city: "",
+      state: "",
+      zip: "",
+    });
+
+    expect(result.street).toBe("500 Harbor Blvd");
+    expect(result.cityStateZip).toBe("Long Beach, CA 90802");
+    expect(result.fullAddress).toBe("500 Harbor Blvd, Long Beach, CA 90802");
+  });
+
+  it("safely handles null or undefined stop", () => {
+    expect(parseFacilityStopAddress(null)).toEqual({
+      street: null,
+      cityStateZip: "—",
+      fullAddress: "—",
+    });
+    expect(parseFacilityStopAddress(undefined)).toEqual({
+      street: null,
+      cityStateZip: "—",
+      fullAddress: "—",
+    });
   });
 });

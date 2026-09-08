@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Badge, type BadgeColor } from "@/components/ui/tailadmin/badge";
 import { CreateTicketForm } from "@/components/support/create-ticket-form";
 import { TicketThread, type TicketThreadMessage } from "@/components/support/ticket-thread";
+import { RestartTourButton } from "@/components/onboarding/restart-tour-card";
 import { formatDateTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +79,7 @@ export default async function SupportPage() {
         title="Help & Support Desk"
         subtitle="Submit operational support tickets and consult knowledge base guides."
         breadcrumbs={[{ label: "Support", href: "/support" }]}
+        action={<RestartTourButton />}
       />
 
       <CreateTicketForm />

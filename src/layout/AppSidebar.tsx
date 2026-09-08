@@ -26,6 +26,7 @@ interface NavItem {
   path: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   badge?: string;
+  tourId?: string;
 }
 
 interface NavSection {
@@ -38,15 +39,15 @@ const navSections: NavSection[] = [
     title: "OPERATIONS",
     items: [
       { name: "Overview", path: "/overview", icon: LayoutDashboard },
-      { name: "Loads", path: "/loads", icon: Package },
-      { name: "Carriers", path: "/carriers", icon: Truck },
+      { name: "Loads", path: "/loads", icon: Package, tourId: "nav-loads" },
+      { name: "Carriers", path: "/carriers", icon: Truck, tourId: "nav-carriers" },
       { name: "Customers", path: "/customers", icon: Building2 },
     ],
   },
   {
     title: "FINANCIALS",
     items: [
-      { name: "Invoices", path: "/invoices", icon: Receipt },
+      { name: "Invoices", path: "/invoices", icon: Receipt, tourId: "nav-invoices" },
       { name: "Settlements", path: "/settlements", icon: Landmark },
       { name: "Reports", path: "/reports", icon: BarChart3 },
     ],
@@ -55,7 +56,7 @@ const navSections: NavSection[] = [
     title: "MANAGEMENT",
     items: [
       { name: "Documents", path: "/documents", icon: FileText },
-      { name: "Driver Tracking", path: "/driver-tracking", icon: Navigation },
+      { name: "Driver Tracking", path: "/driver-tracking", icon: Navigation, tourId: "nav-tracking" },
     ],
   },
   {
@@ -192,6 +193,7 @@ export const AppSidebar: React.FC = () => {
                   <li key={item.name}>
                     <Link
                       href={item.path}
+                      data-tour={item.tourId}
                       title={!isVisibleExpanded ? item.name : undefined}
                       className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                         active

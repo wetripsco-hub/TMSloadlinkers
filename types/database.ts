@@ -609,41 +609,59 @@ export type Database = {
       }
       organizations: {
         Row: {
+          account_number: string | null
           address: string | null
+          bank_name: string | null
           contact_email: string | null
           contact_person_name: string | null
           contact_phone: string | null
           created_at: string
+          dot_number: string | null
           id: string
           logo_url: string | null
+          mc_number: string | null
           name: string
           plan_tier: Database["public"]["Enums"]["subscription_plan_tier"]
+          remittance_notes: string | null
+          routing_number: string | null
           updated_at: string
           workspace_type: Database["public"]["Enums"]["tenant_workspace_type"]
         }
         Insert: {
+          account_number?: string | null
           address?: string | null
+          bank_name?: string | null
           contact_email?: string | null
           contact_person_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          dot_number?: string | null
           id?: string
           logo_url?: string | null
+          mc_number?: string | null
           name: string
           plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
+          remittance_notes?: string | null
+          routing_number?: string | null
           updated_at?: string
           workspace_type?: Database["public"]["Enums"]["tenant_workspace_type"]
         }
         Update: {
+          account_number?: string | null
           address?: string | null
+          bank_name?: string | null
           contact_email?: string | null
           contact_person_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          dot_number?: string | null
           id?: string
           logo_url?: string | null
+          mc_number?: string | null
           name?: string
           plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
+          remittance_notes?: string | null
+          routing_number?: string | null
           updated_at?: string
           workspace_type?: Database["public"]["Enums"]["tenant_workspace_type"]
         }

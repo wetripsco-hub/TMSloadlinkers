@@ -130,3 +130,82 @@ export function formatNullableNumber(
 
   return `${value.toLocaleString("en-US")}${suffix}`;
 }
+
+export interface FormattedFacilityAddress {
+  street: string | null;
+  cityStateZip: string;
+  fullAddress: string;
+}
+
+/**
+ * Formats a load stop's facility address into clean, crash-proof components.
+ * Follows strict freight brokerage formatting rules:
+ * - If street is present: returns street, city/state/zip, and full combined address.
+ * - If street is missing/empty: gracefully falls back to "City, State" (or "City, State ZIP").
+ * - If address string contains embedded city/state (e.g. "Dallas, TX" or "123 Main St, Dallas, TX 75001"),
+ *   intelligently separates street from city/state.
+ * - Never returns placeholders like "City, State, Zip" or "—".
+ */
+export function parseFacilityStopAddress(stop?: {
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+} | null): FormattedFacilityAddress {
+  if (!stop) {
+    return { street: null, cityStateZip: "—", fullAddress: "—" };
+  }
+
+  let street = stop.address ? stop.address.trim() : null;
+  let city = stop.city ? stop.city.trim() : "";
+  let state = stop.state ? stop.state.trim() : "";
+  let zip = stop.zip ? stop.zip.trim() : "";
+
+  // If city or state is missing and street is populated, check if street is an unparsed full address
+  if ((!city || !state) && street) {
+    const parts = street.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const lastPart = parts[parts.length - 1];
+      const stateZipMatch = lastPart.match(/^([A-Za-z]{2})(?:\s+(\d{5}(?:-\d{4})?))?$/);
+      if (stateZipMatch) {
+        state = stateZipMatch[1].toUpperCase();
+        if (stateZipMatch[2]) zip = stateZipMatch[2];
+        city = parts[parts.length - 2];
+        if (parts.length > 2) {
+          street = parts.slice(0, parts.length - 2).join(", ");
+        } else {
+          // Exactly 2 parts, e.g. "Dallas, TX" - this is City, State with no street address
+          street = null;
+        }
+      }
+    }
+  }
+
+  // If street equals city, state (case-insensitive), there is no street address
+  if (street && city && state) {
+    const cityStateLower = `${city.toLowerCase()}, ${state.toLowerCase()}`;
+    if (street.toLowerCase() === cityStateLower) {
+      street = null;
+    }
+  }
+
+  const cityState = [city, state].filter(Boolean).join(", ");
+  const cityStateZip = [cityState, zip].filter(Boolean).join(" ").trim();
+
+  let fullAddress = "—";
+  if (street && cityStateZip) {
+    fullAddress = `${street}, ${cityStateZip}`;
+  } else if (street) {
+    fullAddress = street;
+  } else if (cityStateZip) {
+    fullAddress = cityStateZip;
+  } else if (cityState) {
+    fullAddress = cityState;
+  }
+
+  return {
+    street: street || null,
+    cityStateZip: cityStateZip || cityState || "—",
+    fullAddress,
+  };
+}

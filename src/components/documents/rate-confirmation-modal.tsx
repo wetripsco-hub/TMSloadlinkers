@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { TailAdminButton } from "@/components/ui/tailadmin/form-elements";
 import { formatCents } from "@/lib/money";
+import { parseFacilityStopAddress } from "@/lib/format";
+import { getActiveOrganizationAction } from "@/app/(dashboard)/loads/actions";
 import {
   FileText,
   Printer,
@@ -17,7 +19,7 @@ import {
   MapPin,
   ShieldCheck,
 } from "lucide-react";
-import type { Load } from "../../../types/domain";
+import type { Load, Organization } from "../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 import type { CustomerRecord } from "@/lib/repositories/customers";
 
@@ -25,6 +27,7 @@ export interface RateConfirmationModalProps {
   load: Load;
   carrier?: CarrierRecord | null;
   customer?: CustomerRecord | null;
+  organization?: Organization | null;
   organizationName?: string;
   triggerButton?: React.ReactNode;
 }
@@ -33,10 +36,45 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
   load,
   carrier,
   customer,
-  organizationName = "Loadlinkers TMS Brokerage Inc.",
+  organization,
+  organizationName,
   triggerButton,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [fetchedOrg, setFetchedOrg] = useState<Organization | null>(null);
+
+  useEffect(() => {
+    if (!organization) {
+      let isMounted = true;
+      getActiveOrganizationAction()
+        .then((org) => {
+          if (isMounted && org) {
+            setFetchedOrg(org);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load active organization for rate confirmation", err);
+        });
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [organization]);
+
+  const currentOrg = organization || fetchedOrg;
+  const orgName = currentOrg?.name || organizationName || "Freight Operations";
+  const mcNum = currentOrg?.mcNumber ?? (currentOrg as unknown as { mc_number?: string })?.mc_number;
+  const dotNum = currentOrg?.dotNumber ?? (currentOrg as unknown as { dot_number?: string })?.dot_number;
+  const phone = currentOrg?.contactPhone ?? (currentOrg as unknown as { contact_phone?: string })?.contact_phone;
+  const email = currentOrg?.contactEmail ?? (currentOrg as unknown as { contact_email?: string })?.contact_email;
+
+  const authorityItems: string[] = [];
+  if (mcNum) authorityItems.push(`MC# ${mcNum}`);
+  if (dotNum) authorityItems.push(`DOT# ${dotNum}`);
+  const authorityLine = authorityItems.join(" · ");
+
+  const originAddress = parseFacilityStopAddress(load.origin);
+  const destAddress = parseFacilityStopAddress(load.destination);
 
   const loadNum = load.loadNumber || `LD-${load.id.slice(0, 6).toUpperCase()}`;
   const today = new Date().toLocaleDateString("en-US", {
@@ -143,16 +181,28 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
                   <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-blue-600 print:text-black">
                     Official Freight Contract
                   </span>
-              <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black">
-                {organizationName}
-              </h1>
-              <p className="text-xs text-slate-600 print:text-black mt-0.5">
-                Brokerage MC# 998812 · USDOT# 4109822 · SCAC: LDLR
-              </p>
-              <p className="text-xs text-slate-500 print:text-black">
-                Dispatch Phone: (800) 555-5623 · Email: dispatch@loadlinkers.com
-              </p>
-            </div>
+                  <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black">
+                    {orgName}
+                  </h1>
+                  {currentOrg?.address && (
+                    <p className="text-xs text-slate-600 print:text-black mt-0.5">
+                      {currentOrg.address}
+                    </p>
+                  )}
+                  {authorityLine && (
+                    <p className="text-xs font-semibold text-slate-700 print:text-black mt-0.5">
+                      {authorityLine}
+                    </p>
+                  )}
+                  {Boolean(phone || email) && (
+                    <p className="text-xs text-slate-500 print:text-black mt-0.5">
+                      {[
+                        phone ? `Dispatch: ${phone}` : null,
+                        email ? `Billing: ${email}` : null,
+                      ].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
 
             <div className="mt-4 sm:mt-0 sm:text-right">
               <span className="inline-block rounded-md bg-slate-900 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white print:bg-black">
@@ -226,10 +276,19 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
                 <h4 className="text-sm font-bold text-slate-900 print:text-black">
                   {load.origin?.facilityName || `${customer?.name || "Shipper Facility"}`}
                 </h4>
-                <p className="mt-0.5 text-xs text-slate-600 print:text-black flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  {load.origin?.address || "City, State, Zip"}
-                </p>
+                <div className="mt-0.5 text-xs text-slate-600 print:text-black flex items-start gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                  <div>
+                    {originAddress.street ? (
+                      <>
+                        <p className="font-medium text-slate-800 print:text-black">{originAddress.street}</p>
+                        <p className="text-slate-600 print:text-black">{originAddress.cityStateZip}</p>
+                      </>
+                    ) : (
+                      <p className="text-slate-600 print:text-black">{originAddress.cityStateZip}</p>
+                    )}
+                  </div>
+                </div>
                 <div className="mt-2.5 rounded-md bg-slate-50 p-2 text-[11px] text-slate-600 print:bg-gray-50 print:text-black border border-slate-100">
                   <span className="font-semibold text-slate-900 print:text-black">Loading Notes: </span>
                   Driver must verify piece count & seal trailer. Clean 53ft trailer required.
@@ -249,10 +308,19 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
                 <h4 className="text-sm font-bold text-slate-900 print:text-black">
                   {load.destination?.facilityName || "Consignee Receiving Dock"}
                 </h4>
-                <p className="mt-0.5 text-xs text-slate-600 print:text-black flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  {load.destination?.address || "City, State, Zip"}
-                </p>
+                <div className="mt-0.5 text-xs text-slate-600 print:text-black flex items-start gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                  <div>
+                    {destAddress.street ? (
+                      <>
+                        <p className="font-medium text-slate-800 print:text-black">{destAddress.street}</p>
+                        <p className="text-slate-600 print:text-black">{destAddress.cityStateZip}</p>
+                      </>
+                    ) : (
+                      <p className="text-slate-600 print:text-black">{destAddress.cityStateZip}</p>
+                    )}
+                  </div>
+                </div>
                 <div className="mt-2.5 rounded-md bg-slate-50 p-2 text-[11px] text-slate-600 print:bg-gray-50 print:text-black border border-slate-100">
                   <span className="font-semibold text-slate-900 print:text-black">Unloading Notes: </span>
                   Signed Proof of Delivery (POD) required with clear signature and timestamp.

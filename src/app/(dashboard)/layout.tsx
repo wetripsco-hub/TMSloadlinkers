@@ -6,6 +6,7 @@ import { getAccessStatus } from "@/lib/subscription/guard";
 import { AccessBanner } from "@/components/billing/access-banner";
 import { SidebarProvider } from "@/context/SidebarContext";
 import DashboardShell from "@/layout/DashboardShell";
+import { ProductTour } from "@/components/onboarding/product-tour";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,7 @@ export default async function DashboardLayout({
           {children}
         </div>
       </DashboardShell>
+      <ProductTour />
     </SidebarProvider>
   );
 }

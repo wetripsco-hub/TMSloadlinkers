@@ -16,6 +16,14 @@ export interface Organization {
   mcNumber: string | null;
   dotNumber: string | null;
   createdAt: ISODateTime;
+  address?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  bankName?: string | null;
+  routingNumber?: string | null;
+  accountNumber?: string | null;
+  remittanceNotes?: string | null;
+  logoUrl?: string | null;
 }
 
 export interface Profile {

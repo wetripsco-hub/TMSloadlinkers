@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { ensureUserOrganization } from "@/lib/services/ensure-user-organization";
-import type { UUID } from "../../../types/domain";
 import type { TablesInsert } from "../../../types/database";
 
 export async function seedDemoDataForCurrentOrg(): Promise<{

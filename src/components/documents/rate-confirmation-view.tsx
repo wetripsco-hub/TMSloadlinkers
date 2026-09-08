@@ -1,4 +1,5 @@
 import { formatCents } from "@/lib/money";
+import { parseFacilityStopAddress } from "@/lib/format";
 import type { Carrier, Load, LoadStop, Organization } from "../../../types/domain";
 
 function formatStopWindow(stop: LoadStop): string {
@@ -23,6 +24,8 @@ function StopBlock({
   stop: LoadStop;
   badge: string;
 }) {
+  const formatted = parseFacilityStopAddress(stop);
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 print:border-gray-300 print:p-2">
       <div className="flex items-center justify-between mb-2">
@@ -36,12 +39,20 @@ function StopBlock({
       <h3 className="text-sm font-bold text-slate-900 print:text-black">
         {stop.facilityName ?? "Facility Dock"}
       </h3>
-      <p className="text-xs text-slate-600 print:text-black mt-0.5">
-        {stop.address ?? "—"}
-      </p>
-      <p className="text-xs text-slate-600 print:text-black">
-        {[stop.city, stop.state, stop.zip].filter(Boolean).join(", ") || "—"}
-      </p>
+      {formatted.street ? (
+        <>
+          <p className="text-xs text-slate-700 font-medium print:text-black mt-0.5">
+            {formatted.street}
+          </p>
+          <p className="text-xs text-slate-600 print:text-black">
+            {formatted.cityStateZip}
+          </p>
+        </>
+      ) : (
+        <p className="text-xs text-slate-600 print:text-black mt-0.5">
+          {formatted.cityStateZip}
+        </p>
+      )}
     </div>
   );
 }
@@ -66,6 +77,16 @@ export function RateConfirmationView({
   const lineHaul = Math.round(totalPay * 0.88);
   const fuelSurcharge = totalPay - lineHaul;
 
+  const mcNum = organization?.mcNumber ?? (organization as unknown as { mc_number?: string })?.mc_number;
+  const dotNum = organization?.dotNumber ?? (organization as unknown as { dot_number?: string })?.dot_number;
+  const phone = organization?.contactPhone ?? (organization as unknown as { contact_phone?: string })?.contact_phone;
+  const email = organization?.contactEmail ?? (organization as unknown as { contact_email?: string })?.contact_email;
+
+  const complianceParts: string[] = [];
+  if (mcNum) complianceParts.push(`MC# ${mcNum}`);
+  if (dotNum) complianceParts.push(`DOT# ${dotNum}`);
+  const complianceStr = complianceParts.join(" · ");
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-8 text-slate-900 shadow-sm print:max-w-none print:border-none print:shadow-none print:p-0 print:text-black print:bg-white">
       {/* Header */}
@@ -75,14 +96,26 @@ export function RateConfirmationView({
             Freight Brokerage Rate Agreement
           </span>
           <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black">
-            {organization?.name ?? "Loadlinkers TMS Brokerage"}
+            {organization?.name || "Freight Operations"}
           </h1>
-          <p className="text-xs text-slate-600 print:text-black mt-0.5">
-            MC #{organization?.mcNumber ?? "998812"} · USDOT #{organization?.dotNumber ?? "4109822"}
-          </p>
-          <p className="text-xs text-slate-500 print:text-black">
-            Direct Dispatch: (800) 555-5623 · dispatch@loadlinkers.com
-          </p>
+          {organization?.address && (
+            <p className="text-xs text-slate-600 print:text-black mt-0.5">
+              {organization.address}
+            </p>
+          )}
+          {complianceStr && (
+            <p className="text-xs text-slate-600 print:text-black mt-0.5 font-medium">
+              {complianceStr}
+            </p>
+          )}
+          {Boolean(phone || email) && (
+            <p className="text-xs text-slate-500 print:text-black mt-0.5">
+              {[
+                phone ? `Dispatch: ${phone}` : null,
+                email ? `Billing: ${email}` : null,
+              ].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </div>
 
         <div className="mt-4 sm:mt-0 sm:text-right">
