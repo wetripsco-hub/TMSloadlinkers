@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { listInvoices } from "@/lib/repositories/invoices";
 import { listLoads, getLoadById } from "@/lib/repositories/loads";
 import { getCarrierById } from "@/lib/repositories/carriers";
+import { getCurrentUserOrganization } from "@/lib/repositories/organizations";
 import { SettlementTable } from "@/components/settlements/settlement-table";
 import { GenerateSettlementDialog } from "@/components/settlements/generate-settlement-dialog";
 import { ExportCsvButton } from "@/components/settlements/export-csv-button";
@@ -15,14 +16,15 @@ import type { CarrierRecord } from "@/lib/repositories/carriers";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Settlements (AP) | FreightLink TMS",
+  title: "Carrier Settlements (AP) | Freight Operations",
 };
 
 export default async function SettlementsPage() {
-  const [{ data: invoices }, deliveredLoads, podUploadedLoads] = await Promise.all([
+  const [{ data: invoices }, deliveredLoads, podUploadedLoads, organization] = await Promise.all([
     listInvoices({}, { page: 1, pageSize: 100 }),
     listLoads({ status: "delivered" }, { page: 1, pageSize: 50 }),
     listLoads({ status: "pod_uploaded" }, { page: 1, pageSize: 50 }),
+    getCurrentUserOrganization(),
   ]);
 
   const settlements = invoices.filter(
@@ -135,6 +137,7 @@ export default async function SettlementsPage() {
         settlements={settlements}
         loadsById={loadsById}
         carriersById={carriersById}
+        organization={organization}
       />
     </div>
   );

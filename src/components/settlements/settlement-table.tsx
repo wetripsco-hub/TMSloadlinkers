@@ -12,20 +12,23 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { Search, Truck, ArrowRight, Calendar } from "lucide-react";
-import type { Invoice, Load } from "../../../types/domain";
+import { Search, Truck, ArrowRight, Calendar, Printer } from "lucide-react";
+import { SettlementVoucherModal } from "@/components/settlements/settlement-voucher-modal";
+import type { Invoice, Load, Organization } from "../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
 interface SettlementTableProps {
   settlements: Invoice[];
   loadsById: Record<string, Load>;
   carriersById: Record<string, CarrierRecord>;
+  organization?: Organization | null;
 }
 
 export function SettlementTable({
   settlements,
   loadsById,
   carriersById,
+  organization,
 }: SettlementTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -116,6 +119,7 @@ export function SettlementTable({
               <TableCell isHeader className="py-3.5 px-4 text-slate-600">Status</TableCell>
               <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Carrier Pay Amount</TableCell>
               <TableCell isHeader className="py-3.5 px-4 text-slate-600">Date Issued</TableCell>
+              <TableCell isHeader className="py-3.5 px-4 text-slate-600 text-right">Actions</TableCell>
             </tr>
           </TableHeader>
           <TableBody>
@@ -168,6 +172,28 @@ export function SettlementTable({
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span>{formatDate(invoice.issueDate)}</span>
                     </span>
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell className="py-3.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <SettlementVoucherModal
+                        invoice={invoice}
+                        load={load}
+                        carrier={carrier}
+                        organization={organization}
+                        triggerButton={
+                          <button
+                            type="button"
+                            title="Print or Save PDF Settlement Voucher"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                          >
+                            <Printer className="h-3.5 w-3.5 text-emerald-600" />
+                            <span className="hidden sm:inline">Voucher / PDF</span>
+                          </button>
+                        }
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               );

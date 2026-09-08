@@ -53,8 +53,13 @@ function csvEscape(value: string): string {
   return value;
 }
 
+import { getCurrentUserOrganization } from "@/lib/repositories/organizations";
+
 export async function exportSettlementsCsvAction(): Promise<string> {
-  const { data: invoices } = await listInvoices({}, { page: 1, pageSize: 1000 });
+  const [{ data: invoices }, organization] = await Promise.all([
+    listInvoices({}, { page: 1, pageSize: 1000 }),
+    getCurrentUserOrganization(),
+  ]);
   const settlements = invoices.filter(
     (invoice) => invoice.invoiceType === "carrier_settlement_voucher"
   );
@@ -77,17 +82,28 @@ export async function exportSettlementsCsvAction(): Promise<string> {
     carriers.filter((carrier) => carrier !== null).map((carrier) => [carrier.id, carrier])
   );
 
-  const rows = ["Load ID,Carrier,Amount Paid,Date"];
+  const orgName = organization?.name || "Freight Brokerage";
+  const rows = [
+    "Voucher #,Load Reference,Carrier Name,Carrier MC,Carrier DOT,Payment Status,Carrier Pay (USD),Date Issued,Disbursing Organization",
+  ];
   for (const invoice of settlements) {
     const load = invoice.loadId ? loadsById.get(invoice.loadId) : undefined;
     const carrier = load?.carrierId ? carriersById.get(load.carrierId) : undefined;
+    const formattedVoucher =
+      invoice.invoiceNumber || `SET-${invoice.id.slice(0, 8).toUpperCase()}`;
+    const loadNum = load?.loadNumber || (invoice.loadId ? `LD-${invoice.loadId.slice(0, 6).toUpperCase()}` : "—");
 
     rows.push(
       [
-        csvEscape(invoice.loadId ?? ""),
-        csvEscape(carrier?.companyName ?? ""),
+        csvEscape(formattedVoucher),
+        csvEscape(loadNum),
+        csvEscape(carrier?.companyName ?? "Unassigned Carrier"),
+        csvEscape(carrier?.mcNumber ?? ""),
+        csvEscape(carrier?.dotNumber ?? ""),
+        csvEscape(invoice.status),
         csvEscape(formatCents(invoice.amountTotal)),
         csvEscape(invoice.issueDate),
+        csvEscape(orgName),
       ].join(",")
     );
   }
