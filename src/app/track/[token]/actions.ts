@@ -1,6 +1,10 @@
 "use server";
 
-import { recordTrackingPing } from "@/lib/repositories/tracking";
+import {
+  recordTrackingPing,
+  advanceTrackingStatus,
+  type DriverAdvanceableStatus,
+} from "@/lib/repositories/tracking";
 
 // No auth/org check here by design -- this route is public. Isolation is
 // enforced inside recordTrackingPing, which resolves the load strictly from
@@ -24,4 +28,11 @@ export async function submitTrackingPingAction(
   }
 
   await recordTrackingPing(token, lat, lng);
+}
+
+export async function submitAdvanceStatusAction(
+  token: string,
+  nextStatus: DriverAdvanceableStatus
+): Promise<void> {
+  await advanceTrackingStatus(token, nextStatus);
 }

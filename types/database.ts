@@ -432,6 +432,8 @@ export type Database = {
       }
       loads: {
         Row: {
+          arrived_at_delivery_at: string | null
+          arrived_at_pickup_at: string | null
           broker_margin: number | null
           carrier_id: string | null
           carrier_pay: number
@@ -439,8 +441,15 @@ export type Database = {
           created_at: string
           customer_id: string | null
           customer_po_number: string | null
+          delivered_at: string | null
           delivery_date: string | null
+          departed_pickup_at: string | null
           destination: string | null
+          destination_city: string | null
+          destination_facility_name: string | null
+          destination_state: string | null
+          destination_window_end: string | null
+          destination_zip: string | null
           driver_name: string | null
           driver_phone: string | null
           equipment_type: string | null
@@ -448,9 +457,16 @@ export type Database = {
           last_known_lat: number | null
           last_known_lng: number | null
           last_ping_at: string | null
+          load_number: string | null
+          load_seq: number
           needs_shipper_rate: boolean
           org_id: string
           origin: string | null
+          origin_city: string | null
+          origin_facility_name: string | null
+          origin_state: string | null
+          origin_window_end: string | null
+          origin_zip: string | null
           pickup_date: string | null
           shipper_rate: number
           status: Database["public"]["Enums"]["load_operational_status"]
@@ -461,6 +477,8 @@ export type Database = {
           weight_lbs: number | null
         }
         Insert: {
+          arrived_at_delivery_at?: string | null
+          arrived_at_pickup_at?: string | null
           broker_margin?: number | null
           carrier_id?: string | null
           carrier_pay?: number
@@ -468,8 +486,15 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_po_number?: string | null
+          delivered_at?: string | null
           delivery_date?: string | null
+          departed_pickup_at?: string | null
           destination?: string | null
+          destination_city?: string | null
+          destination_facility_name?: string | null
+          destination_state?: string | null
+          destination_window_end?: string | null
+          destination_zip?: string | null
           driver_name?: string | null
           driver_phone?: string | null
           equipment_type?: string | null
@@ -477,9 +502,16 @@ export type Database = {
           last_known_lat?: number | null
           last_known_lng?: number | null
           last_ping_at?: string | null
+          load_number?: string | null
+          load_seq?: never
           needs_shipper_rate?: boolean
           org_id: string
           origin?: string | null
+          origin_city?: string | null
+          origin_facility_name?: string | null
+          origin_state?: string | null
+          origin_window_end?: string | null
+          origin_zip?: string | null
           pickup_date?: string | null
           shipper_rate?: number
           status?: Database["public"]["Enums"]["load_operational_status"]
@@ -490,6 +522,8 @@ export type Database = {
           weight_lbs?: number | null
         }
         Update: {
+          arrived_at_delivery_at?: string | null
+          arrived_at_pickup_at?: string | null
           broker_margin?: number | null
           carrier_id?: string | null
           carrier_pay?: number
@@ -497,8 +531,15 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_po_number?: string | null
+          delivered_at?: string | null
           delivery_date?: string | null
+          departed_pickup_at?: string | null
           destination?: string | null
+          destination_city?: string | null
+          destination_facility_name?: string | null
+          destination_state?: string | null
+          destination_window_end?: string | null
+          destination_zip?: string | null
           driver_name?: string | null
           driver_phone?: string | null
           equipment_type?: string | null
@@ -506,9 +547,16 @@ export type Database = {
           last_known_lat?: number | null
           last_known_lng?: number | null
           last_ping_at?: string | null
+          load_number?: string | null
+          load_seq?: never
           needs_shipper_rate?: boolean
           org_id?: string
           origin?: string | null
+          origin_city?: string | null
+          origin_facility_name?: string | null
+          origin_state?: string | null
+          origin_window_end?: string | null
+          origin_zip?: string | null
           pickup_date?: string | null
           shipper_rate?: number
           status?: Database["public"]["Enums"]["load_operational_status"]
@@ -1002,6 +1050,13 @@ export type Database = {
       }
     }
     Functions: {
+      advance_tracking_status: {
+        Args: {
+          p_next_status: Database["public"]["Enums"]["load_operational_status"]
+          p_token: string
+        }
+        Returns: undefined
+      }
       approve_data_reset_request: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -1048,13 +1103,30 @@ export type Database = {
       get_load_by_tracking_token: {
         Args: { p_token: string }
         Returns: {
+          arrived_at_delivery_at: string
+          arrived_at_pickup_at: string
+          delivered_at: string
+          delivery_date: string
+          departed_pickup_at: string
           destination: string
+          destination_city: string
+          destination_facility_name: string
+          destination_state: string
+          destination_window_end: string
+          destination_zip: string
           driver_name: string
           id: string
           last_known_lat: number
           last_known_lng: number
           last_ping_at: string
+          load_number: string
           origin: string
+          origin_city: string
+          origin_facility_name: string
+          origin_state: string
+          origin_window_end: string
+          origin_zip: string
+          pickup_date: string
           status: Database["public"]["Enums"]["load_operational_status"]
           truck_number: string
         }[]
