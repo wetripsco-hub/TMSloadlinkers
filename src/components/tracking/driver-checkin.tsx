@@ -1,6 +1,5 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -8,6 +7,7 @@ import { LoadStatusBadge } from "@/components/loads/load-status-badge";
 import { DriverPingButton } from "@/components/tracking/driver-ping-button";
 import { TrackingTimeline, type TrackingTimelineStop } from "@/components/tracking/tracking-timeline";
 import { submitAdvanceStatusAction } from "@/app/track/[token]/actions";
+import { useOfflineActionQueue } from "@/lib/tracking/offline-queue";
 import { getNextStatus } from "@/lib/domain/load-status";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -33,18 +33,31 @@ function isDriverAdvanceable(status: string): status is DriverAdvanceableStatus 
 
 export function DriverCheckin({ token, load }: { token: string; load: TrackedLoad }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const { enqueue, retry, getState } = useOfflineActionQueue();
 
   const next = getNextStatus(load.status);
   const primaryTarget = next && isDriverAdvanceable(next) ? next : null;
   const nextNext = primaryTarget ? getNextStatus(primaryTarget) : null;
   const secondaryTarget = nextNext && isDriverAdvanceable(nextNext) ? nextNext : null;
 
+  const primaryState = primaryTarget ? getState(primaryTarget) : null;
+
   function handleAdvance(target: DriverAdvanceableStatus) {
-    startTransition(async () => {
+    enqueue(target, async () => {
       await submitAdvanceStatusAction(token, target);
       router.refresh();
     });
+  }
+
+  function handlePrimaryClick() {
+    if (!primaryTarget) return;
+
+    if (primaryState?.status === "failed") {
+      retry(primaryTarget);
+      return;
+    }
+
+    handleAdvance(primaryTarget);
   }
 
   const stops: TrackingTimelineStop[] = [
@@ -124,11 +137,20 @@ export function DriverCheckin({ token, load }: { token: string; load: TrackedLoa
           {primaryTarget ? (
             <button
               type="button"
-              disabled={isPending}
-              onClick={() => handleAdvance(primaryTarget)}
-              className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={primaryState?.status === "pending" || primaryState?.status === "retrying"}
+              onClick={handlePrimaryClick}
+              className={cn(
+                "inline-flex min-h-[52px] w-full items-center justify-center rounded-xl px-6 py-3.5 text-base font-semibold shadow-sm transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60",
+                primaryState?.status === "failed"
+                  ? "bg-rose-600 text-white hover:bg-rose-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              )}
             >
-              {isPending ? "Updating..." : DRIVER_ACTION_LABELS[primaryTarget]}
+              {primaryState?.status === "pending" && "Sending..."}
+              {primaryState?.status === "retrying" && "Retrying..."}
+              {primaryState?.status === "failed" && "Couldn't send — tap to retry"}
+              {(!primaryState || primaryState.status === "idle") &&
+                DRIVER_ACTION_LABELS[primaryTarget]}
             </button>
           ) : (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
