@@ -77,7 +77,7 @@ export function GenerateSettlementDialog({ eligibleLoads }: { eligibleLoads: Loa
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="load">Load</Label>
           <Select value={loadId} onValueChange={(value) => setLoadId(value ?? "")}>
-            <SelectTrigger id="load" className="w-full">
+            <SelectTrigger id="load" className="w-full text-foreground">
               <SelectValue placeholder="Select a load" />
             </SelectTrigger>
             <SelectContent>
