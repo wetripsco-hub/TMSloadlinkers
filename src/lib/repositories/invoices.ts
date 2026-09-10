@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { parseCents, formatCents } from "@/lib/money";
-import type { Cents, Invoice, InvoiceType, PaymentStatus, UUID } from "../../../types/domain";
+import { getLoadById, listLoads } from "@/lib/repositories/loads";
+import { LOAD_STATUS_FORWARD_CHAIN } from "@/lib/domain/load-status";
+import type { Cents, Invoice, InvoiceType, Load, LoadStatus, PaymentStatus, UUID } from "../../../types/domain";
 
 // The `invoices` table does not yet persist every field on the Invoice
 // domain interface (invoiceNumber, billToName/Email, issueDate,
@@ -245,4 +247,85 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
   }
 
   return mapRowToInvoice(data as unknown as InvoiceRow);
+}
+
+// "Reached at least pod_uploaded" == pod_uploaded, invoiced, or settled in
+// the forward chain (lib/domain/load-status.ts). A load that hasn't been
+// delivered/POD'd yet isn't billing-ready; 'cancelled' sits outside the
+// forward chain entirely (indexOf === -1) and is correctly excluded too.
+const POD_UPLOADED_CHAIN_INDEX = LOAD_STATUS_FORWARD_CHAIN.indexOf("pod_uploaded" as LoadStatus);
+
+export function isLoadEligibleForShipperInvoice(status: LoadStatus): boolean {
+  const index = LOAD_STATUS_FORWARD_CHAIN.indexOf(status);
+  return index !== -1 && index >= POD_UPLOADED_CHAIN_INDEX;
+}
+
+// Loads that have reached at least pod_uploaded and have no shipper_invoice
+// yet -- this is what the manual "Generate invoice" dialog should offer.
+// Deliberately includes loads already at invoiced/settled that are missing
+// their invoice (e.g. because the automatic delivered-transition attempt in
+// advanceLoadStatus failed silently) so they can be manually backfilled;
+// the old filter (status in delivered/pod_uploaded only, with no check
+// against existing invoices) neither excluded already-invoiced loads nor
+// included later-stage loads still missing one.
+export async function listLoadsEligibleForShipperInvoice(): Promise<Load[]> {
+  const eligibleStatuses = LOAD_STATUS_FORWARD_CHAIN.slice(POD_UPLOADED_CHAIN_INDEX);
+
+  const results = await Promise.all(
+    eligibleStatuses.map((status) => listLoads({ status }, { page: 1, pageSize: 100 }))
+  );
+  const candidates = results.flatMap((result) => result.data);
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  const { data: invoices } = await listInvoices({}, { page: 1, pageSize: 500 });
+  const loadIdsWithShipperInvoice = new Set(
+    invoices
+      .filter((invoice) => invoice.invoiceType === "shipper_invoice" && invoice.loadId)
+      .map((invoice) => invoice.loadId as string)
+  );
+
+  return candidates.filter((load) => !loadIdsWithShipperInvoice.has(load.id));
+}
+
+export interface CreateShipperInvoiceIfMissingResult {
+  created: boolean;
+  invoice?: Invoice;
+  alreadyExisted?: boolean;
+}
+
+// Single source of truth for "does this load already have a shipper
+// invoice, and if not, create one" -- both the manual Generate Invoice
+// dialog (generateInvoiceAction) and the automatic delivered-transition
+// side effect (advanceLoadStatus) call this instead of each duplicating
+// (and drifting from) their own idempotency-check and due-date logic.
+export async function createShipperInvoiceIfMissing(
+  loadId: UUID
+): Promise<CreateShipperInvoiceIfMissingResult> {
+  const load = await getLoadById(loadId);
+  if (!load) {
+    throw new Error("Load not found");
+  }
+
+  const existing = await listInvoices({ loadId }, { page: 1, pageSize: 20 });
+  const existingShipperInvoice = existing.data.find(
+    (invoice) => invoice.invoiceType === "shipper_invoice"
+  );
+
+  if (existingShipperInvoice) {
+    return { created: false, alreadyExisted: true, invoice: existingShipperInvoice };
+  }
+
+  const dueDate = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+
+  const invoice = await createInvoice({
+    loadId: load.id,
+    customerId: load.customerId,
+    invoiceType: "shipper_invoice",
+    amountTotal: load.shipperRate,
+    dueDate,
+  });
+
+  return { created: true, invoice };
 }
