@@ -3,10 +3,11 @@ import { parseCents, formatCents } from "@/lib/money";
 import type { Cents, Load, LoadStatus, LoadStop, UUID } from "../../../types/domain";
 
 // The `loads` table does not yet persist every field on the Load domain
-// interface (loadNumber, equipmentType, dispatcherCommissionEarned,
-// structured stop details, etc). Those fields are filled with safe defaults
-// below until the schema catches up. Tracking/driver/GPS fields are real
-// columns as of migrations/009_tracking.sql.
+// interface (equipmentType, dispatcherCommissionEarned, structured stop
+// details, etc). Those fields are filled with safe defaults below until the
+// schema catches up. Tracking/driver/GPS fields are real columns as of
+// migrations/009_tracking.sql; load_number is a real column as of
+// migrations/037_tracking_checkin.sql.
 
 interface LoadRow {
   id: string;
@@ -14,6 +15,7 @@ interface LoadRow {
   customer_id: string | null;
   carrier_id: string | null;
   status: LoadStatus;
+  load_number: string | null;
   origin: string | null;
   destination: string | null;
   pickup_date: string | null;
@@ -38,7 +40,7 @@ interface LoadRow {
 }
 
 const LOAD_COLUMNS =
-  "id, org_id, customer_id, carrier_id, status, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, equipment_type, commodity, weight_lbs, customer_po_number, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, created_at, updated_at";
+  "id, org_id, customer_id, carrier_id, status, load_number, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, equipment_type, commodity, weight_lbs, customer_po_number, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, created_at, updated_at";
 
 function moneyToCents(value: number): Cents {
   return parseCents(String(value));
@@ -64,7 +66,7 @@ function mapRowToLoad(row: LoadRow): Load {
   return {
     id: row.id,
     orgId: row.org_id,
-    loadNumber: "",
+    loadNumber: row.load_number ?? "",
     status: row.status,
     customerId: row.customer_id,
     carrierId: row.carrier_id,
@@ -313,6 +315,38 @@ export async function assignCarrier(loadId: UUID, carrierId: UUID): Promise<Load
   const { data, error } = await supabase
     .from("loads")
     .update({ carrier_id: carrierId })
+    .eq("id", loadId)
+    .select(LOAD_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToLoad(data as unknown as LoadRow);
+}
+
+export interface DriverInfoInput {
+  driverName: string | null;
+  driverPhone: string | null;
+  truckNumber: string | null;
+  trailerNumber: string | null;
+}
+
+// Focused update: touches only these four columns, unlike a general-purpose
+// load update, so a dispatcher editing driver/truck details can never
+// accidentally clobber rate, status, or stop fields with stale form state.
+export async function updateDriverInfo(loadId: UUID, fields: DriverInfoInput): Promise<Load> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("loads")
+    .update({
+      driver_name: fields.driverName,
+      driver_phone: fields.driverPhone,
+      truck_number: fields.truckNumber,
+      trailer_number: fields.trailerNumber,
+    })
     .eq("id", loadId)
     .select(LOAD_COLUMNS)
     .single();

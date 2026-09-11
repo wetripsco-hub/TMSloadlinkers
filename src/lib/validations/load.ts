@@ -39,6 +39,44 @@ export const equipmentCargoStepSchema = z.object({
   specialInstructions: z.string().trim().optional().or(z.literal("")),
 });
 
+// Same normalization pattern as normalizePhoneNumber in
+// app/actions/send-tracking-link.ts (kept separate, not imported -- that
+// file's exports must all be async Server Actions, so its helper can't be
+// shared): strips punctuation, prepends +1 to a bare 10-digit US number,
+// otherwise leaves an already-'+'-prefixed number as digits-only-after-'+'.
+function normalizeDriverPhone(raw: string): string {
+  const trimmed = raw.trim();
+  const hasLeadingPlus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/\D/g, "");
+
+  if (hasLeadingPlus) {
+    return `+${digits}`;
+  }
+
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+
+  return digits;
+}
+
+const E164_PATTERN = /^\+[1-9]\d{1,14}$/;
+
+export const driverDispatchSchema = z.object({
+  driverName: z.string().trim().max(120).optional().or(z.literal("")),
+  driverPhone: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || E164_PATTERN.test(normalizeDriverPhone(value)), {
+      message: "Enter a valid phone number (e.g. (555) 123-4567 or +15551234567)",
+    })
+    .transform((value) => (value ? normalizeDriverPhone(value) : "")),
+  truckNumber: z.string().trim().max(50).optional().or(z.literal("")),
+  trailerNumber: z.string().trim().max(50).optional().or(z.literal("")),
+});
+
+export type DriverDispatchValues = z.infer<typeof driverDispatchSchema>;
+
 export const loadWizardSchema = z.object({
   ...customerRateStepSchema.shape,
   origin: loadStopSchema,
