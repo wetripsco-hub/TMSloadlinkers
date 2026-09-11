@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
-import { createClient } from "@/lib/supabase/client";
+import { resolveModuleForPath, isModuleAllowed } from "@/lib/domain/modules";
+import { isAdminRole } from "@/lib/auth/admin-role";
 import {
   Truck,
   Building2,
@@ -19,6 +20,7 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface NavItem {
@@ -56,6 +58,7 @@ const navSections: NavSection[] = [
     title: "MANAGEMENT",
     items: [
       { name: "Documents", path: "/documents", icon: FileText },
+      { name: "Review Queue", path: "/documents/review", icon: ClipboardCheck },
       { name: "Driver Tracking", path: "/driver-tracking", icon: Navigation, tourId: "nav-tracking" },
     ],
   },
@@ -68,49 +71,46 @@ const navSections: NavSection[] = [
   },
 ];
 
-interface UserProfile {
-  id: string;
-  email: string | null;
-  fullName: string | null;
-  role: string | null;
-}
-
 export const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered, orgName, orgLogoUrl } = useSidebar();
+  const {
+    isExpanded,
+    isMobileOpen,
+    isHovered,
+    setIsHovered,
+    orgName,
+    orgLogoUrl,
+    profileFullName,
+    profileEmail,
+    profileRole,
+    profileAllowedModules,
+  } = useSidebar();
   const pathname = usePathname();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("full_name, role")
-            .eq("id", user.id)
-            .single();
-
-          setProfile({
-            id: user.id,
-            email: user.email || null,
-            fullName: profileData?.full_name || user.user_metadata?.full_name || null,
-            role: profileData?.role || "Member",
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching user profile in sidebar:", err);
-      }
-    }
-
-    fetchUser();
-  }, []);
 
   const isVisibleExpanded = isExpanded || isHovered || isMobileOpen;
+
+  // Restricted members never see a link for a module they can't open.
+  // Overview is now a normal module (lib/domain/modules.ts) so it's
+  // covered by the same resolveModuleForPath/isModuleAllowed check as
+  // everything else -- no special-casing here. Settings isn't part of
+  // allowed_modules at all; every settings/*/page.tsx gates on
+  // isAdminRole via getAdminContext (lib/auth/require-admin.ts), so the
+  // link uses that same predicate rather than a new one. Help & Support
+  // is the only item with no gate. profile* comes from the server layout
+  // (DashboardLayout -> SidebarProvider), so it's known on first paint --
+  // no client-side fetch, no unrestricted-then-narrowed flash.
+  const visibleNavSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        if (item.path === "/settings/organization") {
+          return isAdminRole(profileRole);
+        }
+        const navModule = resolveModuleForPath(item.path);
+        if (!navModule) return true;
+        return isModuleAllowed(profileRole, profileAllowedModules, navModule.key);
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
 
   const isActive = (path: string) => {
     if (path === "/overview") {
@@ -123,16 +123,16 @@ export const AppSidebar: React.FC = () => {
   };
 
   const getInitials = () => {
-    if (profile?.fullName) {
-      return profile.fullName
+    if (profileFullName) {
+      return profileFullName
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase()
         .slice(0, 2);
     }
-    if (profile?.email) {
-      return profile.email.slice(0, 2).toUpperCase();
+    if (profileEmail) {
+      return profileEmail.slice(0, 2).toUpperCase();
     }
     return "BA";
   };
@@ -175,7 +175,7 @@ export const AppSidebar: React.FC = () => {
 
       {/* Navigation List */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {navSections.map((section) => (
+        {visibleNavSections.map((section) => (
           <div key={section.title}>
             {isVisibleExpanded ? (
               <h3 className="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
@@ -253,7 +253,7 @@ export const AppSidebar: React.FC = () => {
           className={`flex items-center gap-2.5 rounded-xl p-1.5 hover:bg-slate-100 transition-colors ${
             !isVisibleExpanded ? "justify-center" : ""
           }`}
-          title={!isVisibleExpanded ? profile?.fullName || "User Profile" : undefined}
+          title={!isVisibleExpanded ? profileFullName || "User Profile" : undefined}
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-xs font-bold text-white shadow-xs">
             {getInitials()}
@@ -261,10 +261,10 @@ export const AppSidebar: React.FC = () => {
           {isVisibleExpanded && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-slate-800">
-                {profile?.fullName || "Broker User"}
+                {profileFullName || "Broker User"}
               </p>
               <p className="truncate text-[10px] text-slate-500">
-                {profile?.email || "user@loadlinkers.com"}
+                {profileEmail || "user@loadlinkers.com"}
               </p>
             </div>
           )}

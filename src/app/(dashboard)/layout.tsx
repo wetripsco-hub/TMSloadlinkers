@@ -42,11 +42,21 @@ export default async function DashboardLayout({
     .eq("id", orgId)
     .maybeSingle();
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, role, allowed_modules")
+    .eq("id", user.id)
+    .maybeSingle();
+
   return (
     <SidebarProvider
       orgName={organization?.name ?? null}
       orgLogoUrl={organization?.logo_url ?? null}
       workspaceType={organization?.workspace_type ?? null}
+      profileFullName={profile?.full_name ?? (user.user_metadata?.full_name as string | undefined) ?? null}
+      profileEmail={user.email ?? null}
+      profileRole={profile?.role ?? null}
+      profileAllowedModules={profile?.allowed_modules ?? []}
     >
       <DashboardShell>
         <div className="space-y-6">

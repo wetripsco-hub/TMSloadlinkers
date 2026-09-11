@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveModuleForPath, isModuleAllowed, firstAllowedModulePath } from "@/lib/domain/modules";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -30,12 +31,15 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const DASHBOARD_PREFIXES = [
+    "/overview",
     "/loads",
     "/carriers",
     "/customers",
     "/invoices",
     "/settlements",
     "/documents",
+    "/reports",
+    "/driver-tracking",
   ];
   const isDashboardRoute = DASHBOARD_PREFIXES.some(
     (prefix) => request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`)
@@ -45,6 +49,32 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Per-member module visibility/routing (lib/domain/modules.ts). This is
+  // NOT tenant isolation -- org_id/RLS already scopes every query
+  // regardless of this check; a restricted member who somehow reached a
+  // module's data would still only ever see their own org's rows. This
+  // only decides whether they're allowed to navigate to the route at all.
+  if (user && isDashboardRoute) {
+    const matchedModule = resolveModuleForPath(request.nextUrl.pathname);
+    if (matchedModule) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, allowed_modules")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!isModuleAllowed(profile?.role, profile?.allowed_modules, matchedModule.key)) {
+        // 'overview' is itself gated now, so the old hardcoded '/overview'
+        // fallback could send a restricted member straight back into
+        // another redirect -- land on the first module they actually have.
+        const fallbackPath = firstAllowedModulePath(profile?.allowed_modules, profile?.role);
+        const redirectUrl = new URL(fallbackPath, request.url);
+        redirectUrl.searchParams.set("restricted", matchedModule.key);
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
   }
 
   const isPlatformAdminRoute =
@@ -75,12 +105,15 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/overview/:path*",
     "/loads/:path*",
     "/carriers/:path*",
     "/customers/:path*",
     "/invoices/:path*",
     "/settlements/:path*",
     "/documents/:path*",
+    "/reports/:path*",
+    "/driver-tracking/:path*",
     "/platform-admin/:path*",
   ],
 };

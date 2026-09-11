@@ -10,6 +10,7 @@ export interface TeamMember {
   role: MemberRole;
   isActive: boolean;
   createdAt: string;
+  allowedModules: string[];
 }
 
 export interface TeamInvite {
@@ -18,6 +19,7 @@ export interface TeamInvite {
   role: MemberRole;
   createdAt: string;
   expiresAt: string;
+  allowedModules: string[];
 }
 
 export interface TeamOverview {
@@ -34,12 +36,12 @@ export async function getTeamOverview(orgId: string): Promise<TeamOverview> {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, role, is_active, created_at")
+        .select("id, full_name, role, is_active, created_at, allowed_modules")
         .eq("org_id", orgId)
         .order("created_at", { ascending: true }),
       supabase
         .from("invitations")
-        .select("id, email, role, created_at, expires_at")
+        .select("id, email, role, created_at, expires_at, allowed_modules")
         .eq("org_id", orgId)
         .is("accepted_at", null)
         .is("revoked_at", null)
@@ -61,6 +63,7 @@ export async function getTeamOverview(orgId: string): Promise<TeamOverview> {
       role: member.role,
       isActive: member.is_active,
       createdAt: member.created_at,
+      allowedModules: member.allowed_modules,
     })),
     invites: (invites ?? []).map((invite) => ({
       id: invite.id,
@@ -68,6 +71,7 @@ export async function getTeamOverview(orgId: string): Promise<TeamOverview> {
       role: invite.role,
       createdAt: invite.created_at,
       expiresAt: invite.expires_at,
+      allowedModules: invite.allowed_modules,
     })),
     seatsUsed: seatsUsed ?? 0,
     seatLimit: subscription?.seat_limit ?? 0,

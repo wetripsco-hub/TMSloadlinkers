@@ -1,8 +1,9 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole, type AdminRole } from "@/lib/auth/admin-role";
 import type { UUID } from "../../../types/domain";
 
-export type AdminRole = "owner" | "admin";
+export type { AdminRole };
 
 export interface AdminContext {
   userId: UUID;
@@ -26,7 +27,7 @@ export async function getAdminContext(): Promise<AdminContext | null> {
     .maybeSingle();
 
   if (!profile?.org_id) return null;
-  if (profile.role !== "owner" && profile.role !== "admin") return null;
+  if (!isAdminRole(profile.role)) return null;
 
   return {
     userId: user.id as UUID,

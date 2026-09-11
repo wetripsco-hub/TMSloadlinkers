@@ -11,6 +11,10 @@ type SidebarContextType = {
   orgName: string | null;
   orgLogoUrl: string | null;
   workspaceType: string | null;
+  profileFullName: string | null;
+  profileEmail: string | null;
+  profileRole: string | null;
+  profileAllowedModules: string[];
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
   setIsHovered: (isHovered: boolean) => void;
@@ -33,7 +37,20 @@ export const SidebarProvider: React.FC<{
   orgName?: string | null;
   orgLogoUrl?: string | null;
   workspaceType?: string | null;
-}> = ({ children, orgName = null, orgLogoUrl = null, workspaceType = null }) => {
+  profileFullName?: string | null;
+  profileEmail?: string | null;
+  profileRole?: string | null;
+  profileAllowedModules?: string[];
+}> = ({
+  children,
+  orgName = null,
+  orgLogoUrl = null,
+  workspaceType = null,
+  profileFullName = null,
+  profileEmail = null,
+  profileRole = null,
+  profileAllowedModules = [],
+}) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -81,6 +98,10 @@ export const SidebarProvider: React.FC<{
         orgName,
         orgLogoUrl,
         workspaceType,
+        profileFullName,
+        profileEmail,
+        profileRole,
+        profileAllowedModules,
         toggleSidebar,
         toggleMobileSidebar,
         setIsHovered,
