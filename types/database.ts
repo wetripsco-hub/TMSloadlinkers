@@ -190,6 +190,33 @@ export type Database = {
           },
         ]
       }
+      fmcsa_lookup_cache: {
+        Row: {
+          dot_number: string | null
+          expires_at: string
+          fetched_at: string
+          id: string
+          mc_number: string | null
+          response_json: Json
+        }
+        Insert: {
+          dot_number?: string | null
+          expires_at: string
+          fetched_at?: string
+          id?: string
+          mc_number?: string | null
+          response_json: Json
+        }
+        Update: {
+          dot_number?: string | null
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          mc_number?: string | null
+          response_json?: Json
+        }
+        Relationships: []
+      }
       gps_pings: {
         Row: {
           id: string
@@ -226,6 +253,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           accepted_by: string | null
+          allowed_modules: string[]
           created_at: string
           email: string
           expires_at: string
@@ -239,6 +267,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           accepted_by?: string | null
+          allowed_modules?: string[]
           created_at?: string
           email: string
           expires_at?: string
@@ -252,6 +281,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           accepted_by?: string | null
+          allowed_modules?: string[]
           created_at?: string
           email?: string
           expires_at?: string
@@ -785,6 +815,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allowed_modules: string[]
           created_at: string
           email: string | null
           full_name: string | null
@@ -795,6 +826,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_modules?: string[]
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -805,6 +837,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_modules?: string[]
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -1195,6 +1228,15 @@ export type Database = {
       }
       is_org_admin: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { uid: string }; Returns: boolean }
+      list_tracking_documents: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          document_type: string
+          id: string
+          ocr_status: string
+        }[]
+      }
       org_can_write: { Args: { p_org_id: string }; Returns: boolean }
       record_tracking_ping: {
         Args: { p_lat: number; p_lng: number; p_token: string }
@@ -1203,6 +1245,13 @@ export type Database = {
       reject_data_reset_request: {
         Args: { p_reason: string; p_request_id: string }
         Returns: undefined
+      }
+      resolve_load_for_tracking_upload: {
+        Args: { p_token: string }
+        Returns: {
+          load_id: string
+          org_id: string
+        }[]
       }
       seats_used: { Args: { p_org_id: string }; Returns: number }
       trial_lifecycle_targets: {
