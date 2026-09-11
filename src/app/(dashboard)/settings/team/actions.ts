@@ -123,13 +123,21 @@ export async function setMemberActive(memberId: string, isActive: boolean) {
     throw new Error("The organization owner cannot be deactivated");
   }
 
-  const { error } = await supabase
+  // profiles' only UPDATE policy is `profiles_update_own_row: (id = auth.uid())`,
+  // so a session-bound client silently affects 0 rows here -- the role/org_id
+  // check above is the actual authorization boundary; the service-role
+  // client is only used to perform the write it already authorized.
+  const serviceClient = createServiceClient();
+  const { data: updated, error } = await serviceClient
     .from("profiles")
     .update({ is_active: isActive })
     .eq("id", memberId)
-    .eq("org_id", admin.orgId);
+    .eq("org_id", admin.orgId)
+    .select("id")
+    .maybeSingle();
 
   if (error) throw error;
+  if (!updated) throw new Error("Member not found");
 
   revalidatePath("/settings/team");
 }
