@@ -67,6 +67,7 @@ export function DocumentUploadForm({ loadId }: { loadId: UUID }) {
         <Select
           value={documentType}
           onValueChange={(value) => setDocumentType(value as DocumentType)}
+          items={DOCUMENT_TYPE_LABELS}
         >
           <SelectTrigger id="documentType" className="w-56">
             <SelectValue />

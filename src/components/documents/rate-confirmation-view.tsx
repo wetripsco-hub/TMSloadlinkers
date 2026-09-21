@@ -88,7 +88,7 @@ export function RateConfirmationView({
   const complianceStr = complianceParts.join(" · ");
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-8 text-slate-900 shadow-sm print:max-w-none print:border-none print:shadow-none print:p-0 print:text-black print:bg-white">
+    <div className="rate-con-document mx-auto flex w-full max-w-4xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-8 text-slate-900 shadow-sm print:max-w-none print:w-full print:border-none print:shadow-none print:p-0 print:m-0 print:text-black print:bg-white">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b-2 border-slate-900 pb-5 print:border-black">
         <div>

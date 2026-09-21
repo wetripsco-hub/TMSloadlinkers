@@ -106,8 +106,27 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
   const lineHaul = Math.round(totalPay * 0.88);
   const fuelSurcharge = totalPay - lineHaul;
 
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      const sheet = document.getElementById(`rate-con-${load.id}`);
+      if (sheet?.parentElement) {
+        sheet.parentElement.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("beforeprint", handleBeforePrint);
+    return () => window.removeEventListener("beforeprint", handleBeforePrint);
+  }, [load.id]);
+
   const handlePrint = () => {
-    window.print();
+    const sheet = document.getElementById(`rate-con-${load.id}`);
+    if (sheet?.parentElement) {
+      sheet.parentElement.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      window.print();
+    }, 50);
   };
 
   return (
@@ -129,7 +148,7 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
       )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-4xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-slate-900/60 backdrop-blur-md border border-slate-800">
+        <DialogContent className="max-w-4xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-slate-900/60 backdrop-blur-md border border-slate-800 print:static print:top-auto print:left-auto print:translate-x-0 print:translate-y-0 print:transform-none print:w-full print:max-w-none print:max-h-none print:h-auto print:overflow-visible print:bg-white print:border-none print:p-0 print:m-0 print:block">
           {/* Action Header in Modal */}
           <div className="no-print flex items-center justify-between px-6 py-3 border-b border-slate-800 shrink-0 bg-slate-900/90 z-10 sticky top-0">
             <div className="flex items-center gap-2.5">
@@ -169,33 +188,33 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
           </div>
 
           {/* Scrollable Document Viewport */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-950/40">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-950/40 print:bg-white print:p-0 print:m-0 print:overflow-visible print:block print:w-full print:max-w-none">
             {/* Printable Rate Confirmation Document Sheet */}
             <div
               id={`rate-con-${load.id}`}
-              className="rate-con-document w-full max-w-[800px] bg-white text-slate-900 rounded-lg shadow-xl p-8 border border-slate-200 print:border-none print:shadow-none print:p-2 print:text-black print:bg-white"
+              className="rate-con-document mx-auto w-full max-w-[800px] min-h-fit bg-white text-slate-900 rounded-lg shadow-xl p-6 sm:p-8 border border-slate-200 print:max-w-none print:w-full print:border-none print:shadow-none print:p-0 print:m-0 print:text-black print:bg-white"
             >
               {/* Document Header */}
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b-2 border-slate-900 pb-4 print:border-black">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b-2 border-slate-900 pb-4 print:border-black print:pb-1.5">
                 <div>
                   <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-blue-600 print:text-black">
                     Official Freight Contract
                   </span>
-                  <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black">
+                  <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 print:text-black print:text-lg">
                     {orgName}
                   </h1>
                   {currentOrg?.address && (
-                    <p className="text-xs text-slate-600 print:text-black mt-0.5">
+                    <p className="text-xs text-slate-600 print:text-black print:text-[10px] mt-0.5">
                       {currentOrg.address}
                     </p>
                   )}
                   {authorityLine && (
-                    <p className="text-xs font-semibold text-slate-700 print:text-black mt-0.5">
+                    <p className="text-xs font-semibold text-slate-700 print:text-black print:text-[10px] mt-0.5">
                       {authorityLine}
                     </p>
                   )}
                   {Boolean(phone || email) && (
-                    <p className="text-xs text-slate-500 print:text-black mt-0.5">
+                    <p className="text-xs text-slate-500 print:text-black print:text-[10px] mt-0.5">
                       {[
                         phone ? `Dispatch: ${phone}` : null,
                         email ? `Billing: ${email}` : null,
@@ -205,10 +224,10 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
                 </div>
 
             <div className="mt-4 sm:mt-0 sm:text-right">
-              <span className="inline-block rounded-md bg-slate-900 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white print:bg-black">
+              <span className="inline-block rounded-md bg-slate-900 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white print:bg-black print:py-0.5 print:text-[10px]">
                 RATE CONFIRMATION
               </span>
-              <div className="mt-2 text-xs">
+              <div className="mt-2 text-xs print:mt-1 print:text-[10px]">
                 <p className="font-bold text-slate-900 print:text-black">
                   Load Order #: <span className="font-mono text-blue-600 print:text-black">{loadNum}</span>
                 </p>
@@ -223,17 +242,17 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
           </div>
 
           {/* Section: Carrier Assignment & Equipment Details */}
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-b border-slate-200 pb-5 print:border-gray-300">
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-b border-slate-200 pb-5 print:border-gray-300 print:mt-2 print:pb-2 print:gap-2.5">
             {/* Carrier Box */}
-            <div className="rounded-lg bg-slate-50/70 p-3.5 border border-slate-200 print:bg-white print:border-gray-200">
-              <div className="flex items-center gap-1.5 mb-2 text-xs font-bold uppercase tracking-wider text-slate-600 print:text-black">
-                <Truck className="h-3.5 w-3.5 text-blue-600" />
+            <div className="rounded-lg bg-slate-50/70 p-3.5 border border-slate-200 print:bg-white print:border-gray-200 print:p-2">
+              <div className="flex items-center gap-1.5 mb-2 print:mb-1 text-xs font-bold uppercase tracking-wider text-slate-600 print:text-black print:text-[10px]">
+                <Truck className="h-3.5 w-3.5 text-blue-600 print:h-3 print:w-3" />
                 Carrier Information
               </div>
-              <p className="text-sm font-bold text-slate-900 print:text-black">
+              <p className="text-sm font-bold text-slate-900 print:text-black print:text-xs">
                 {carrier?.companyName || "Carrier On File"}
               </p>
-              <div className="mt-1 grid grid-cols-2 gap-2 text-xs text-slate-600 print:text-black">
+              <div className="mt-1 grid grid-cols-2 gap-2 print:gap-1 text-xs text-slate-600 print:text-black print:text-[10px]">
                 <p>MC #: <span className="font-semibold text-slate-900 print:text-black">{carrier?.mcNumber || "Pending"}</span></p>
                 <p>DOT #: <span className="font-semibold text-slate-900 print:text-black">{carrier?.dotNumber || "Pending"}</span></p>
                 <p>Phone: <span className="font-semibold text-slate-900 print:text-black">{carrier?.contactPhone || "(555) 012-3456"}</span></p>
@@ -242,12 +261,12 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
             </div>
 
             {/* Equipment & Load Specs */}
-            <div className="rounded-lg bg-slate-50/70 p-3.5 border border-slate-200 print:bg-white print:border-gray-200">
-              <div className="flex items-center gap-1.5 mb-2 text-xs font-bold uppercase tracking-wider text-slate-600 print:text-black">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            <div className="rounded-lg bg-slate-50/70 p-3.5 border border-slate-200 print:bg-white print:border-gray-200 print:p-2">
+              <div className="flex items-center gap-1.5 mb-2 print:mb-1 text-xs font-bold uppercase tracking-wider text-slate-600 print:text-black print:text-[10px]">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 print:h-3 print:w-3" />
                 Equipment & Specifications
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 print:text-black">
+              <div className="grid grid-cols-2 gap-2 print:gap-1 text-xs text-slate-600 print:text-black print:text-[10px]">
                 <p>Equipment: <span className="font-semibold text-slate-900 print:text-black">{load.equipmentType || "53' Dry Van"}</span></p>
                 <p>Commodity: <span className="font-semibold text-slate-900 print:text-black">{load.commodity || "General Freight (FAK)"}</span></p>
                 <p>Weight: <span className="font-semibold text-slate-900 print:text-black">{load.weightLbs ? `${load.weightLbs.toLocaleString()} lbs` : "42,500 lbs"}</span></p>
@@ -257,27 +276,27 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
           </div>
 
           {/* Section: Stops & Route Schedule */}
-          <div className="mt-5 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 print:text-black">
+          <div className="mt-5 space-y-4 print:mt-2 print:space-y-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 print:text-black print:text-[10px]">
               Route Itinerary & Delivery Schedule
             </h3>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 print:gap-2.5">
               {/* Stop 1: Pickup / Origin */}
-              <div className="relative rounded-lg border border-slate-200 p-4 print:border-gray-300">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold uppercase text-blue-700 border border-blue-200 print:bg-gray-100 print:text-black">
+              <div className="relative rounded-lg border border-slate-200 p-4 print:border-gray-300 print:p-2">
+                <div className="flex items-center justify-between mb-2 print:mb-1">
+                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold uppercase text-blue-700 border border-blue-200 print:bg-gray-100 print:text-black print:text-[9px]">
                     Stop 1 · Shipper Pickup
                   </span>
-                  <span className="text-xs text-slate-500 print:text-black">
+                  <span className="text-xs text-slate-500 print:text-black print:text-[9px]">
                     {pickupDateFormatted}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 print:text-black">
+                <h4 className="text-sm font-bold text-slate-900 print:text-black print:text-xs">
                   {load.origin?.facilityName || `${customer?.name || "Shipper Facility"}`}
                 </h4>
-                <div className="mt-0.5 text-xs text-slate-600 print:text-black flex items-start gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                <div className="mt-0.5 text-xs text-slate-600 print:text-black print:text-[10px] flex items-start gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5 print:h-3 print:w-3" />
                   <div>
                     {originAddress.street ? (
                       <>
@@ -289,27 +308,27 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="mt-2.5 rounded-md bg-slate-50 p-2 text-[11px] text-slate-600 print:bg-gray-50 print:text-black border border-slate-100">
+                <div className="mt-2.5 rounded-md bg-slate-50 p-2 text-[11px] text-slate-600 print:bg-gray-50 print:text-black border border-slate-100 print:mt-1 print:p-1 print:text-[9px]">
                   <span className="font-semibold text-slate-900 print:text-black">Loading Notes: </span>
                   Driver must verify piece count & seal trailer. Clean 53ft trailer required.
                 </div>
               </div>
 
               {/* Stop 2: Delivery / Destination */}
-              <div className="relative rounded-lg border border-slate-200 p-4 print:border-gray-300">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-bold uppercase text-emerald-700 border border-emerald-200 print:bg-gray-100 print:text-black">
+              <div className="relative rounded-lg border border-slate-200 p-4 print:border-gray-300 print:p-2">
+                <div className="flex items-center justify-between mb-2 print:mb-1">
+                  <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-bold uppercase text-emerald-700 border border-emerald-200 print:bg-gray-100 print:text-black print:text-[9px]">
                     Stop 2 · Consignee Delivery
                   </span>
-                  <span className="text-xs text-slate-500 print:text-black">
+                  <span className="text-xs text-slate-500 print:text-black print:text-[9px]">
                     {deliveryDateFormatted}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 print:text-black">
+                <h4 className="text-sm font-bold text-slate-900 print:text-black print:text-xs">
                   {load.destination?.facilityName || "Consignee Receiving Dock"}
                 </h4>
-                <div className="mt-0.5 text-xs text-slate-600 print:text-black flex items-start gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                <div className="mt-0.5 text-xs text-slate-600 print:text-black print:text-[10px] flex items-start gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5 print:h-3 print:w-3" />
                   <div>
                     {destAddress.street ? (
                       <>
@@ -321,7 +340,7 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="mt-2.5 rounded-md bg-slate-50 p-2 text-[11px] text-slate-600 print:bg-gray-50 print:text-black border border-slate-100">
+                <div className="mt-2.5 rounded-md bg-slate-50 p-2 text-[11px] text-slate-600 print:bg-gray-50 print:text-black border border-slate-100 print:mt-1 print:p-1 print:text-[9px]">
                   <span className="font-semibold text-slate-900 print:text-black">Unloading Notes: </span>
                   Signed Proof of Delivery (POD) required with clear signature and timestamp.
                 </div>
@@ -330,37 +349,37 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
           </div>
 
           {/* Section: Rate Agreement Table */}
-          <div className="mt-5 border-t border-slate-200 pt-4 print:border-gray-300">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 print:text-black mb-2">
+          <div className="mt-5 border-t border-slate-200 pt-4 print:border-gray-300 print:mt-2 print:pt-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 print:text-black print:text-[10px] mb-2 print:mb-1">
               Agreed Compensation & Payment Terms
             </h3>
 
-            <div className="rounded-lg border border-slate-200 overflow-hidden print:border-gray-300">
-              <div className="grid grid-cols-3 bg-slate-50 p-2.5 text-xs font-bold text-slate-600 border-b border-slate-200 print:bg-gray-100 print:text-black">
+            <div className="rounded-lg border border-slate-200 overflow-hidden print:border-gray-300 bg-white">
+              <div className="grid grid-cols-3 bg-slate-50 p-2.5 text-xs font-bold text-slate-600 border-b border-slate-200 print:bg-gray-100 print:text-black print:py-1 print:px-2 print:text-[10px]">
                 <span>Description</span>
                 <span className="text-center">Terms</span>
                 <span className="text-right">Agreed Amount (USD)</span>
               </div>
-              <div className="divide-y divide-slate-100 text-xs print:divide-gray-200">
-                <div className="grid grid-cols-3 p-2.5">
+              <div className="divide-y divide-slate-100 text-xs print:divide-gray-200 bg-white print:text-[10px]">
+                <div className="grid grid-cols-3 p-2.5 bg-white print:py-1 print:px-2">
                   <span className="font-medium text-slate-900 print:text-black">Line Haul Agreement</span>
                   <span className="text-center text-slate-500 print:text-black">Fixed Carrier Rate</span>
                   <span className="text-right font-mono font-semibold text-slate-900">{formatCents(lineHaul)}</span>
                 </div>
-                <div className="grid grid-cols-3 p-2.5">
+                <div className="grid grid-cols-3 p-2.5 bg-white print:py-1 print:px-2">
                   <span className="font-medium text-slate-900 print:text-black">Fuel Surcharge (FSC)</span>
                   <span className="text-center text-slate-500 print:text-black">Included</span>
                   <span className="text-right font-mono font-semibold text-slate-900">{formatCents(fuelSurcharge)}</span>
                 </div>
-                <div className="grid grid-cols-3 p-2.5">
+                <div className="grid grid-cols-3 p-2.5 bg-white print:py-1 print:px-2">
                   <span className="font-medium text-slate-900 print:text-black">Accessorials & Detention</span>
                   <span className="text-center text-slate-500 print:text-black">$50/hr after 2 hrs free; TONU $150</span>
                   <span className="text-right font-mono text-slate-600 print:text-black">$0.00 / As Agreed</span>
                 </div>
-                <div className="grid grid-cols-3 bg-blue-50/60 p-3 text-sm font-bold text-slate-900 border-t border-blue-100 print:bg-gray-100 print:text-black">
+                <div className="grid grid-cols-3 bg-blue-50/60 p-3 text-sm font-bold text-slate-900 border-t border-blue-100 print:bg-gray-100 print:text-black print:py-1.5 print:px-2 print:text-xs">
                   <span>TOTAL AGREED CARRIER PAY</span>
-                  <span className="text-center text-xs font-medium text-blue-700 print:text-black">Standard Net 30 / QuickPay</span>
-                  <span className="text-right font-mono text-base text-blue-700 print:text-black">
+                  <span className="text-center text-xs font-medium text-blue-700 print:text-black print:text-[10px]">Standard Net 30 / QuickPay</span>
+                  <span className="text-right font-mono text-base text-blue-700 print:text-black print:text-xs">
                     {formatCents(load.carrierPay)}
                   </span>
                 </div>
@@ -369,11 +388,11 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
           </div>
 
           {/* Section: Standard Legal Terms */}
-          <div className="mt-5 rounded-lg bg-slate-50 p-3.5 text-[10px] text-slate-600 border border-slate-200 print:border-gray-200 print:text-black">
-            <p className="font-bold uppercase text-slate-800 print:text-black mb-1">
+          <div className="mt-5 rounded-lg bg-slate-50 p-3.5 text-[10px] text-slate-700 border border-slate-200 print:border-gray-200 print:text-black print:mt-1.5 print:p-1.5 print:text-[8.5px] print:leading-tight">
+            <p className="font-bold uppercase text-slate-900 print:text-black mb-1 print:mb-0.5">
               Standard Broker-Carrier Contract Terms:
             </p>
-            <p className="leading-normal">
+            <p className="leading-normal print:leading-tight">
               1. <strong>NO DOUBLE BROKERING:</strong> Re-brokering, trip-leasing, or unauthorized assignment of this shipment to any other carrier or co-broker is strictly prohibited and shall result in total forfeiture of payment.
               2. <strong>COMPLIANCE:</strong> Carrier warrants having active FMCSA operating authority and minimum insurance of $100,000 Cargo and $1,000,000 Auto Liability.
               3. <strong>BILLING REQUIREMENTS:</strong> A clean, legible signed Proof of Delivery (POD) must be submitted with carrier invoice within 24 hours of delivery.
@@ -381,24 +400,24 @@ export const RateConfirmationModal: React.FC<RateConfirmationModalProps> = ({
           </div>
 
           {/* Signature Sign-Off Block */}
-          <div className="mt-6 grid grid-cols-2 gap-8 border-t-2 border-slate-900 pt-5 print:border-black">
+          <div className="mt-6 grid grid-cols-2 gap-8 border-t-2 border-slate-900 pt-5 print:border-black bg-white print:mt-2 print:pt-1.5 print:gap-4">
             <div>
-              <p className="text-[11px] font-bold text-slate-800 print:text-black">
+              <p className="text-[11px] font-bold text-slate-900 print:text-black print:text-[10px]">
                 AUTHORIZED BROKER REPRESENTATIVE
               </p>
-              <div className="mt-6 border-b border-slate-300 print:border-black" />
-              <div className="mt-1 flex justify-between text-[10px] text-slate-500 print:text-black">
+              <div className="mt-6 border-b border-slate-400 print:border-black print:mt-3" />
+              <div className="mt-1 flex justify-between text-[10px] text-slate-600 print:text-black print:text-[9px]">
                 <span>Authorized Signature</span>
                 <span>Date: {today}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-[11px] font-bold text-slate-800 print:text-black">
+              <p className="text-[11px] font-bold text-slate-900 print:text-black print:text-[10px]">
                 CARRIER ACCEPTANCE & SIGN-OFF
               </p>
-              <div className="mt-6 border-b border-slate-300 print:border-black" />
-              <div className="mt-1 flex justify-between text-[10px] text-slate-500 print:text-black">
+              <div className="mt-6 border-b border-slate-400 print:border-black print:mt-3" />
+              <div className="mt-1 flex justify-between text-[10px] text-slate-600 print:text-black print:text-[9px]">
                 <span>Authorized Representative Signature</span>
                 <span>Date</span>
               </div>

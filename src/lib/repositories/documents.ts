@@ -22,10 +22,11 @@ interface LoadDocumentRow {
   ocr_confidence_score: number | null;
   ocr_extracted_json: RateConExtraction | PodExtraction | Record<string, unknown> | null;
   created_at: string;
+  updated_at: string;
 }
 
 const DOCUMENT_COLUMNS =
-  "id, org_id, load_id, document_type, file_url, ocr_status, ocr_confidence_score, ocr_extracted_json, created_at";
+  "id, org_id, load_id, document_type, file_url, ocr_status, ocr_confidence_score, ocr_extracted_json, created_at, updated_at";
 
 function mapRowToLoadDocument(row: LoadDocumentRow): LoadDocument {
   return {
@@ -41,6 +42,7 @@ function mapRowToLoadDocument(row: LoadDocumentRow): LoadDocument {
     isVerified: false,
     verifiedByUserId: null,
     uploadedAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -122,6 +124,47 @@ export async function listAllDocuments(
     data: (data as unknown as LoadDocumentRow[]).map(mapRowToLoadDocument),
     total: count ?? 0,
   };
+}
+
+export interface DocumentForReview extends LoadDocument {
+  loadNumber: string | null;
+}
+
+interface LoadDocumentReviewRow extends LoadDocumentRow {
+  // Embedded via the load_documents.load_id -> loads(id) FK. PostgREST
+  // returns this as a single object for a many-to-one embed, but the shape
+  // is normalized defensively below in case of an array.
+  loads: { load_number: string | null } | { load_number: string | null }[] | null;
+}
+
+const REVIEW_QUEUE_COLUMNS = `${DOCUMENT_COLUMNS}, loads(load_number)`;
+
+// Additive: the review queue (app/(dashboard)/documents/review) needs the
+// associated load_number alongside each document, which listAllDocuments
+// doesn't fetch. Filters server-side by ocr_status rather than fetching
+// everything and filtering in JS. RLS (load_documents_select_own_org)
+// scopes this to the caller's org; no org_id is passed here.
+export async function listDocumentsForReview(): Promise<DocumentForReview[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("load_documents")
+    .select(REVIEW_QUEUE_COLUMNS)
+    .eq("ocr_status", "review_required")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as unknown as LoadDocumentReviewRow[]).map((row) => {
+    const loadsField = row.loads;
+    const loadNumber = Array.isArray(loadsField)
+      ? (loadsField[0]?.load_number ?? null)
+      : (loadsField?.load_number ?? null);
+
+    return { ...mapRowToLoadDocument(row), loadNumber };
+  });
 }
 
 export async function createLoadDocument(
@@ -221,11 +264,32 @@ export async function linkDocumentToLoad(documentId: UUID, loadId: UUID): Promis
   return mapRowToLoadDocument(data as unknown as LoadDocumentRow);
 }
 
-export async function updateDocumentOcrStatus(
+// Thrown when the row's updated_at no longer matches what the caller last
+// read -- someone else (another reviewer, or a re-run of OCR) wrote to this
+// document in between. The write below never merges or overwrites in this
+// case; the caller must re-fetch and retry.
+export class DocumentConflictError extends Error {
+  constructor() {
+    super("This document was updated by someone else — refresh and try again");
+    this.name = "DocumentConflictError";
+  }
+}
+
+// Single write path for persisting a reviewed/approved OCR extraction.
+// Guarded by an optimistic-concurrency check: the update only applies if
+// the row's updated_at still equals expectedUpdatedAt (captured by the
+// caller when it first loaded the document). Postgres evaluates the WHERE
+// clause and the UPDATE atomically, so this is race-safe against a
+// concurrent write landing between the caller's read and this call --
+// .maybeSingle() returns null (zero rows matched) when the guard fails,
+// which is turned into a DocumentConflictError rather than silently
+// no-op'ing.
+export async function updateDocumentOcrExtractionIfUnchanged(
   id: UUID,
   status: OcrStatus,
   confidence: number | null,
-  extractedJson: RateConExtraction | PodExtraction | Record<string, unknown> | null
+  extractedJson: RateConExtraction | PodExtraction | Record<string, unknown> | null,
+  expectedUpdatedAt: string
 ): Promise<LoadDocument> {
   const supabase = await createClient();
 
@@ -235,13 +299,18 @@ export async function updateDocumentOcrStatus(
       ocr_status: status,
       ocr_confidence_score: confidence,
       ocr_extracted_json: extractedJson === null ? null : JSON.parse(JSON.stringify(extractedJson)),
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id)
+    .eq("updated_at", expectedUpdatedAt)
     .select(DOCUMENT_COLUMNS)
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw error;
+  }
+  if (!data) {
+    throw new DocumentConflictError();
   }
 
   return mapRowToLoadDocument(data as unknown as LoadDocumentRow);

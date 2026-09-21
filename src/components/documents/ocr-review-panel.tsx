@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatCents, parseCents } from "@/lib/money";
-import { approveDocumentExtraction } from "@/app/(dashboard)/loads/[id]/documents/actions";
+import { reviewDocument } from "@/app/actions/review-document";
 import type {
   LoadDocument,
   OcrField,
@@ -123,6 +123,12 @@ export function OcrReviewPanel({ document }: { document: LoadDocument }) {
     const entries = Object.entries(raw).filter(([, value]) => isOcrField(value)) as [string, OcrField<unknown>][];
     return Object.fromEntries(entries);
   });
+  // Same editedKeys pattern as ReviewPane (review-pane.tsx): only fields the
+  // reviewer actually touched are sent to reviewDocument, which re-fetches
+  // the document server-side and merges just those keys into whatever is
+  // currently there -- so this panel can never blind-overwrite a field it
+  // never saw (or a field someone else changed after this snapshot loaded).
+  const [editedKeys, setEditedKeys] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,19 +142,25 @@ export function OcrReviewPanel({ document }: { document: LoadDocument }) {
       ...prev,
       [key]: { value: textToFieldValue(kind, text), confidence: 100 },
     }));
+    setEditedKeys((prev) => new Set(prev).add(key));
   }
 
   function updateBooleanField(key: string, value: boolean | null) {
     setExtraction((prev) => ({ ...prev, [key]: { value, confidence: 100 } }));
+    setEditedKeys((prev) => new Set(prev).add(key));
   }
 
   async function handleApprove() {
-    if (!document.loadId) return;
-
     setIsSaving(true);
     setError(null);
+
+    const correctedFields: Record<string, unknown> = {};
+    for (const key of editedKeys) {
+      correctedFields[key] = extraction[key]?.value ?? null;
+    }
+
     try {
-      await approveDocumentExtraction(document.id, document.loadId, extraction);
+      await reviewDocument(document.id, correctedFields, document.updatedAt);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save extraction");
@@ -190,6 +202,7 @@ export function OcrReviewPanel({ document }: { document: LoadDocument }) {
                   onValueChange={(value) =>
                     updateBooleanField(key, value === "unknown" ? null : value === "true")
                   }
+                  items={{ true: "Yes", false: "No", unknown: "Unknown" }}
                 >
                   <SelectTrigger id={`ocr-${key}`} className="w-full">
                     <SelectValue />
