@@ -38,6 +38,7 @@ function makeVerification(
 ): CarrierVerificationResult {
   return {
     authorityActive: true,
+    authorityStatus: "A",
     safetyRating: "Satisfactory",
     insuranceOnFile: true,
     outOfServiceDate: null,
@@ -51,18 +52,8 @@ function makeVerification(
 const REQUIREMENTS = { minCargoCents: 10_000_00, minAutoLiabilityCents: 100_000_00 };
 
 describe("deriveComplianceBadge", () => {
-  it("returns verified when authority is active, insurance is on file, and rating is satisfactory", () => {
+  it("returns verified when authority status is A and the carrier has been verified", () => {
     expect(deriveComplianceBadge(makeCarrier(), makeVerification(), NOW)).toBe("verified");
-  });
-
-  it("treats a None safety rating as satisfying the verified condition", () => {
-    expect(
-      deriveComplianceBadge(
-        makeCarrier({ insuranceExpiryDate: daysFromNow(90) }),
-        makeVerification({ safetyRating: "None" }),
-        NOW
-      )
-    ).toBe("verified");
   });
 
   it("returns blocked when the carrier is blacklisted, regardless of a clean verification", () => {
@@ -71,20 +62,20 @@ describe("deriveComplianceBadge", () => {
     ).toBe("blocked");
   });
 
-  it("returns blocked when the verification reports an out-of-service date", () => {
+  it("returns blocked when authority status is I (inactive, seen live from FMCSA)", () => {
     expect(
-      deriveComplianceBadge(
-        makeCarrier(),
-        makeVerification({ outOfServiceDate: "2026-08-01" }),
-        NOW
-      )
+      deriveComplianceBadge(makeCarrier(), makeVerification({ authorityStatus: "I" }), NOW)
     ).toBe("blocked");
   });
 
-  it("returns blocked when the safety rating is Unsatisfactory", () => {
+  it("returns expiring for a never-verified carrier with insurance expiring soon (BUG 1: insurance and FMCSA signals are independent, insurance is not masked by unverified)", () => {
     expect(
-      deriveComplianceBadge(makeCarrier(), makeVerification({ safetyRating: "Unsatisfactory" }), NOW)
-    ).toBe("blocked");
+      deriveComplianceBadge(
+        makeCarrier({ lastVerifiedAt: null, insuranceExpiryDate: daysFromNow(5) }),
+        makeVerification(),
+        NOW
+      )
+    ).toBe("expiring");
   });
 
   it("blocked takes precedence over an expiring insurance window", () => {
@@ -117,37 +108,40 @@ describe("deriveComplianceBadge", () => {
     ).toBe("verified");
   });
 
-  it("returns expiring when insurance already lapsed", () => {
+  it("returns blocked when insurance already lapsed (BUG 1: a past expiry date is a stronger signal than 'expiring soon')", () => {
     expect(
       deriveComplianceBadge(
         makeCarrier({ insuranceExpiryDate: daysFromNow(-5) }),
         makeVerification(),
         NOW
       )
-    ).toBe("expiring");
+    ).toBe("blocked");
   });
 
-  it("returns unverified when authority is not active but nothing is blocked or expiring", () => {
+  it("returns unverified when the carrier has never been verified (lastVerifiedAt null)", () => {
     expect(
-      deriveComplianceBadge(makeCarrier(), makeVerification({ authorityActive: false }), NOW)
+      deriveComplianceBadge(makeCarrier({ lastVerifiedAt: null }), makeVerification(), NOW)
     ).toBe("unverified");
   });
 
-  it("returns unverified when insurance is not on file", () => {
+  it("does not treat a never-verified carrier's placeholder authority status as blocked", () => {
+    // mapRowToCarrier()'s fallback for an unverified carrier: authorityStatus
+    // "unknown", lastVerifiedAt null. Must fall through to unverified, not blocked.
     expect(
-      deriveComplianceBadge(makeCarrier(), makeVerification({ insuranceOnFile: false }), NOW)
+      deriveComplianceBadge(
+        makeCarrier({ authorityStatus: "unknown", lastVerifiedAt: null }),
+        makeVerification({ authorityStatus: null }),
+        NOW
+      )
     ).toBe("unverified");
   });
 
-  it("returns unverified for a Conditional safety rating", () => {
+  it("treats authority status comparisons as case-insensitive", () => {
     expect(
-      deriveComplianceBadge(makeCarrier(), makeVerification({ safetyRating: "Conditional" }), NOW)
-    ).toBe("unverified");
-  });
-
-  it("treats safety rating comparisons as case-insensitive", () => {
+      deriveComplianceBadge(makeCarrier(), makeVerification({ authorityStatus: "a" }), NOW)
+    ).toBe("verified");
     expect(
-      deriveComplianceBadge(makeCarrier(), makeVerification({ safetyRating: "unsatisfactory" }), NOW)
+      deriveComplianceBadge(makeCarrier(), makeVerification({ authorityStatus: "i" }), NOW)
     ).toBe("blocked");
   });
 });
@@ -269,6 +263,19 @@ describe("isCarrierEligibleForDispatch", () => {
     );
 
     expect(result).toEqual({ eligible: true, reasons: [] });
+  });
+
+  it("is ineligible with a distinct reason when insurance has already lapsed (BUG 1: not the same reason text as 'expiring soon')", () => {
+    const result = isCarrierEligibleForDispatch(
+      makeCarrier({ insuranceExpiryDate: daysFromNow(-5) }),
+      makeVerification(),
+      REQUIREMENTS,
+      NOW
+    );
+
+    expect(result.eligible).toBe(false);
+    expect(result.reasons).toContain("Carrier insurance has expired");
+    expect(result.reasons).not.toContain("Carrier insurance is expiring within 30 days");
   });
 
   it("accumulates every applicable reason rather than short-circuiting on the first", () => {

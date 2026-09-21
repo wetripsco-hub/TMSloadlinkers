@@ -45,8 +45,13 @@ export function ComplianceStatusBadge({ badge }: { badge: ComplianceBadgeValue }
 }
 
 export function deriveStoredComplianceBadge(carrier: Carrier): ComplianceBadgeValue {
+  // carrier.authorityStatus is now the real, persisted FMCSA statusCode
+  // (047_carrier_verification_columns.sql) -- pass it through as-is rather
+  // than translating to a boolean, since deriveComplianceBadge reads the
+  // raw code directly.
   const verificationResult: CarrierVerificationResult = {
-    authorityActive: carrier.authorityStatus === "active",
+    authorityActive: carrier.authorityStatus === "A",
+    authorityStatus: carrier.authorityStatus,
     safetyRating: carrier.safetyRating,
     insuranceOnFile: carrier.insuranceCarrierName !== null,
     outOfServiceDate: null,

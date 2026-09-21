@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { ComplianceStatusBadge } from "@/components/carriers/compliance-badge";
 import { deriveComplianceBadge } from "@/lib/domain/carrier-compliance";
 import {
@@ -26,6 +26,7 @@ import {
   type CarrierOnboardValues,
 } from "@/lib/validations/carrier";
 import { onboardCarrier, previewCarrierVerification } from "@/app/(dashboard)/carriers/actions";
+import { VERIFICATION_UNAVAILABLE_PREFIX } from "@/lib/domain/carrier-verification-status";
 import type { Carrier, CarrierVerificationResult } from "../../../types/domain";
 
 function FieldError({ message }: { message?: string }) {
@@ -33,15 +34,20 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-destructive">{message}</p>;
 }
 
-function previewCarrier(values: CarrierOnboardValues): Carrier {
+// Mirrors what onboardCarrier will actually persist once "Onboard Carrier"
+// is clicked (updateCarrierVerification runs with this same verification
+// result), so the preview badge shown here matches the real post-save state
+// instead of always reading the pre-verification "unknown"/never-verified
+// fallback.
+function previewCarrier(values: CarrierOnboardValues, verification: CarrierVerificationResult | null): Carrier {
   return {
     id: "",
     orgId: "",
     companyName: values.companyName,
     dotNumber: values.dotNumber ?? "",
     mcNumber: values.mcNumber ?? "",
-    safetyRating: "unrated",
-    authorityStatus: "unknown",
+    safetyRating: verification?.safetyRating ?? "unrated",
+    authorityStatus: verification?.authorityStatus ?? "unknown",
     insuranceCarrierName: null,
     insurancePolicyNumber: null,
     insuranceExpiryDate: null,
@@ -52,7 +58,7 @@ function previewCarrier(values: CarrierOnboardValues): Carrier {
     isInternalFleet: false,
     dispatchFeePercentage: 0,
     dispatchFeeFlatWeekly: 0,
-    lastVerifiedAt: null,
+    lastVerifiedAt: verification?.fetchedAt ?? null,
   };
 }
 
@@ -137,7 +143,7 @@ export function CarrierOnboardDialog({
   async function onSubmit(values: CarrierOnboardValues) {
     setSubmitError(null);
     try {
-      await onboardCarrier(values);
+      await onboardCarrier(values, verification ?? undefined);
       setOpen(false);
       resetDialogState();
       if (onSuccess) {
@@ -151,7 +157,7 @@ export function CarrierOnboardDialog({
   }
 
   const previewBadge = verification
-    ? deriveComplianceBadge(previewCarrier(getValues()), verification)
+    ? deriveComplianceBadge(previewCarrier(getValues(), verification), verification)
     : null;
 
   return (
@@ -176,20 +182,21 @@ export function CarrierOnboardDialog({
           }
         />
       )}
-      <DialogContent>
+      <DialogContent className="border-slate-800 bg-[#18171d] text-slate-100 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Onboard carrier</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg font-bold text-white">Onboard carrier</DialogTitle>
+          <DialogDescription className="text-sm text-slate-400">
             Enter a DOT or MC number and verify authority/safety before saving.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="companyName" className="flex items-center gap-1 font-medium text-slate-700">
+            <Label htmlFor="companyName" className="flex items-center gap-1 font-medium text-slate-200 text-xs">
               Company name <span className="text-rose-500">*</span>
             </Label>
             <Input
               id="companyName"
+              className="bg-slate-900/80 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
               placeholder="e.g. Eagle Express Logistics"
               aria-invalid={!!errors.companyName}
               {...register("companyName")}
@@ -199,28 +206,41 @@ export function CarrierOnboardDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dotNumber" className="flex items-center gap-1 font-medium text-slate-700">
+              <Label htmlFor="dotNumber" className="flex items-center gap-1 font-medium text-slate-200 text-xs">
                 DOT number <span className="text-rose-500">*</span>
               </Label>
-              <Input id="dotNumber" placeholder="e.g. 1234567" aria-invalid={!!errors.dotNumber} {...register("dotNumber")} />
+              <Input
+                id="dotNumber"
+                className="bg-slate-900/80 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
+                placeholder="e.g. 1234567"
+                aria-invalid={!!errors.dotNumber}
+                {...register("dotNumber")}
+              />
               <FieldError message={errors.dotNumber?.message} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="mcNumber" className="flex items-center gap-1 font-medium text-slate-700">
+              <Label htmlFor="mcNumber" className="flex items-center gap-1 font-medium text-slate-200 text-xs">
                 MC number <span className="text-rose-500">*</span>
               </Label>
-              <Input id="mcNumber" placeholder="e.g. 987654" aria-invalid={!!errors.mcNumber} {...register("mcNumber")} />
+              <Input
+                id="mcNumber"
+                className="bg-slate-900/80 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
+                placeholder="e.g. 987654"
+                aria-invalid={!!errors.mcNumber}
+                {...register("mcNumber")}
+              />
               <FieldError message={errors.mcNumber?.message} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="contactEmail" className="flex items-center gap-1 font-medium text-slate-700">
+            <Label htmlFor="contactEmail" className="flex items-center gap-1 font-medium text-slate-200 text-xs">
               Contact email <span className="text-rose-500">*</span>
             </Label>
             <Input
               id="contactEmail"
               type="email"
+              className="bg-slate-900/80 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
               placeholder="dispatch@eagleexpress.com"
               aria-invalid={!!errors.contactEmail}
               {...register("contactEmail")}
@@ -229,28 +249,58 @@ export function CarrierOnboardDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="contactPhone" className="font-medium text-slate-700">Contact phone</Label>
-            <Input id="contactPhone" placeholder="(555) 000-0000" {...register("contactPhone")} />
+            <Label htmlFor="contactPhone" className="font-medium text-slate-200 text-xs">
+              Contact phone
+            </Label>
+            <Input
+              id="contactPhone"
+              className="bg-slate-900/80 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
+              placeholder="(555) 000-0000"
+              {...register("contactPhone")}
+            />
           </div>
 
-          <div className="flex flex-col gap-2 rounded-lg border border-dashed p-3">
+          {/* Verification Box with High-Contrast Verify Button */}
+          <div className="flex flex-col gap-2.5 rounded-xl border border-dashed border-slate-700 bg-slate-900/60 p-3.5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Verification preview</span>
-              <Button type="button" variant="outline" size="sm" onClick={handleVerify} disabled={isVerifying}>
-                {isVerifying ? "Verifying..." : "Verify"}
+              <span className="text-sm font-semibold text-white">Verification preview</span>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleVerify}
+                disabled={isVerifying}
+                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {isVerifying ? (
+                  <>
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  <span>Verify</span>
+                )}
               </Button>
             </div>
-            {verifyError && <FieldError message={verifyError} />}
+            {verifyError && (
+              verifyError.startsWith(VERIFICATION_UNAVAILABLE_PREFIX) ? (
+                <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-sm text-amber-400">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{verifyError} Check the FMCSA API configuration and try again.</span>
+                </div>
+              ) : (
+                <FieldError message={verifyError} />
+              )
+            )}
             {verification && previewBadge && (
-              <div className="flex flex-col gap-1 text-sm">
+              <div className="flex flex-col gap-1.5 text-sm pt-2 border-t border-slate-800">
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Status:</span>
+                  <span className="text-slate-400 text-xs">Status:</span>
                   <ComplianceStatusBadge badge={previewBadge} />
                 </div>
-                <span className="text-muted-foreground">
-                  Authority: {verification.authorityActive ? "Active" : "Inactive"} · Safety rating:{" "}
-                  {verification.safetyRating} · Insurance on file:{" "}
-                  {verification.insuranceOnFile ? "Yes" : "No"}
+                <span className="text-xs text-slate-400">
+                  Authority: <strong className={verification.authorityActive ? "text-emerald-400" : "text-rose-400"}>{verification.authorityActive ? "Active" : "Inactive"}</strong> · Safety rating:{" "}
+                  <strong className="text-slate-200">{verification.safetyRating}</strong> · Insurance on file:{" "}
+                  <strong className={verification.insuranceOnFile ? "text-emerald-400" : "text-rose-400"}>{verification.insuranceOnFile ? "Yes" : "No"}</strong>
                 </span>
               </div>
             )}
@@ -261,7 +311,7 @@ export function CarrierOnboardDialog({
           <DialogFooter>
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Onboarding..." : "Onboard Carrier"}

@@ -1,16 +1,30 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Carrier, UUID } from "../../../types/domain";
+import { parseCents, formatCents } from "@/lib/money";
+import type { Carrier, Cents, UUID } from "../../../types/domain";
 
-// The `carriers` table only persists contact/identification fields today —
-// compliance data (safety rating, insurance, blacklist status, dispatch fee)
-// from the full Carrier domain interface has no backing column yet. Rows are
-// mapped onto Carrier with safe, clearly-inert fallbacks (unrated/unknown/
-// zero/false) rather than fabricating verified-looking data. contactEmail
-// and contactPhone are real persisted columns with no slot on Carrier, so
-// CarrierRecord extends it with them for callers that need contact info.
+function moneyToCents(value: number | null): Cents {
+  return parseCents(String(value ?? 0));
+}
+
+function centsToMoney(cents: Cents): string {
+  return formatCents(cents).replace(/[$,]/g, "");
+}
+
+// The `carriers` table persists contact/identification fields, 5 FMCSA
+// verification columns (047_carrier_verification_columns.sql), and 8
+// manually-entered compliance columns (049_carrier_compliance_columns.sql:
+// insurance_*, cargo/auto liability limits, is_blacklisted,
+// blacklist_reason, coi_file_url). isInternalFleet/dispatchFee* from the
+// full Carrier domain interface still have no backing column, so those
+// stay inert fallbacks. contactEmail, contactPhone, outOfServiceDate,
+// verificationSource, and coiFileUrl are real persisted columns with no
+// slot on Carrier, so CarrierRecord extends it with them.
 export interface CarrierRecord extends Carrier {
   contactEmail: string | null;
   contactPhone: string | null;
+  outOfServiceDate: string | null;
+  verificationSource: string | null;
+  coiFileUrl: string | null;
 }
 
 interface CarrierRow {
@@ -21,11 +35,24 @@ interface CarrierRow {
   dot_number: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  authority_status: string | null;
+  safety_rating: string | null;
+  out_of_service_date: string | null;
+  last_verified_at: string | null;
+  verification_source: string | null;
+  insurance_carrier_name: string | null;
+  insurance_policy_number: string | null;
+  insurance_expiry_date: string | null;
+  cargo_coverage_limit: number | null;
+  auto_liability_limit: number | null;
+  is_blacklisted: boolean;
+  blacklist_reason: string | null;
+  coi_file_url: string | null;
   created_at: string;
 }
 
 const CARRIER_COLUMNS =
-  "id, org_id, name, mc_number, dot_number, contact_email, contact_phone, created_at";
+  "id, org_id, name, mc_number, dot_number, contact_email, contact_phone, authority_status, safety_rating, out_of_service_date, last_verified_at, verification_source, insurance_carrier_name, insurance_policy_number, insurance_expiry_date, cargo_coverage_limit, auto_liability_limit, is_blacklisted, blacklist_reason, coi_file_url, created_at";
 
 function mapRowToCarrier(row: CarrierRow): CarrierRecord {
   return {
@@ -34,21 +61,24 @@ function mapRowToCarrier(row: CarrierRow): CarrierRecord {
     companyName: row.name,
     dotNumber: row.dot_number ?? "",
     mcNumber: row.mc_number ?? "",
-    safetyRating: "unrated",
-    authorityStatus: "unknown",
-    insuranceCarrierName: null,
-    insurancePolicyNumber: null,
-    insuranceExpiryDate: null,
-    cargoCoverageLimit: 0,
-    autoLiabilityLimit: 0,
-    isBlacklisted: false,
-    blacklistReason: null,
+    safetyRating: row.safety_rating ?? "unrated",
+    authorityStatus: row.authority_status ?? "unknown",
+    insuranceCarrierName: row.insurance_carrier_name,
+    insurancePolicyNumber: row.insurance_policy_number,
+    insuranceExpiryDate: row.insurance_expiry_date,
+    cargoCoverageLimit: moneyToCents(row.cargo_coverage_limit),
+    autoLiabilityLimit: moneyToCents(row.auto_liability_limit),
+    isBlacklisted: row.is_blacklisted,
+    blacklistReason: row.blacklist_reason,
     isInternalFleet: false,
     dispatchFeePercentage: 0,
     dispatchFeeFlatWeekly: 0,
-    lastVerifiedAt: null,
+    lastVerifiedAt: row.last_verified_at,
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
+    outOfServiceDate: row.out_of_service_date,
+    verificationSource: row.verification_source,
+    coiFileUrl: row.coi_file_url,
   };
 }
 
@@ -202,6 +232,93 @@ export async function upsertCarrier(input: UpsertCarrierInput): Promise<CarrierR
   const { data, error } = await supabase
     .from("carriers")
     .insert({ ...values, org_id: orgId })
+    .select(CARRIER_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToCarrier(data as unknown as CarrierRow);
+}
+
+export interface CarrierComplianceFields {
+  insuranceCarrierName: string | null;
+  insurancePolicyNumber: string | null;
+  insuranceExpiryDate: string | null;
+  cargoCoverageLimit: Cents | null;
+  autoLiabilityLimit: Cents | null;
+  isBlacklisted: boolean;
+  blacklistReason: string | null;
+  coiFileUrl: string | null;
+}
+
+// Manually-entered compliance data (049_carrier_compliance_columns.sql),
+// separate from updateCarrierVerification's FMCSA-derived columns above --
+// this is never written by verifyCarrier/onboardCarrier. Session-bound
+// client is correct here: carriers_update_own_org's RLS policy checks
+// org_id (own-org, any role), not id = auth.uid() (own-row), so a plain
+// update against a carrier already in the caller's org succeeds -- unlike
+// the profiles RLS gap found earlier this session.
+export async function updateCarrierCompliance(
+  id: UUID,
+  fields: CarrierComplianceFields
+): Promise<CarrierRecord> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("carriers")
+    .update({
+      insurance_carrier_name: fields.insuranceCarrierName,
+      insurance_policy_number: fields.insurancePolicyNumber,
+      insurance_expiry_date: fields.insuranceExpiryDate,
+      cargo_coverage_limit: fields.cargoCoverageLimit !== null ? Number(centsToMoney(fields.cargoCoverageLimit)) : null,
+      auto_liability_limit: fields.autoLiabilityLimit !== null ? Number(centsToMoney(fields.autoLiabilityLimit)) : null,
+      is_blacklisted: fields.isBlacklisted,
+      blacklist_reason: fields.blacklistReason,
+      coi_file_url: fields.coiFileUrl,
+    })
+    .eq("id", id)
+    .select(CARRIER_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToCarrier(data as unknown as CarrierRow);
+}
+
+export interface CarrierVerificationFields {
+  authorityStatus: string | null;
+  safetyRating: string;
+  outOfServiceDate: string | null;
+  verificationSource: string;
+  verifiedAt: string;
+}
+
+// Single write path for the 5 FMCSA verification columns
+// (047_carrier_verification_columns.sql), used both at creation time
+// (onboardCarrier, once previewCarrierVerification succeeds) and on
+// re-verification (verifyCarrier / "Verify Safety"), so both call sites
+// persist the exact same shape and last_verified_at always reflects the
+// most recent check.
+export async function updateCarrierVerification(
+  id: UUID,
+  fields: CarrierVerificationFields
+): Promise<CarrierRecord> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("carriers")
+    .update({
+      authority_status: fields.authorityStatus,
+      safety_rating: fields.safetyRating,
+      out_of_service_date: fields.outOfServiceDate,
+      verification_source: fields.verificationSource,
+      last_verified_at: fields.verifiedAt,
+    })
+    .eq("id", id)
     .select(CARRIER_COLUMNS)
     .single();
 

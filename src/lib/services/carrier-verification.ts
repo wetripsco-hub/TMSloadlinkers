@@ -12,6 +12,7 @@ interface FmcsaCarrierResponse {
   content?: {
     carrier?: {
       allowedToOperate?: string;
+      statusCode?: string;
       safetyRating?: string;
       oosDate?: string | null;
       bipdInsuranceOnFile?: string;
@@ -62,6 +63,12 @@ function mapFmcsaResponseToResult(
 
   return {
     authorityActive: carrier?.allowedToOperate === "Y",
+    // Raw FMCSA authority status code ("A" = active, "I" = inactive --
+    // confirmed against live fmcsa_lookup_cache rows, not assumed).
+    // Persisted as-is on carriers.authority_status; allowedToOperate alone
+    // isn't a reliable proxy for this -- a live carrier had statusCode "I"
+    // while still showing allowedToOperate "Y".
+    authorityStatus: carrier?.statusCode ?? null,
     safetyRating: normalizeSafetyRating(carrier?.safetyRating),
     insuranceOnFile: carrier?.bipdInsuranceOnFile === "Y",
     outOfServiceDate: carrier?.oosDate ?? null,
@@ -229,6 +236,7 @@ export class MockCarrierVerificationProvider implements CarrierVerificationProvi
     if (!identifier) {
       return {
         authorityActive: false,
+        authorityStatus: null,
         safetyRating: "None",
         insuranceOnFile: false,
         outOfServiceDate: null,
@@ -244,6 +252,7 @@ export class MockCarrierVerificationProvider implements CarrierVerificationProvi
     if (Number.isNaN(numeric)) {
       return {
         authorityActive: false,
+        authorityStatus: null,
         safetyRating: "None",
         insuranceOnFile: false,
         outOfServiceDate: null,
@@ -267,6 +276,7 @@ export class MockCarrierVerificationProvider implements CarrierVerificationProvi
 
     return {
       authorityActive: bucket !== 3,
+      authorityStatus: bucket !== 3 ? "A" : "I",
       safetyRating,
       insuranceOnFile: bucket !== 2,
       outOfServiceDate: bucket === 2 ? new Date().toISOString().slice(0, 10) : null,

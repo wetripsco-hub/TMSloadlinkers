@@ -29,3 +29,20 @@ export const CARRIER_ONBOARD_DEFAULT_VALUES: CarrierOnboardValues = {
   contactEmail: "",
   contactPhone: "",
 };
+
+// Manually-entered compliance data (049_carrier_compliance_columns.sql).
+// Coverage limits are entered in whole dollars in the form and converted to
+// Cents at the action boundary, matching how loads' dollar fields are
+// handled -- kept as strings here since react-hook-form inputs are
+// string-valued and an empty string must mean "not entered", not zero.
+export const carrierComplianceSchema = z.object({
+  insuranceCarrierName: z.string().trim().optional().or(z.literal("")),
+  insurancePolicyNumber: z.string().trim().optional().or(z.literal("")),
+  insuranceExpiryDate: z.string().trim().optional().or(z.literal("")),
+  cargoCoverageLimit: z.string().trim().optional().or(z.literal("")),
+  autoLiabilityLimit: z.string().trim().optional().or(z.literal("")),
+  isBlacklisted: z.boolean(),
+  blacklistReason: z.string().trim().optional().or(z.literal("")),
+});
+
+export type CarrierComplianceValues = z.infer<typeof carrierComplianceSchema>;

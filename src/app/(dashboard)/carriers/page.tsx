@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { listCarriers } from "@/lib/repositories/carriers";
+import { createClient } from "@/lib/supabase/server";
 import { CarrierTable } from "@/components/carriers/carrier-table";
 import { CarrierOnboardDialog } from "@/components/carriers/carrier-onboard-dialog";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,8 +14,35 @@ export const metadata: Metadata = {
   title: "Carrier Directory | FreightLink TMS",
 };
 
-export default async function CarriersPage() {
+// Mirrors carrier-table.tsx's complianceFilter <select> option values --
+// an unrecognized ?compliance= value falls back to "ALL" rather than being
+// passed through to the filter's state untouched.
+const COMPLIANCE_FILTER_VALUES = new Set(["verified", "unverified", "expiring", "blocked"]);
+
+export default async function CarriersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ insuranceExpired?: string; compliance?: string }>;
+}) {
+  const { insuranceExpired, compliance } = await searchParams;
   const { data: carriers } = await listCarriers({}, { page: 1, pageSize: 100 });
+
+  // carrier-documents is a private bucket, so coiFileUrl (an object path,
+  // not a URL -- same convention as load_documents.file_url) needs signing
+  // before it can be linked to, same pattern as documents/page.tsx.
+  const supabase = await createClient();
+  const coiPaths = carriers.map((c) => c.coiFileUrl).filter((p): p is string => !!p);
+  const coiSignedUrlByPath: Record<string, string> = {};
+  if (coiPaths.length > 0) {
+    const { data: signedUrls } = await supabase.storage
+      .from("carrier-documents")
+      .createSignedUrls(coiPaths, 3600); // 1 hour expiry
+    (signedUrls ?? []).forEach((entry) => {
+      if (entry.path && entry.signedUrl) {
+        coiSignedUrlByPath[entry.path] = entry.signedUrl;
+      }
+    });
+  }
 
   // Calculate compliance statistics
   let verifiedCount = 0;
@@ -87,7 +115,14 @@ export default async function CarriersPage() {
       </div>
 
       {/* Modern Data Table */}
-      <CarrierTable carriers={carriers} />
+      <CarrierTable
+        carriers={carriers}
+        coiSignedUrlByPath={coiSignedUrlByPath}
+        initialInsuranceExpiredOnly={insuranceExpired === "1"}
+        initialComplianceFilter={
+          compliance && COMPLIANCE_FILTER_VALUES.has(compliance) ? compliance : undefined
+        }
+      />
     </div>
   );
 }

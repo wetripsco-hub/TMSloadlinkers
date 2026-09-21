@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import { ComplianceStatusBadge, deriveStoredComplianceBadge } from "@/components/carriers/compliance-badge";
 import {
   Table,
@@ -9,71 +10,63 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { Search, Truck, Mail, Phone, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Search, Truck, Mail, Phone, ShieldAlert, CheckCircle2, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CarrierOnboardDialog } from "@/components/carriers/carrier-onboard-dialog";
-import { previewCarrierVerification } from "@/app/(dashboard)/carriers/actions";
+import { CarrierComplianceDialog } from "@/components/carriers/carrier-compliance-dialog";
+import { VerifyCarrierSafetyButton } from "@/components/carriers/verify-carrier-safety-button";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 
 export interface CarrierTableProps {
   carriers: CarrierRecord[];
+  coiSignedUrlByPath?: Record<string, string>;
   onOnboardCarrier?: () => void;
+  initialInsuranceExpiredOnly?: boolean;
+  initialComplianceFilter?: string;
 }
 
-export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) {
+export function CarrierTable({
+  carriers,
+  coiSignedUrlByPath = {},
+  onOnboardCarrier,
+  initialInsuranceExpiredOnly,
+  initialComplianceFilter,
+}: CarrierTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [complianceFilter, setComplianceFilter] = useState("ALL");
+  const [complianceFilter, setComplianceFilter] = useState(initialComplianceFilter ?? "ALL");
+  const [insuranceExpiredOnly, setInsuranceExpiredOnly] = useState<boolean>(
+    initialInsuranceExpiredOnly ?? false
+  );
   const [isOnboardDialogOpen, setIsOnboardDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [verificationFeedback, setVerificationFeedback] = useState<{
-    id: string;
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
 
   const handleOnboardCarrier = onOnboardCarrier || (() => setIsOnboardDialogOpen(true));
 
-  async function handleVerifySafety(carrier: CarrierRecord) {
-    if (!carrier.dotNumber && !carrier.mcNumber) {
-      setVerificationFeedback({
-        id: carrier.id,
-        message: "No DOT/MC on file",
-        type: "error",
-      });
-      setTimeout(() => setVerificationFeedback(null), 3000);
-      return;
-    }
-
-    setVerifyingId(carrier.id);
-    try {
-      const res = await previewCarrierVerification({
-        dotNumber: carrier.dotNumber || undefined,
-        mcNumber: carrier.mcNumber || undefined,
-      });
-      setVerificationFeedback({
-        id: carrier.id,
-        message: `${res.safetyRating.toUpperCase()} · ${res.authorityActive ? "Active" : "Inactive"}`,
-        type: "success",
-      });
-      setTimeout(() => setVerificationFeedback(null), 4000);
-    } catch (err) {
-      setVerificationFeedback({
-        id: carrier.id,
-        message: err instanceof Error ? err.message : "Verification failed",
-        type: "error",
-      });
-      setTimeout(() => setVerificationFeedback(null), 3000);
-    } finally {
-      setVerifyingId(null);
-    }
-  }
-
   const filteredCarriers = useMemo(() => {
+    // Insurance-expired is a strict "already lapsed" date check
+    // (insurance_expiry_date < today, matching v_exceptions'
+    // expired_insurance_count, 055_v_exceptions_expired_insurance.sql) --
+    // deliberately independent of deriveStoredComplianceBadge's "expiring"
+    // badge, which also covers insurance expiring up to 30 days in the
+    // future. Kept as its own toggle (same shape as loads' noCarrier/
+    // pendingPod filters) rather than folded into the compliance dropdown,
+    // so this predicate stays untouched by that badge's own definition.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     return carriers.filter((carrier) => {
       const badge = deriveStoredComplianceBadge(carrier);
       if (complianceFilter !== "ALL" && badge !== complianceFilter) {
         return false;
+      }
+
+      if (insuranceExpiredOnly) {
+        if (!carrier.insuranceExpiryDate) {
+          return false;
+        }
+        if (new Date(carrier.insuranceExpiryDate) >= today) {
+          return false;
+        }
       }
 
       if (searchTerm.trim()) {
@@ -91,7 +84,7 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
 
       return true;
     });
-  }, [carriers, complianceFilter, searchTerm]);
+  }, [carriers, complianceFilter, insuranceExpiredOnly, searchTerm]);
 
   return (
     <div className="space-y-4">
@@ -141,6 +134,17 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
               <option value="blocked">Blocked</option>
             </select>
           </div>
+
+          {insuranceExpiredOnly && (
+            <button
+              type="button"
+              onClick={() => setInsuranceExpiredOnly(false)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 shadow-xs hover:bg-amber-100 transition-colors"
+            >
+              Insurance expired
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="text-xs text-slate-500 font-medium">
@@ -153,7 +157,7 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
           icon={Truck}
           title="No carriers found"
           description={
-            searchTerm || complianceFilter !== "ALL"
+            searchTerm || complianceFilter !== "ALL" || insuranceExpiredOnly
               ? "No carrier matches your search criteria or compliance filter. Try adjusting your search."
               : "Onboard your first carrier partner to assign loads and issue rate confirmations."
           }
@@ -181,19 +185,22 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
                 <TableRow key={carrier.id} className="hover:bg-slate-50/70 transition-colors">
                   {/* Company Name */}
                   <TableCell className="py-3.5 px-4">
-                    <div className="flex items-center gap-3">
+                    <Link
+                      href={`/carriers/${carrier.id}`}
+                      className="group/carrier-link flex items-center gap-3"
+                    >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 font-bold text-xs">
                         {carrier.companyName.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900 text-sm">
+                        <p className="font-semibold text-slate-900 text-sm group-hover/carrier-link:text-blue-600 group-hover/carrier-link:underline transition-colors">
                           {carrier.companyName}
                         </p>
                         <p className="text-xs font-mono text-slate-500">
                           ID: {carrier.id.slice(0, 8)}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   </TableCell>
 
                   {/* MC / DOT */}
@@ -248,29 +255,23 @@ export function CarrierTable({ carriers, onOnboardCarrier }: CarrierTableProps) 
 
                   {/* Actions */}
                   <TableCell className="py-3.5 px-4 text-right">
-                    {verificationFeedback?.id === carrier.id ? (
-                      <span
-                        className={
-                          verificationFeedback.type === "success"
-                            ? "inline-flex items-center gap-1 text-xs font-semibold text-emerald-600"
-                            : "inline-flex items-center gap-1 text-xs font-semibold text-rose-600"
+                    <div className="flex items-center justify-end gap-3">
+                      <CarrierComplianceDialog
+                        carrier={carrier}
+                        coiSignedUrl={carrier.coiFileUrl ? coiSignedUrlByPath[carrier.coiFileUrl] ?? null : null}
+                        trigger={
+                          <button
+                            type="button"
+                            aria-label={`Edit compliance details for ${carrier.companyName}`}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors focus:outline-none focus:underline"
+                          >
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                            Compliance
+                          </button>
                         }
-                      >
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                        {verificationFeedback.message}
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleVerifySafety(carrier)}
-                        disabled={verifyingId === carrier.id}
-                        aria-label={`Verify safety compliance for ${carrier.companyName}`}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:underline"
-                      >
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                        {verifyingId === carrier.id ? "Verifying..." : "Verify Safety"}
-                      </button>
-                    )}
+                      />
+                      <VerifyCarrierSafetyButton carrier={carrier} />
+                    </div>
                   </TableCell>
                 </TableRow>
               );
