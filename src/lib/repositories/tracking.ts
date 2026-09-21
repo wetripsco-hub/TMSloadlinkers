@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { LoadStatus } from "../../../types/domain";
+import type { DocumentType, LoadStatus, OcrStatus } from "../../../types/domain";
 
 export interface TrackedLoadStop {
   facilityName: string | null;
@@ -174,10 +174,39 @@ export async function recordTrackingPing(token: string, lat: number, lng: number
 // the guard_load_status_transition trigger on the database side, not here.
 export type DriverAdvanceableStatus = "at_pickup" | "in_transit" | "at_delivery" | "delivered";
 
+export type AdvanceTrackingStatusErrorCode = "illegal_transition" | "not_whitelisted" | "invalid_token" | "unknown";
+
+export type AdvanceTrackingStatusResult =
+  | { success: true }
+  | { success: false; errorCode: AdvanceTrackingStatusErrorCode; message: string };
+
+// advance_tracking_status() (037_tracking_checkin.sql) and the
+// guard_load_status_transition() trigger it runs through
+// (006_load_status_domain_alignment.sql) both fail via plain
+// `raise exception '...'` with no `using errcode = ...`. Postgres therefore
+// assigns every one of them the same generic SQLSTATE, P0001
+// ("raise_exception"), which PostgREST forwards verbatim as
+// PostgrestError.code -- so `error.code` cannot distinguish "illegal
+// transition" from "not on the driver whitelist" from "bad token"; only the
+// raised message text differs between them. Matching on that text is done
+// right here, server-side, against the real PostgrestError straight off the
+// RPC call -- not client-side, and not after Next.js's production Server
+// Action error redaction (which only strips *thrown*/uncaught errors before
+// they leave the server). This function classifies the error once, while it
+// still has the real message, and returns a small structured, already-safe
+// result; nothing about that value is touched by redaction because it is
+// never thrown.
+function classifyAdvanceTrackingStatusError(message: string): AdvanceTrackingStatusErrorCode {
+  if (message.includes("illegal load status transition")) return "illegal_transition";
+  if (message.includes("may not set status to")) return "not_whitelisted";
+  if (message.includes("Invalid tracking token")) return "invalid_token";
+  return "unknown";
+}
+
 export async function advanceTrackingStatus(
   token: string,
   nextStatus: DriverAdvanceableStatus
-): Promise<void> {
+): Promise<AdvanceTrackingStatusResult> {
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("advance_tracking_status", {
@@ -185,7 +214,115 @@ export async function advanceTrackingStatus(
     p_next_status: nextStatus,
   });
 
+  if (!error) {
+    return { success: true };
+  }
+
+  return {
+    success: false,
+    errorCode: classifyAdvanceTrackingStatusError(error.message),
+    message: error.message,
+  };
+}
+
+export type AddDriverLoadNoteResult =
+  | { success: true }
+  | { success: false; message: string };
+
+// add_driver_load_note (050_load_notes.sql) reports every failure (invalid
+// token, empty/over-length note, 30-second cooldown) via a plain `raise
+// exception` with a distinct message, same convention as
+// advance_tracking_status. There's no need to classify into an error code
+// here the way classifyAdvanceTrackingStatusError does -- the driver-facing
+// UI just shows the message text directly -- but the error is still caught
+// and returned as data rather than thrown, so Next.js's production error
+// redaction never strips it before the client sees it.
+export async function addDriverLoadNote(token: string, note: string): Promise<AddDriverLoadNoteResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("add_driver_load_note", {
+    p_token: token,
+    p_note: note,
+  });
+
+  if (!error) {
+    return { success: true };
+  }
+
+  return { success: false, message: error.message };
+}
+
+export interface TrackedLoadNote {
+  id: string;
+  authorType: "staff" | "driver";
+  authorLabel: string;
+  noteText: string;
+  createdAt: string;
+}
+
+interface TrackedLoadNoteRow {
+  id: string;
+  author_type: string;
+  author_label: string;
+  note_text: string;
+  created_at: string;
+}
+
+// list_load_notes_for_tracking (051_list_load_notes_for_tracking.sql) is the
+// anon-side read path for the same load_notes table load_notes_select_own_org
+// (050_load_notes.sql) covers for authenticated staff -- same
+// token-resolves-strictly-one-load security model as list_tracking_documents,
+// returns both author_type values so the driver sees the full thread
+// including staff replies, not just their own messages.
+export async function listLoadNotesForTracking(token: string): Promise<TrackedLoadNote[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("list_load_notes_for_tracking", { p_token: token });
+
   if (error) {
     throw error;
   }
+
+  return (data as unknown as TrackedLoadNoteRow[]).map((row) => ({
+    id: row.id,
+    authorType: row.author_type as "staff" | "driver",
+    authorLabel: row.author_label,
+    noteText: row.note_text,
+    createdAt: row.created_at,
+  }));
+}
+
+export interface TrackedDocument {
+  id: string;
+  documentType: DocumentType | null;
+  ocrStatus: OcrStatus;
+  createdAt: string;
+}
+
+interface TrackedDocumentRow {
+  id: string;
+  document_type: string | null;
+  ocr_status: string;
+  created_at: string;
+}
+
+// list_tracking_documents (040_tracking_document_list.sql) is metadata-only
+// by design -- it deliberately does not return file_url, and there is no
+// anon storage read policy on the load-documents bucket, so a signed URL
+// isn't something this can offer yet either.
+export async function listTrackingDocuments(token: string): Promise<TrackedDocument[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("list_tracking_documents", { p_token: token });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as unknown as TrackedDocumentRow[]).map((row) => ({
+    id: row.id,
+    documentType: row.document_type as DocumentType | null,
+    ocrStatus: row.ocr_status as OcrStatus,
+    createdAt: row.created_at,
+  }));
 }

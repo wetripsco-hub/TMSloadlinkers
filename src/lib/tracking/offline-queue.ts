@@ -4,19 +4,38 @@ export type QueueStatus = "idle" | "pending" | "retrying" | "failed";
 
 export interface OfflineActionState {
   status: QueueStatus;
+  error: string | null;
+  // A caller-defined, server-classified reason code, read off a rejected
+  // action's `.code` property when present (the Node/DOM convention for
+  // typed errors, e.g. fs errors' `.code = 'ENOENT'`). This queue is generic
+  // and has no notion of what the codes mean -- it just forwards whatever
+  // the action attached, so a caller can distinguish failure kinds reliably
+  // instead of pattern-matching `error` text.
+  errorCode: string | null;
 }
 
 type ActionFn = () => Promise<void>;
 
 interface QueueEntry {
   status: QueueStatus;
+  error: string | null;
+  errorCode: string | null;
   action: ActionFn;
   timer: ReturnType<typeof setTimeout> | null;
 }
 
 export const RETRY_DELAYS_MS = [2000, 5000, 10000] as const;
 const MAX_RETRIES = RETRY_DELAYS_MS.length;
-const IDLE_STATE: OfflineActionState = { status: "idle" };
+const IDLE_STATE: OfflineActionState = { status: "idle", error: null, errorCode: null };
+
+function toErrorInfo(reason: unknown): { message: string; code: string | null } {
+  if (reason instanceof Error) {
+    const code = (reason as Error & { code?: unknown }).code;
+    return { message: reason.message, code: typeof code === "string" ? code : null };
+  }
+  if (typeof reason === "string") return { message: reason, code: null };
+  return { message: "Unknown error", code: null };
+}
 
 export interface OfflineQueue {
   getState(key: string): OfflineActionState;
@@ -51,8 +70,12 @@ export function createOfflineQueue(): OfflineQueue {
           notify();
         }
       },
-      () => {
+      (reason) => {
         if (entries.get(key) !== entry) return;
+
+        const info = toErrorInfo(reason);
+        entry.error = info.message;
+        entry.errorCode = info.code;
 
         if (retryCount < MAX_RETRIES) {
           const delay = RETRY_DELAYS_MS[retryCount];
@@ -78,7 +101,7 @@ export function createOfflineQueue(): OfflineQueue {
         return;
       }
 
-      const entry: QueueEntry = { status: "pending", action, timer: null };
+      const entry: QueueEntry = { status: "pending", error: null, errorCode: null, action, timer: null };
       entries.set(key, entry);
       run(key, 0);
     },

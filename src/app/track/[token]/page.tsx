@@ -1,5 +1,9 @@
 import { MapPin } from "lucide-react";
-import { getLoadByTrackingToken } from "@/lib/repositories/tracking";
+import {
+  getLoadByTrackingToken,
+  listTrackingDocuments,
+  listLoadNotesForTracking,
+} from "@/lib/repositories/tracking";
 import { DriverCheckin } from "@/components/tracking/driver-checkin";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -23,5 +27,10 @@ export default async function TrackLoadPage({
     );
   }
 
-  return <DriverCheckin token={token} load={load} />;
+  const [documents, notes] = await Promise.all([
+    listTrackingDocuments(token),
+    listLoadNotesForTracking(token),
+  ]);
+
+  return <DriverCheckin token={token} load={load} documents={documents} initialNotes={notes} />;
 }

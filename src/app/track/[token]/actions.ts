@@ -3,7 +3,12 @@
 import {
   recordTrackingPing,
   advanceTrackingStatus,
+  addDriverLoadNote,
+  listLoadNotesForTracking,
   type DriverAdvanceableStatus,
+  type AdvanceTrackingStatusResult,
+  type AddDriverLoadNoteResult,
+  type TrackedLoadNote,
 } from "@/lib/repositories/tracking";
 
 // No auth/org check here by design -- this route is public. Isolation is
@@ -30,9 +35,24 @@ export async function submitTrackingPingAction(
   await recordTrackingPing(token, lat, lng);
 }
 
+// Returns a structured result rather than throwing so the real failure
+// reason (guard-trigger rejection vs. genuine error) reaches the client
+// intact -- a thrown error here would have its message redacted by Next.js
+// in production before the client ever sees it.
 export async function submitAdvanceStatusAction(
   token: string,
   nextStatus: DriverAdvanceableStatus
-): Promise<void> {
-  await advanceTrackingStatus(token, nextStatus);
+): Promise<AdvanceTrackingStatusResult> {
+  return advanceTrackingStatus(token, nextStatus);
+}
+
+export async function submitDriverNoteAction(
+  token: string,
+  note: string
+): Promise<AddDriverLoadNoteResult> {
+  return addDriverLoadNote(token, note);
+}
+
+export async function listDriverLoadNotesAction(token: string): Promise<TrackedLoadNote[]> {
+  return listLoadNotesForTracking(token);
 }
