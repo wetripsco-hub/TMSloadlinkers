@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -248,24 +249,7 @@
   }
 }
 
-/* Printable documents (rate confirmations, etc.) render on a white page
-   regardless of the app's dark theme, and app chrome is hidden. */
-@media print {
-  :root {
-    --background: #ffffff;
-    --foreground: #000000;
-    --muted-foreground: #4b5563;
-    --border: rgba(0, 0, 0, 0.2);
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  @page {
-    margin: 0.5in;
-  }
-}
+/* Print styles are consolidated at the bottom of this file */
 
 /* Custom Gradient Utilities */
 .turvo-gradient-text {
@@ -345,48 +329,208 @@
 
 /* Print Styles for Rate Confirmations, Invoices & Settlement Vouchers */
 @media print {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --muted-foreground: #4b5563;
+    --border: rgba(0, 0, 0, 0.2);
+  }
+
   *,
   *::before,
   *::after {
     text-shadow: none !important;
     box-shadow: none !important;
   }
+
+  html,
   body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
     background: #ffffff !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* Hide app chrome, actions, sidebars, interactive controls, and dialog backdrops */
   .no-print,
   aside,
-  header,
+  header:not([data-slot="dialog-content"] header),
   nav,
-  footer,
+  footer:not([data-slot="dialog-content"] footer),
   button,
   .dropdown-toggle,
   [data-slot="dialog-overlay"],
+  [data-slot="dialog-backdrop"],
+  [data-base-ui-inert],
+  [data-slot="dialog-close"],
   button[data-dialog-close],
   button[aria-label="Close"] {
     display: none !important;
   }
+
+  /* When printing from a dialog, hide the backdrop and outside body elements */
+  body:has([data-slot="dialog-portal"]) {
+    overflow: visible !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body:has([data-slot="dialog-portal"]) > *:not([data-slot="dialog-portal"]) {
+    display: none !important;
+  }
+
+  [data-slot="dialog-portal"],
+  [data-base-ui-portal] {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* Dialog container reset for clean, full-width, un-cropped print */
   [data-slot="dialog-content"] {
     position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    inset: auto !important;
+    --tw-translate-x: 0px !important;
+    --tw-translate-y: 0px !important;
+    --tw-translate-z: 0px !important;
+    --tw-enter-translate-x: 0px !important;
+    --tw-enter-translate-y: 0px !important;
+    --tw-exit-translate-x: 0px !important;
+    --tw-exit-translate-y: 0px !important;
+    translate: 0px 0px !important;
     transform: none !important;
+    -webkit-transform: none !important;
+    margin: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
+    min-width: 100% !important;
     max-height: none !important;
+    height: auto !important;
     overflow: visible !important;
-    background: transparent !important;
+    background: #ffffff !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
   }
+
+  /* Inner scroll containers inside dialogs */
+  [data-slot="dialog-content"] > div {
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Document sheet containers -- Single-page fit */
+  .rate-con-document,
+  [data-slot="dialog-content"] .rate-con-document {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .rate-con-document h1 {
+    font-size: 18px !important;
+    line-height: 1.2 !important;
+  }
+
+  .rate-con-document h2,
+  .rate-con-document h3,
+  .rate-con-document h4 {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  .rate-con-document .mt-5,
+  .rate-con-document .mt-6 {
+    margin-top: 6px !important;
+  }
+
+  .rate-con-document .pb-4,
+  .rate-con-document .pb-5 {
+    padding-bottom: 5px !important;
+  }
+
+  .rate-con-document .pt-4,
+  .rate-con-document .pt-5 {
+    padding-top: 5px !important;
+  }
+
+  .rate-con-document .space-y-4 > * + * {
+    margin-top: 5px !important;
+  }
+
+  .rate-con-document .gap-4,
+  .rate-con-document .gap-8 {
+    gap: 6px !important;
+  }
+
+  .rate-con-document .p-4 {
+    padding: 5px 8px !important;
+  }
+
+  .rate-con-document .p-3 {
+    padding: 3px 6px !important;
+  }
+
+  .rate-con-document .mt-6.border-b,
+  .rate-con-document .mt-8.border-b {
+    margin-top: 14px !important;
+  }
+
   main {
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
   }
+
   a[href]::after {
     content: none !important;
+  }
+
+  @page {
+    size: letter portrait;
+    margin: 0.25in;
+  }
+
+  /* Prevent bad page splits across critical document sections */
+  table,
+  tr,
+  section,
+  footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 
