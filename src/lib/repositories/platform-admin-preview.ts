@@ -30,7 +30,7 @@ interface LoadRow {
   last_known_lat: number | null;
   last_known_lng: number | null;
   last_ping_at: string | null;
-  is_demo: boolean;
+  is_demo?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -117,7 +117,7 @@ function toStop(rawAddress: string | null, windowStart: string | null): LoadStop
 }
 
 const LOAD_COLUMNS =
-  "id, org_id, customer_id, carrier_id, status, load_number, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, equipment_type, commodity, weight_lbs, customer_po_number, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, is_demo, created_at, updated_at";
+  "id, org_id, customer_id, carrier_id, status, load_number, origin, destination, pickup_date, delivery_date, shipper_rate, carrier_pay, broker_margin, equipment_type, commodity, weight_lbs, customer_po_number, tracking_token, driver_name, driver_phone, truck_number, trailer_number, last_known_lat, last_known_lng, last_ping_at, created_at, updated_at";
 
 export async function getPreviewLoads(orgId: string): Promise<Load[]> {
   const supabase = createServiceClient();
@@ -164,7 +164,7 @@ export async function getPreviewLoads(orgId: string): Promise<Load[]> {
     lastKnownLng: row.last_known_lng,
     lastPingAt: row.last_ping_at,
 
-    isDemo: row.is_demo,
+    isDemo: row.is_demo ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
