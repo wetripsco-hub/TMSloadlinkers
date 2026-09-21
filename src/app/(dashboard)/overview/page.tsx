@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   getCurrentSubscription,
+  getExceptions,
   getKpiSummary,
   getLoadsByStatus,
   getRevenueByWeek,
@@ -11,10 +12,13 @@ import {
 import { listLoads } from "@/lib/repositories/loads";
 import { getCurrentUserOrganization } from "@/lib/repositories/organizations";
 import { getTeamOverview } from "@/lib/repositories/team";
+import { syncSystemAlertNotificationsForCurrentUser } from "@/lib/repositories/notification-alerts";
 import { parseFacilityStopAddress } from "@/lib/format";
 import type { LoadStatus } from "../../../../types/domain";
 import { PageHeader } from "@/components/layout/page-header";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { RestrictedAccessBanner } from "@/components/dashboard/restricted-access-banner";
+import { ExceptionWorkbench } from "@/components/dashboard/exception-workbench";
 import {
   WeeklyPerformanceCards,
   type DailyActivityItem,
@@ -35,16 +39,28 @@ export const metadata: Metadata = {
   title: "Overview | FreightLink TMS",
 };
 
-export default async function OverviewPage() {
-  const [subscription, kpi, revenueByWeek, loadsByStatus, topCustomers, loadsResult, organization] =
+export default async function OverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ restricted?: string }>;
+}) {
+  // Best-effort: syncing system alerts into the notifications table (bell
+  // dropdown) should never block the dashboard itself from rendering.
+  await syncSystemAlertNotificationsForCurrentUser().catch((err) => {
+    console.error("Failed to sync system alert notifications:", err);
+  });
+
+  const [subscription, exceptions, kpi, revenueByWeek, loadsByStatus, topCustomers, loadsResult, organization, { restricted }] =
     await Promise.all([
       getCurrentSubscription(),
+      getExceptions(),
       getKpiSummary(),
       getRevenueByWeek(),
       getLoadsByStatus(),
       getTopCustomers(),
       listLoads({}, { page: 1, pageSize: 200 }),
       getCurrentUserOrganization(),
+      searchParams,
     ]);
 
   const loads = loadsResult.data;
@@ -261,7 +277,9 @@ export default async function OverviewPage() {
         />
       </div>
 
+      <RestrictedAccessBanner moduleKey={restricted} />
       <TrialBanner subscription={subscription} />
+      <ExceptionWorkbench exceptions={exceptions} />
 
       {/* Row 1: 3 Performance & Volume Cards */}
       <WeeklyPerformanceCards

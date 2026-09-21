@@ -15,6 +15,7 @@ export interface KpiSummary {
   grossMarginMtdCents: Cents;
   marginPercent: number;
   outstandingArCents: Cents;
+  expiringInsuranceCount: number;
 }
 
 export async function getKpiSummary(): Promise<KpiSummary> {
@@ -35,6 +36,31 @@ export async function getKpiSummary(): Promise<KpiSummary> {
     grossMarginMtdCents: moneyToCents(data?.gross_margin_mtd ?? null),
     marginPercent: data?.margin_percent ?? 0,
     outstandingArCents: moneyToCents(data?.outstanding_ar ?? null),
+    expiringInsuranceCount: data?.expiring_insurance_count ?? 0,
+  };
+}
+
+export interface Exceptions {
+  missingCarrierCount: number;
+  pendingPodCount: number;
+  expiredInsuranceCount: number;
+  expiringInsuranceCount: number;
+}
+
+export async function getExceptions(): Promise<Exceptions> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.from("v_exceptions").select("*").maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    missingCarrierCount: data?.missing_carrier_count ?? 0,
+    pendingPodCount: data?.pending_pod_count ?? 0,
+    expiredInsuranceCount: data?.expired_insurance_count ?? 0,
+    expiringInsuranceCount: data?.expiring_insurance_count ?? 0,
   };
 }
 
