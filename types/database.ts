@@ -60,37 +60,76 @@ export type Database = {
       }
       carriers: {
         Row: {
+          authority_status: string | null
+          auto_liability_limit: number | null
+          blacklist_reason: string | null
+          cargo_coverage_limit: number | null
+          coi_file_url: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
           dot_number: string | null
           id: string
+          insurance_carrier_name: string | null
+          insurance_expiry_date: string | null
+          insurance_policy_number: string | null
+          is_blacklisted: boolean
+          last_verified_at: string | null
           mc_number: string | null
           name: string
           org_id: string
+          out_of_service_date: string | null
+          safety_rating: string | null
           updated_at: string
+          verification_source: string | null
         }
         Insert: {
+          authority_status?: string | null
+          auto_liability_limit?: number | null
+          blacklist_reason?: string | null
+          cargo_coverage_limit?: number | null
+          coi_file_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
           dot_number?: string | null
           id?: string
+          insurance_carrier_name?: string | null
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          is_blacklisted?: boolean
+          last_verified_at?: string | null
           mc_number?: string | null
           name: string
           org_id: string
+          out_of_service_date?: string | null
+          safety_rating?: string | null
           updated_at?: string
+          verification_source?: string | null
         }
         Update: {
+          authority_status?: string | null
+          auto_liability_limit?: number | null
+          blacklist_reason?: string | null
+          cargo_coverage_limit?: number | null
+          coi_file_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
           dot_number?: string | null
           id?: string
+          insurance_carrier_name?: string | null
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          is_blacklisted?: boolean
+          last_verified_at?: string | null
           mc_number?: string | null
           name?: string
           org_id?: string
+          out_of_service_date?: string | null
+          safety_rating?: string | null
           updated_at?: string
+          verification_source?: string | null
         }
         Relationships: [
           {
@@ -183,6 +222,95 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "data_reset_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facilities: {
+        Row: {
+          address: string | null
+          appointment_required: boolean
+          city: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          operating_hours: string | null
+          org_id: string
+          state: string
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          appointment_required?: boolean
+          city: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          operating_hours?: string | null
+          org_id: string
+          state: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          appointment_required?: boolean
+          city?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          operating_hours?: string | null
+          org_id?: string
+          state?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facilities_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facilities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facilities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_top_customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "facilities_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -460,10 +588,69 @@ export type Database = {
           },
         ]
       }
+      load_notes: {
+        Row: {
+          author_label: string
+          author_type: string
+          author_user_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          load_id: string
+          note_text: string
+          org_id: string
+        }
+        Insert: {
+          author_label: string
+          author_type: string
+          author_user_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          load_id: string
+          note_text: string
+          org_id: string
+        }
+        Update: {
+          author_label?: string
+          author_type?: string
+          author_user_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          load_id?: string
+          note_text?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "load_notes_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "load_notes_load_id_fkey"
+            columns: ["load_id"]
+            isOneToOne: false
+            referencedRelation: "loads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "load_notes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loads: {
         Row: {
           arrived_at_delivery_at: string | null
           arrived_at_pickup_at: string | null
+          assigned_user_id: string | null
           broker_margin: number | null
           carrier_id: string | null
           carrier_pay: number
@@ -509,6 +696,7 @@ export type Database = {
         Insert: {
           arrived_at_delivery_at?: string | null
           arrived_at_pickup_at?: string | null
+          assigned_user_id?: string | null
           broker_margin?: number | null
           carrier_id?: string | null
           carrier_pay?: number
@@ -554,6 +742,7 @@ export type Database = {
         Update: {
           arrived_at_delivery_at?: string | null
           arrived_at_pickup_at?: string | null
+          assigned_user_id?: string | null
           broker_margin?: number | null
           carrier_id?: string | null
           carrier_pay?: number
@@ -598,6 +787,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "loads_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "loads_carrier_id_fkey"
             columns: ["carrier_id"]
             isOneToOne: false
@@ -620,6 +816,56 @@ export type Database = {
           },
           {
             foreignKeyName: "loads_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          entity_id: string | null
+          id: string
+          is_read: boolean
+          link_url: string | null
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          org_id: string
+          recipient_user_id: string | null
+          source: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          is_read?: boolean
+          link_url?: string | null
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          org_id: string
+          recipient_user_id?: string | null
+          source: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          is_read?: boolean
+          link_url?: string | null
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          org_id?: string
+          recipient_user_id?: string | null
+          source?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -688,6 +934,7 @@ export type Database = {
       organizations: {
         Row: {
           account_number: string | null
+          account_status: string
           address: string | null
           bank_name: string | null
           contact_email: string | null
@@ -702,11 +949,15 @@ export type Database = {
           plan_tier: Database["public"]["Enums"]["subscription_plan_tier"]
           remittance_notes: string | null
           routing_number: string | null
+          suspended_at: string | null
+          suspended_by: string | null
+          suspended_reason: string | null
           updated_at: string
           workspace_type: Database["public"]["Enums"]["tenant_workspace_type"]
         }
         Insert: {
           account_number?: string | null
+          account_status?: string
           address?: string | null
           bank_name?: string | null
           contact_email?: string | null
@@ -721,11 +972,15 @@ export type Database = {
           plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
           remittance_notes?: string | null
           routing_number?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_reason?: string | null
           updated_at?: string
           workspace_type?: Database["public"]["Enums"]["tenant_workspace_type"]
         }
         Update: {
           account_number?: string | null
+          account_status?: string
           address?: string | null
           bank_name?: string | null
           contact_email?: string | null
@@ -740,10 +995,21 @@ export type Database = {
           plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
           remittance_notes?: string | null
           routing_number?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_reason?: string | null
           updated_at?: string
           workspace_type?: Database["public"]["Enums"]["tenant_workspace_type"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_suspended_by_fkey"
+            columns: ["suspended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_ocr_daily_limits: {
         Row: {
@@ -759,6 +1025,41 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan_tier"]
         }
         Relationships: []
+      }
+      platform_admin_access_log: {
+        Row: {
+          admin_user_id: string
+          ended_at: string | null
+          id: string
+          reason: string | null
+          started_at: string
+          target_org_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          ended_at?: string | null
+          id?: string
+          reason?: string | null
+          started_at?: string
+          target_org_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          ended_at?: string | null
+          id?: string
+          reason?: string | null
+          started_at?: string
+          target_org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_admin_access_log_target_org_id_fkey"
+            columns: ["target_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_admins: {
         Row: {
@@ -850,6 +1151,125 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_negotiation_events: {
+        Row: {
+          action: string
+          actor_type: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          org_id: string
+          quote_id: string
+          rate: number | null
+        }
+        Insert: {
+          action: string
+          actor_type: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          org_id: string
+          quote_id: string
+          rate?: number | null
+        }
+        Update: {
+          action?: string
+          actor_type?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          org_id?: string
+          quote_id?: string
+          rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_negotiation_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_negotiation_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_negotiation_events_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          expires_at: string
+          id: string
+          load_id: string
+          org_id: string
+          proposed_rate: number
+          status: Database["public"]["Enums"]["quote_status_type"]
+          tracking_token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          expires_at?: string
+          id?: string
+          load_id: string
+          org_id: string
+          proposed_rate: number
+          status?: Database["public"]["Enums"]["quote_status_type"]
+          tracking_token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          expires_at?: string
+          id?: string
+          load_id?: string
+          org_id?: string
+          proposed_rate?: number
+          status?: Database["public"]["Enums"]["quote_status_type"]
+          tracking_token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_load_id_fkey"
+            columns: ["load_id"]
+            isOneToOne: false
+            referencedRelation: "loads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1042,11 +1462,21 @@ export type Database = {
       }
     }
     Views: {
+      v_exceptions: {
+        Row: {
+          expired_insurance_count: number | null
+          expiring_insurance_count: number | null
+          missing_carrier_count: number | null
+          pending_pod_count: number | null
+        }
+        Relationships: []
+      }
       v_kpi_summary: {
         Row: {
           active_loads: number | null
           delivered_mtd: number | null
           exception_count: number | null
+          expiring_insurance_count: number | null
           gross_margin_mtd: number | null
           in_transit: number | null
           margin_percent: number | null
@@ -1083,6 +1513,10 @@ export type Database = {
       }
     }
     Functions: {
+      add_driver_load_note: {
+        Args: { p_note: string; p_token: string }
+        Returns: undefined
+      }
       advance_tracking_status: {
         Args: {
           p_next_status: Database["public"]["Enums"]["load_operational_status"]
@@ -1108,6 +1542,10 @@ export type Database = {
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       default_trial_interval: { Args: never; Returns: string }
+      end_platform_admin_preview: {
+        Args: { p_log_id: string }
+        Returns: undefined
+      }
       execute_data_reset: { Args: { request_id: string }; Returns: undefined }
       get_auth_user_org_id: { Args: never; Returns: string }
       get_carrier_performance_report: {
@@ -1188,16 +1626,19 @@ export type Database = {
       get_platform_organizations: {
         Args: never
         Returns: {
+          account_status: string
           created_at: string
           name: string
           org_id: string
           plan_tier: string
           seat_count: number
           subscription_state: string
+          suspended_reason: string
           trial_ends_at: string
           workspace_type: string
         }[]
       }
+      get_quote_by_token: { Args: { p_token: string }; Returns: Json }
       get_revenue_by_period: {
         Args: {
           p_bucket?: string
@@ -1228,6 +1669,16 @@ export type Database = {
       }
       is_org_admin: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { uid: string }; Returns: boolean }
+      list_load_notes_for_tracking: {
+        Args: { p_token: string }
+        Returns: {
+          author_label: string
+          author_type: string
+          created_at: string
+          id: string
+          note_text: string
+        }[]
+      }
       list_tracking_documents: {
         Args: { p_token: string }
         Returns: {
@@ -1237,6 +1688,7 @@ export type Database = {
           ocr_status: string
         }[]
       }
+      mark_load_notes_read: { Args: { p_load_id: string }; Returns: number }
       org_can_write: { Args: { p_org_id: string }; Returns: boolean }
       record_tracking_ping: {
         Args: { p_lat: number; p_lng: number; p_token: string }
@@ -1253,7 +1705,78 @@ export type Database = {
           org_id: string
         }[]
       }
+      respond_to_quote_as_broker: {
+        Args: {
+          p_action: string
+          p_counter_rate?: number
+          p_note?: string
+          p_quote_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by_user_id: string | null
+          expires_at: string
+          id: string
+          load_id: string
+          org_id: string
+          proposed_rate: number
+          status: Database["public"]["Enums"]["quote_status_type"]
+          tracking_token: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "quotes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      respond_to_quote_as_shipper: {
+        Args: {
+          p_action: string
+          p_counter_rate?: number
+          p_note?: string
+          p_token: string
+        }
+        Returns: {
+          created_at: string
+          created_by_user_id: string | null
+          expires_at: string
+          id: string
+          load_id: string
+          org_id: string
+          proposed_rate: number
+          status: Database["public"]["Enums"]["quote_status_type"]
+          tracking_token: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "quotes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       seats_used: { Args: { p_org_id: string }; Returns: number }
+      send_admin_notification: {
+        Args: {
+          p_body: string
+          p_target_org_id: string
+          p_target_type: string
+          p_target_user_id: string
+          p_title: string
+        }
+        Returns: number
+      }
+      set_organization_account_status: {
+        Args: { p_org_id: string; p_reason?: string; p_status: string }
+        Returns: undefined
+      }
+      start_platform_admin_preview: {
+        Args: { p_org_id: string; p_reason?: string }
+        Returns: string
+      }
+      sync_system_alert_notifications: { Args: never; Returns: number }
       trial_lifecycle_targets: {
         Args: never
         Returns: {
@@ -1284,11 +1807,20 @@ export type Database = {
         | "invoiced"
         | "settled"
         | "cancelled"
+      notification_type: "system_alert" | "admin_message"
       payment_status_enum:
         | "pending"
         | "partial"
         | "paid"
         | "overdue"
+        | "cancelled"
+      quote_status_type:
+        | "sent"
+        | "countered_by_shipper"
+        | "countered_by_broker"
+        | "accepted"
+        | "declined"
+        | "expired"
         | "cancelled"
       subscription_plan_tier: "free" | "starter" | "growth" | "enterprise"
       subscription_state:
@@ -1444,11 +1976,21 @@ export const Constants = {
         "settled",
         "cancelled",
       ],
+      notification_type: ["system_alert", "admin_message"],
       payment_status_enum: [
         "pending",
         "partial",
         "paid",
         "overdue",
+        "cancelled",
+      ],
+      quote_status_type: [
+        "sent",
+        "countered_by_shipper",
+        "countered_by_broker",
+        "accepted",
+        "declined",
+        "expired",
         "cancelled",
       ],
       subscription_plan_tier: ["free", "starter", "growth", "enterprise"],

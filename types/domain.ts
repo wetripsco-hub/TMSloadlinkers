@@ -88,6 +88,63 @@ export interface Load {
   updatedAt: ISODateTime;
 }
 
+export type LoadNoteAuthorType = 'staff' | 'driver';
+
+export interface LoadNote {
+  id: UUID;
+  orgId: UUID;
+  loadId: UUID;
+  authorType: LoadNoteAuthorType;
+  authorUserId: UUID | null;
+  authorLabel: string;
+  noteText: string;
+  isRead: boolean;
+  createdAt: ISODateTime;
+}
+
+export type NotificationType = 'system_alert' | 'admin_message';
+
+export interface AppNotification {
+  id: UUID;
+  orgId: UUID;
+  recipientUserId: UUID | null;
+  title: string;
+  body: string;
+  notificationType: NotificationType;
+  source: string;
+  entityId: UUID | null;
+  linkUrl: string | null;
+  isRead: boolean;
+  createdAt: ISODateTime;
+}
+
+// ---------- Facilities ----------
+// A saved shipping/receiving dock (supabase/migrations/065_facilities.sql).
+// customerId null means org-wide/shared -- any load for any customer can
+// use it; a set customerId scopes it to that one customer's own saved
+// docks. Selecting one in the load wizard copies these fields onto the
+// load's own origin/destination stop at that moment -- the load never
+// stays linked to the facility row afterward (see load-wizard.tsx).
+export interface Facility {
+  id: UUID;
+  orgId: UUID;
+  customerId: UUID | null;
+  name: string;
+  address: string | null;
+  city: string;
+  state: string;
+  zip: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  appointmentRequired: boolean;
+  operatingHours: string | null;
+  notes: string | null;
+  createdByUserId: UUID | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
 // ---------- Carriers & compliance ----------
 export type ComplianceBadge = 'verified' | 'expiring' | 'blocked' | 'unverified';
 
@@ -114,6 +171,7 @@ export interface Carrier {
 
 export interface CarrierVerificationResult {
   authorityActive: boolean;
+  authorityStatus: string | null; // raw provider authority code, e.g. FMCSA statusCode "A"/"I"
   safetyRating: string;
   insuranceOnFile: boolean;
   outOfServiceDate: string | null;
@@ -178,6 +236,7 @@ export interface LoadDocument {
   isVerified: boolean;
   verifiedByUserId: UUID | null;
   uploadedAt: ISODateTime;
+  updatedAt: ISODateTime;
 }
 
 // ---------- Financials ----------
@@ -212,4 +271,41 @@ export interface ThreeWayMatchResult {
   variance: Cents;
   podOnFile: boolean;
   reasons: string[];
+}
+
+// ---------- Quotes ----------
+// Status-changing writes always go through the RPCs in
+// supabase/migrations/059_offers_quotes_schema.sql
+// (respond_to_quote_as_broker / respond_to_quote_as_shipper) -- never a raw
+// UPDATE on quotes. See lib/repositories/quotes.ts.
+export type QuoteStatus =
+  | 'sent' | 'countered_by_shipper' | 'countered_by_broker'
+  | 'accepted' | 'declined' | 'expired' | 'cancelled';
+
+export interface Quote {
+  id: UUID;
+  orgId: UUID;
+  loadId: UUID;
+  proposedRate: Cents;
+  status: QuoteStatus;
+  trackingToken: string;
+  expiresAt: ISODateTime;
+  createdByUserId: UUID | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+export type QuoteNegotiationActorType = 'broker' | 'shipper';
+export type QuoteNegotiationAction = 'sent' | 'accepted' | 'declined' | 'countered';
+
+export interface QuoteNegotiationEvent {
+  id: UUID;
+  orgId: UUID;
+  quoteId: UUID;
+  actorType: QuoteNegotiationActorType;
+  actorUserId: UUID | null;
+  action: QuoteNegotiationAction;
+  rate: Cents | null;
+  note: string | null;
+  createdAt: ISODateTime;
 }
