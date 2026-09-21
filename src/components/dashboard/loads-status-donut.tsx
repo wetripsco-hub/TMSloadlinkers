@@ -69,28 +69,32 @@ export function LoadsStatusDonut({ data }: { data: LoadsByStatus[] }) {
   }
 
   return (
-    <div className="relative">
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart>
-          <Pie
-            data={slices}
-            dataKey="count"
-            nameKey="label"
-            innerRadius={62}
-            outerRadius={92}
-            paddingAngle={2}
-            strokeWidth={0}
-          >
-            {slices.map((slice) => (
-              <Cell key={slice.status} fill={slice.fill} />
-            ))}
-          </Pie>
-          <Tooltip content={<TooltipContent />} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-slate-900">{total}</span>
-        <span className="text-xs text-slate-500">loads</span>
+    <div>
+      {/* Chart + center label in their own relative container */}
+      <div className="relative" style={{ height: 220 }}>
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={slices}
+              dataKey="count"
+              nameKey="label"
+              innerRadius={62}
+              outerRadius={92}
+              paddingAngle={2}
+              strokeWidth={0}
+            >
+              {slices.map((slice) => (
+                <Cell key={slice.status} fill={slice.fill} />
+              ))}
+            </Pie>
+            <Tooltip content={<TooltipContent />} />
+          </PieChart>
+        </ResponsiveContainer>
+        {/* Overlay sits only inside the 220px chart block */}
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-3xl font-bold text-slate-900 leading-none">{total}</span>
+          <span className="text-[11px] text-slate-500 mt-0.5">loads</span>
+        </div>
       </div>
       <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {slices.map((slice) => (
