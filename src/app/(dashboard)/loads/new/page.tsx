@@ -1,7 +1,12 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { LoadWizard } from "@/components/loads/load-wizard";
+import { listFacilities } from "@/lib/repositories/facilities";
 
-export default function NewLoadPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewLoadPage() {
+  const facilities = await listFacilities();
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -14,7 +19,7 @@ export default function NewLoadPage() {
         ]}
       />
       <div className="flex justify-center pb-8">
-        <LoadWizard />
+        <LoadWizard facilities={facilities} />
       </div>
     </div>
   );

@@ -4,8 +4,14 @@ import { revalidatePath } from "next/cache";
 import { getNextStatus } from "@/lib/domain/load-status";
 import { getLoadById, updateLoadStatus, assignCarrier, updateDriverInfo } from "@/lib/repositories/loads";
 import { createShipperInvoiceIfMissing } from "@/lib/repositories/invoices";
+import {
+  listLoadNotes as listLoadNotesRow,
+  insertStaffLoadNote,
+  markLoadNotesRead as markLoadNotesReadRow,
+} from "@/lib/repositories/load-notes";
 import { driverDispatchSchema, type DriverDispatchValues } from "@/lib/validations/load";
-import type { Load, UUID } from "../../../../../types/domain";
+import { createClient } from "@/lib/supabase/server";
+import type { Load, LoadNote, UUID } from "../../../../../types/domain";
 
 // Additive, backward-compatible: still structurally a Load (every existing
 // field a caller reads, e.g. `updated.status`, is unchanged), with one
@@ -60,6 +66,59 @@ export async function assignCarrierToLoad(loadId: UUID, carrierId: UUID): Promis
   revalidatePath(`/loads/${loadId}`);
   revalidatePath("/loads");
   return updated;
+}
+
+export async function listLoadNotes(loadId: UUID): Promise<LoadNote[]> {
+  return listLoadNotesRow(loadId);
+}
+
+// author_label is always the caller's own profile name, resolved
+// server-side (same auth.getUser() + profiles lookup pattern as
+// uploadLoadDocument, loads/[id]/documents/actions.ts) -- never taken from
+// client input, so a staff note can't be posted under someone else's name.
+export async function addLoadNote(loadId: UUID, text: string): Promise<LoadNote> {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Note cannot be empty");
+  }
+  if (trimmed.length > 500) {
+    throw new Error("Note must be 500 characters or fewer");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("org_id, full_name")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile?.org_id) {
+    throw new Error("No profile found for the current user");
+  }
+
+  const note = await insertStaffLoadNote(
+    loadId,
+    profile.org_id,
+    user.id,
+    profile.full_name || "Staff",
+    trimmed
+  );
+
+  revalidatePath(`/loads/${loadId}`);
+  return note;
+}
+
+export async function markLoadNotesRead(loadId: UUID): Promise<void> {
+  await markLoadNotesReadRow(loadId);
+  revalidatePath(`/loads/${loadId}`);
 }
 
 export async function updateLoadDriverInfo(loadId: UUID, values: DriverDispatchValues): Promise<Load> {

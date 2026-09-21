@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { AlertTriangle } from "lucide-react";
 
 import { LoadStatusBadge } from "@/components/loads/load-status-badge";
 import { advanceLoadStatus } from "@/app/(dashboard)/loads/[id]/actions";
@@ -27,6 +28,11 @@ export function StatusProgressionBar({ load }: { load: Load }) {
   const [status, setStatus] = useState(load.status);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // No shadcn/ui toast or sonner is installed in this project -- this
+  // mirrors the ad-hoc fixed-position toast pattern already used elsewhere
+  // (components/tracking/driver-checkin.tsx's showToast/toastMessage), just
+  // in the amber warning palette instead of that one's blue success tone.
+  const [invoiceWarning, setInvoiceWarning] = useState<string | null>(null);
 
   const next = getNextStatus(status);
   const currentIndex = LOAD_STATUS_FORWARD_CHAIN.indexOf(status);
@@ -40,6 +46,10 @@ export function StatusProgressionBar({ load }: { load: Load }) {
       try {
         const updated = await advanceLoadStatus(load.id);
         setStatus(updated.status);
+        if (updated.invoiceWarning) {
+          setInvoiceWarning(updated.invoiceWarning);
+          setTimeout(() => setInvoiceWarning(null), 6000);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to advance status");
       }
@@ -88,6 +98,13 @@ export function StatusProgressionBar({ load }: { load: Load }) {
         </button>
         {error && <span className="text-xs font-medium text-rose-600">{error}</span>}
       </div>
+
+      {invoiceWarning && (
+        <div className="fixed top-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-amber-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xl animate-in fade-in slide-in-from-top duration-200">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>{invoiceWarning}</span>
+        </div>
+      )}
     </div>
   );
 }

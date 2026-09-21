@@ -29,6 +29,10 @@ export interface LoadsViewProps {
   carriers: CarrierRecord[];
   organization?: Organization | null;
   initialStatus?: string;
+  initialNoCarrier?: boolean;
+  initialPendingPod?: boolean;
+  completedPodLoadIds?: string[];
+  unreadNoteLoadIds?: string[];
 }
 
 export function LoadsView({
@@ -37,6 +41,10 @@ export function LoadsView({
   carriers,
   organization,
   initialStatus,
+  initialNoCarrier,
+  initialPendingPod,
+  completedPodLoadIds,
+  unreadNoteLoadIds,
 }: LoadsViewProps) {
   const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>(initialStatus);
@@ -195,7 +203,7 @@ export function LoadsView({
         </div>
       )}
 
-      {/* 14-Day Free Trial Onboarding Banner (When empty or new) */}
+      {/* 7-Day Free Trial Onboarding Banner (When empty or new) */}
       {loads.length === 0 && (
         <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/50 via-white to-sky-50/50 p-6 shadow-sm">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -203,7 +211,7 @@ export function LoadsView({
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
                   <Sparkles className="h-3 w-3" />
-                  14-DAY FREE TRIAL ACTIVE
+                  7-DAY FREE TRIAL ACTIVE
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
                   Self-Serve Onboarding
@@ -323,6 +331,10 @@ export function LoadsView({
         carriers={carriers}
         organization={organization}
         initialStatus={selectedStatus}
+        initialNoCarrier={initialNoCarrier}
+        initialPendingPod={initialPendingPod}
+        completedPodLoadIds={completedPodLoadIds}
+        unreadNoteLoadIds={unreadNoteLoadIds}
         onCreateLoad={() => setIsCreateModalOpen(true)}
       />
     </div>

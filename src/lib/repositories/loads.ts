@@ -292,6 +292,35 @@ export async function findLoadByCustomerPoNumber(poNumber: string): Promise<Load
   return mapRowToLoad(data[0] as unknown as LoadRow);
 }
 
+// Same document_type/ocr_status predicate as v_exceptions' pending_pod CTE
+// (046_exceptions_view.sql) -- a load's POD/BOL is "reviewed and accepted"
+// once a load_documents row of that type has ocr_status = 'completed'
+// (there is no is_verified column). This mirrors that logic as a
+// set-membership check instead of a SQL NOT EXISTS, since listLoads() and
+// LOAD_COLUMNS carry no join to load_documents and every other caller of
+// listLoads() (invoices, tracking, etc.) doesn't need one.
+export async function getLoadIdsWithCompletedPod(): Promise<UUID[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("load_documents")
+    .select("load_id")
+    .in("document_type", ["POD", "BOL"])
+    .eq("ocr_status", "completed");
+
+  if (error) {
+    throw error;
+  }
+
+  return Array.from(
+    new Set(
+      (data ?? [])
+        .map((row) => row.load_id)
+        .filter((loadId): loadId is UUID => loadId !== null)
+    )
+  );
+}
+
 export async function updateLoadStatus(id: UUID, nextStatus: LoadStatus): Promise<Load> {
   const supabase = await createClient();
 

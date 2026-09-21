@@ -21,6 +21,7 @@ import {
   Eye,
   Navigation,
   FileText,
+  X,
 } from "lucide-react";
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
 import type { Load, Organization } from "../../../types/domain";
@@ -33,6 +34,10 @@ interface LoadTableProps {
   carriers: CarrierRecord[];
   organization?: Organization | null;
   initialStatus?: string;
+  initialNoCarrier?: boolean;
+  initialPendingPod?: boolean;
+  completedPodLoadIds?: string[];
+  unreadNoteLoadIds?: string[];
   onCreateLoad?: () => void;
 }
 
@@ -45,10 +50,25 @@ export function LoadTable({
   carriers,
   organization,
   initialStatus,
+  initialNoCarrier,
+  initialPendingPod,
+  completedPodLoadIds,
+  unreadNoteLoadIds,
   onCreateLoad,
 }: LoadTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(initialStatus ?? "ALL");
+  const [noCarrierFilter, setNoCarrierFilter] = useState<boolean>(initialNoCarrier ?? false);
+  const [pendingPodFilter, setPendingPodFilter] = useState<boolean>(initialPendingPod ?? false);
+
+  const completedPodIdSet = useMemo(
+    () => new Set(completedPodLoadIds ?? []),
+    [completedPodLoadIds]
+  );
+  const unreadNoteIdSet = useMemo(
+    () => new Set(unreadNoteLoadIds ?? []),
+    [unreadNoteLoadIds]
+  );
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
@@ -69,13 +89,34 @@ export function LoadTable({
   const filteredAndSortedLoads = useMemo(() => {
     return loads
       .filter((load) => {
-        // Status filter
+        // Status filter -- statusFilter may be a single status or a
+        // comma-separated set (e.g. deep-linked from the exception
+        // workbench: "covered,dispatched,at_pickup,in_transit,at_delivery").
+        // A single value is just a set of size 1, so this subsumes the
+        // original exact-match behavior without a separate code path.
         const filterKey = statusFilter.toLowerCase();
         if (filterKey === "open" || filterKey === "active") {
           if (load.status === "cancelled" || load.status === "settled") {
             return false;
           }
-        } else if (statusFilter !== "ALL" && filterKey !== "all" && load.status !== statusFilter && load.status.toLowerCase() !== filterKey) {
+        } else if (statusFilter !== "ALL" && filterKey !== "all") {
+          const statusSet = filterKey.split(",").map((s) => s.trim());
+          if (!statusSet.includes(load.status.toLowerCase())) {
+            return false;
+          }
+        }
+
+        // Missing-carrier filter (deep-linked from the exception workbench)
+        if (noCarrierFilter && load.carrierId) {
+          return false;
+        }
+
+        // Pending-POD filter (deep-linked from the exception workbench) --
+        // same status='delivered' + no completed POD/BOL predicate as
+        // v_exceptions' pending_pod CTE, checked independently of
+        // statusFilter so this stays correct even if the two params ever
+        // disagree.
+        if (pendingPodFilter && (load.status !== "delivered" || completedPodIdSet.has(load.id))) {
           return false;
         }
 
@@ -116,7 +157,7 @@ export function LoadTable({
 
         return sortOrder === "asc" ? -comparison : comparison;
       });
-  }, [loads, customersById, carriersById, statusFilter, searchTerm, sortField, sortOrder]);
+  }, [loads, customersById, carriersById, statusFilter, noCarrierFilter, pendingPodFilter, completedPodIdSet, searchTerm, sortField, sortOrder]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -165,6 +206,28 @@ export function LoadTable({
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
+
+          {noCarrierFilter && (
+            <button
+              type="button"
+              onClick={() => setNoCarrierFilter(false)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 shadow-xs hover:bg-amber-100 transition-colors"
+            >
+              Missing carrier
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {pendingPodFilter && (
+            <button
+              type="button"
+              onClick={() => setPendingPodFilter(false)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 shadow-xs hover:bg-amber-100 transition-colors"
+            >
+              Pending POD
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Total counts badge */}
@@ -179,7 +242,7 @@ export function LoadTable({
           icon={Package}
           title="No loads found"
           description={
-            searchTerm || statusFilter !== "ALL"
+            searchTerm || statusFilter !== "ALL" || noCarrierFilter || pendingPodFilter
               ? "Try adjusting your search query or status filter."
               : "Create a new shipment to start tracking rates, assigning carriers, and dispatching."
           }
@@ -256,9 +319,15 @@ export function LoadTable({
                   <TableCell className="py-3.5 px-4">
                     <Link
                       href={`/loads/${load.id}`}
-                      className="font-semibold text-blue-600 hover:text-blue-700 text-sm transition-colors"
+                      className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-700 text-sm transition-colors"
                     >
                       {formattedLoadNum}
+                      {unreadNoteIdSet.has(load.id) && (
+                        <span
+                          className="h-1.5 w-1.5 rounded-full bg-amber-500"
+                          title="Unread driver note"
+                        />
+                      )}
                     </Link>
                   </TableCell>
 

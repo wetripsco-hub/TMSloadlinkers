@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -29,6 +36,7 @@ import {
 } from "@/lib/validations/load";
 import { createLoadFromWizard } from "@/app/(dashboard)/loads/new/actions";
 import { AddressAutocomplete, type AddressSuggestion } from "@/components/ui/address-autocomplete";
+import type { Facility } from "../../../types/domain";
 
 const DISPATCHER_COMMISSION_PERCENTAGE = 10;
 
@@ -82,7 +90,7 @@ function LiveEconomicsSummary({
   );
 }
 
-export function LoadWizard() {
+export function LoadWizard({ facilities = [] }: { facilities?: Facility[] }) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -125,6 +133,18 @@ export function LoadWizard() {
 
   const shipperRate = watch("shipperRate");
   const carrierPay = watch("carrierPay");
+  const customerId = watch("customerId");
+
+  // Saved-facility autofill shortcut for the origin/destination steps
+  // (item 5): this customer's own facilities plus every org-wide/shared
+  // one (customerId null). customerId here is whatever's currently typed
+  // in the customer-rate step's free-text field -- the wizard's own
+  // manual-entry flow, unchanged -- so this is best-effort: an empty or
+  // not-yet-valid customerId just falls back to shared-only facilities.
+  const availableFacilities = useMemo(
+    () => facilities.filter((f) => f.customerId === null || f.customerId === customerId),
+    [facilities, customerId]
+  );
 
   const step = WIZARD_STEPS[stepIndex];
   const isLastStep = stepIndex === WIZARD_STEPS.length - 1;
@@ -244,6 +264,40 @@ export function LoadWizard() {
                   Select a live suggestion to auto-fill City, State, ZIP, and coordinates.
                 </span>
               </div>
+
+              {availableFacilities.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor={`${step.id}.savedFacility`}>Select saved facility (optional)</Label>
+                  <Select
+                    key={step.id}
+                    value=""
+                    onValueChange={(facilityId) => {
+                      const facility = availableFacilities.find((f) => f.id === facilityId);
+                      if (!facility) return;
+                      setValue(`${step.id}.facilityName`, facility.name, { shouldValidate: true, shouldDirty: true });
+                      setValue(`${step.id}.address`, facility.address ?? "", { shouldValidate: true, shouldDirty: true });
+                      setValue(`${step.id}.city`, facility.city, { shouldValidate: true, shouldDirty: true });
+                      setValue(`${step.id}.state`, facility.state, { shouldValidate: true, shouldDirty: true });
+                      setValue(`${step.id}.zip`, facility.zip ?? "", { shouldValidate: true, shouldDirty: true });
+                    }}
+                  >
+                    <SelectTrigger id={`${step.id}.savedFacility`} className="w-full">
+                      <SelectValue placeholder="Choose a saved facility to autofill..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableFacilities.map((facility) => (
+                        <SelectItem key={facility.id} value={facility.id}>
+                          {facility.name} — {facility.city}, {facility.state}
+                          {facility.customerId === null ? " (Shared)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-[11px] text-muted-foreground">
+                    Autofills the fields below from a saved facility -- still editable afterward and not linked back to it.
+                  </span>
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={`${step.id}.facilityName`}>

@@ -111,6 +111,42 @@ export function formatDateTime(value: string | Date | null | undefined): string 
 }
 
 /**
+ * Formats an ISO string or Date into a short relative time (e.g. "5m ago",
+ * "3h ago", "2d ago"). Falls back to formatDate beyond 6 days, since
+ * "23d ago" is less scannable than a calendar date at that distance.
+ * Returns "—" for null, undefined, empty, or invalid date values.
+ *
+ * @example
+ * formatRelativeTime(new Date(Date.now() - 5 * 60_000)) => "5m ago"
+ * formatRelativeTime(null) => "—"
+ */
+export function formatRelativeTime(value: string | Date | null | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  const d = value instanceof Date ? value : new Date(value.trim());
+  if (Number.isNaN(d.getTime())) return "—";
+
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 0) return "just now";
+
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return "just now";
+
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+
+  return formatDate(d);
+}
+
+/**
  * Formats a nullable numeric value with an optional suffix.
  * CRITICAL RULE: Never renders null or undefined as "0" or empty string.
  * Returns "No data" if null or undefined.

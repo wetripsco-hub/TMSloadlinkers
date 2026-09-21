@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -9,20 +9,21 @@ import {
   FileText,
   History,
   Calendar,
-  Truck,
   Printer,
   ShieldCheck,
   ExternalLink,
-  Navigation,
   Receipt,
 } from "lucide-react";
 import { CarrierAssignmentCard } from "@/components/loads/carrier-assignment-card";
+import { DriverDispatchCard } from "@/components/loads/driver-dispatch-card";
 import { LoadFinancialBreakdown } from "@/components/loads/load-financial-breakdown";
 import { LoadAuditTrail } from "@/components/loads/load-audit-trail";
 import { StatusProgressionBar } from "@/components/loads/status-progression-bar";
+import { QuotePanel } from "@/components/loads/quote-panel";
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
+import { refreshQuoteForLoadAction } from "@/app/(dashboard)/loads/[id]/quotes/actions";
 import { formatDateTime, formatMoney, parseFacilityStopAddress } from "@/lib/format";
-import type { Load, LoadStop, Organization } from "../../../types/domain";
+import type { Load, LoadStop, Organization, Quote, QuoteNegotiationEvent } from "../../../types/domain";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
 import type { AuditEvent } from "@/lib/repositories/audit";
 
@@ -92,7 +93,17 @@ export interface LoadDetailTabsProps {
   availableCarriers: CarrierRecord[];
   auditEvents: AuditEvent[];
   organization?: Organization | null;
+  quote: Quote | null;
+  quoteEvents: QuoteNegotiationEvent[];
 }
+
+// A shipper can accept/decline/counter from the public /quote/[token] page
+// at any time, with nothing to push a notification back to an already-open
+// load detail tab -- so quote state is polled on an interval rather than
+// only refreshed on this broker's own next action or a manual reload. Same
+// cadence as the load notes panel's driver-message polling
+// (components/loads/load-notes-panel.tsx).
+const QUOTE_POLL_INTERVAL_MS = 15000;
 
 type TabKey = "summary" | "stops" | "financials" | "documents" | "audit";
 
@@ -116,8 +127,51 @@ export function LoadDetailTabs({
   availableCarriers,
   auditEvents,
   organization,
+  quote: initialQuote,
+  quoteEvents: initialQuoteEvents,
 }: LoadDetailTabsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
+  const [quote, setQuote] = useState<Quote | null>(initialQuote);
+  const [quoteEvents, setQuoteEvents] = useState<QuoteNegotiationEvent[]>(initialQuoteEvents);
+  const quoteNeedsResponse = quote?.status === "countered_by_shipper";
+
+  // Shared by the poll interval below and by QuotePanel's own actions
+  // (Send Quote, Accept Counter, Send New Counter) -- both cases want the
+  // exact same "fetch the load's current quote + events, replace local
+  // state" behavior, just triggered on a different schedule.
+  const refreshQuote = useCallback(async () => {
+    try {
+      const result = await refreshQuoteForLoadAction(load.id);
+      setQuote(result.quote);
+      setQuoteEvents(result.events);
+    } catch {
+      // Best-effort -- the next poll tick (or this broker's own next
+      // action) retries; a transient failure here shouldn't surface as an
+      // error banner for a background refresh nobody explicitly asked for.
+    }
+  }, [load.id]);
+
+  useEffect(() => {
+    const interval = setInterval(refreshQuote, QUOTE_POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [refreshQuote]);
+
+  // Deep link from the org-wide Quotes list (components/loads/quotes-list.tsx,
+  // app/(dashboard)/quotes/page.tsx) -- the Financials tab panel is
+  // conditionally rendered, so #quote-panel only exists in the DOM once this
+  // tab is active. Client-only (window read), so this runs after hydration
+  // rather than in the initial render.
+  useEffect(() => {
+    if (window.location.hash === "#quote-panel") {
+      Promise.resolve().then(() => setActiveTab("financials"));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "financials" && window.location.hash === "#quote-panel") {
+      document.getElementById("quote-panel")?.scrollIntoView({ block: "start" });
+    }
+  }, [activeTab]);
 
   return (
     <div className="space-y-6">
@@ -144,6 +198,12 @@ export function LoadDetailTabs({
                   <span className="ml-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
                     {auditEvents.length}
                   </span>
+                )}
+                {tab.id === "financials" && quoteNeedsResponse && (
+                  <span
+                    className="ml-1 h-2 w-2 rounded-full bg-amber-500"
+                    title="Quote needs your response"
+                  />
                 )}
               </button>
             );
@@ -193,57 +253,14 @@ export function LoadDetailTabs({
             <StopDetailsCard title="Destination Delivery (Stop 2)" stop={load.destination} isOrigin={false} />
           </div>
 
-          {/* Driver & Telemetry Details Card */}
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <Truck className="h-4 w-4 text-slate-400" />
-                Assigned Driver & Telemetry
-              </h3>
-              <Link
-                href={`/loads/${load.id}/tracking`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-              >
-                <Navigation className="h-3.5 w-3.5" />
-                Live Telemetry Portal
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-              <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                <span className="text-slate-400 block mb-1">Driver Name</span>
-                <span className="font-semibold text-slate-900 text-sm">
-                  {load.driverName || "Driver not assigned"}
-                </span>
-              </div>
-
-              <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                <span className="text-slate-400 block mb-1">Driver Phone</span>
-                <span className="font-semibold text-slate-900 text-sm">
-                  {load.driverPhone || "—"}
-                </span>
-              </div>
-
-              <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                <span className="text-slate-400 block mb-1">Tractor / Trailer</span>
-                <span className="font-semibold text-slate-900 text-sm">
-                  {load.truckNumber || "—"} / {load.trailerNumber || "—"}
-                </span>
-              </div>
-
-              <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                <span className="text-slate-400 block mb-1">Last GPS Ping</span>
-                <span className="font-semibold text-slate-900 text-sm">
-                  {load.lastPingAt ? formatDateTime(load.lastPingAt) : "No ping recorded"}
-                </span>
-              </div>
-            </div>
-          </div>
+          <DriverDispatchCard load={load} />
         </div>
       )}
 
       {activeTab === "financials" && (
         <div className="space-y-6">
+          <QuotePanel load={load} quote={quote} events={quoteEvents} onQuoteRefresh={refreshQuote} />
+
           <div className="grid gap-4 md:grid-cols-2">
             <LoadFinancialBreakdown load={load} />
 
