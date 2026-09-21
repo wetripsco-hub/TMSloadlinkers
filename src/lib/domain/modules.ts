@@ -19,6 +19,9 @@ export const APP_MODULE_KEYS = [
   "documents",
   "review_queue",
   "driver_tracking",
+  "messages",
+  "quotes",
+  "facilities",
 ] as const;
 
 export type ModuleKey = (typeof APP_MODULE_KEYS)[number];
@@ -37,12 +40,15 @@ export const APP_MODULES: AppModule[] = [
   { key: "loads", label: "Loads", pathPrefix: "/loads" },
   { key: "carriers", label: "Carriers", pathPrefix: "/carriers" },
   { key: "customers", label: "Customers", pathPrefix: "/customers" },
+  { key: "facilities", label: "Facilities", pathPrefix: "/facilities" },
   { key: "invoices", label: "Invoices", pathPrefix: "/invoices" },
   { key: "settlements", label: "Settlements", pathPrefix: "/settlements" },
   { key: "reports", label: "Reports", pathPrefix: "/reports" },
   { key: "review_queue", label: "Review Queue", pathPrefix: "/documents/review" },
   { key: "documents", label: "Documents", pathPrefix: "/documents" },
   { key: "driver_tracking", label: "Driver Tracking", pathPrefix: "/driver-tracking" },
+  { key: "messages", label: "Messages", pathPrefix: "/messages" },
+  { key: "quotes", label: "Quotes", pathPrefix: "/quotes" },
 ];
 
 export function isModuleKey(value: string): value is ModuleKey {
