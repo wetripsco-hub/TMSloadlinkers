@@ -91,19 +91,28 @@ export async function seedDemoDataForCurrentOrg(): Promise<{
     },
   ];
 
-  const { data: insertedCarriers, error: carrError } = await supabase
+  // Upsert on (org_id, mc_number) -- the unique constraint added in
+  // 048_carriers_org_mc_number_unique.sql -- instead of a blind insert.
+  // Previously this ran unconditionally on every call with no existence
+  // check, so clicking "Inject sample data" more than once in the same org
+  // silently created duplicate carrier rows (confirmed live: org
+  // 29a4426b-ca83-4cbe-a409-a6ae238fff48 had 3 rows each for these 4
+  // carriers before being merged back to 1). Re-running this now updates
+  // the existing row in place instead of inserting a new one.
+  const { data: upsertedCarriers, error: carrError } = await supabase
     .from("carriers")
-    .insert(carrierRecords)
+    .upsert(carrierRecords, { onConflict: "org_id,mc_number" })
     .select("id, name");
 
   if (carrError) {
     throw new Error(`Failed to seed carriers: ${carrError.message}`);
   }
 
-  const k1 = insertedCarriers[0]?.id;
-  const k2 = insertedCarriers[1]?.id;
-  const k3 = insertedCarriers[2]?.id;
-  const k4 = insertedCarriers[3]?.id;
+  const carrierIdByName = new Map(upsertedCarriers.map((c) => [c.name, c.id]));
+  const k1 = carrierIdByName.get("Express Freight Lines LLC");
+  const k2 = carrierIdByName.get("Reliable Haulers Inc");
+  const k3 = carrierIdByName.get("Patriot Transport Systems");
+  const k4 = carrierIdByName.get("Horizon Star Logistics");
 
   // 4. Insert 9-10 Loads across diverse lifecycle stages & financial margins
   const now = new Date();
@@ -309,7 +318,7 @@ export async function seedDemoDataForCurrentOrg(): Promise<{
 
   return {
     customersCount: insertedCustomers.length,
-    carriersCount: insertedCarriers.length,
+    carriersCount: upsertedCarriers.length,
     loadsCount: insertedLoads.length,
     invoicesCount: invoiceRecords.length,
   };

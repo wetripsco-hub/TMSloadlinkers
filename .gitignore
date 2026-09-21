@@ -57,3 +57,17 @@ temp/
 
 # Graphify output (regenerated locally, not part of the source tree)
 graphify-out/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/tests/e2e/.auth/
+/reports/
+
+# Agent runtime artifacts (not project source)
+brag-output*/
+.agent/
+.agents/
