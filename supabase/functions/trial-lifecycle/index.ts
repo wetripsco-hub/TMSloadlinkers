@@ -23,21 +23,21 @@ type LifecycleTarget = {
   owner_email: string;
 };
 
-type Template = "trial_day_7" | "trial_day_11" | "trial_final_day" | "trial_expired";
+type Template = "trial_day_4" | "trial_day_1" | "trial_final_day" | "trial_expired";
 
 const SUBJECTS: Record<Template, string> = {
-  trial_day_7: "1 week left in your trial",
-  trial_day_11: "3 days left in your trial",
+  trial_day_4: "4 days left in your trial",
+  trial_day_1: "1 day left in your trial",
   trial_final_day: "Your trial ends today",
   trial_expired: "Your trial has ended",
 };
 
 function bodyFor(template: Template, orgName: string): string {
   switch (template) {
-    case "trial_day_7":
-      return `Hi there,\n\n${orgName}'s trial has 7 days left. Add a card any time before it ends to keep your workspace active without interruption.`;
-    case "trial_day_11":
-      return `Hi there,\n\n${orgName}'s trial ends in 3 days. Add a card now to avoid losing access.`;
+    case "trial_day_4":
+      return `Hi there,\n\n${orgName}'s trial has 4 days left. Add a card any time before it ends to keep your workspace active without interruption.`;
+    case "trial_day_1":
+      return `Hi there,\n\n${orgName}'s trial ends tomorrow. Add a card now to avoid losing access.`;
     case "trial_final_day":
       return `Hi there,\n\n${orgName}'s trial ends today. Add a card to keep editing without interruption.`;
     case "trial_expired":
@@ -46,8 +46,8 @@ function bodyFor(template: Template, orgName: string): string {
 }
 
 function templateFor(daysRemaining: number): Template | null {
-  if (daysRemaining === 7) return "trial_day_7";
-  if (daysRemaining === 3) return "trial_day_11";
+  if (daysRemaining === 4) return "trial_day_4";
+  if (daysRemaining === 1) return "trial_day_1";
   if (daysRemaining === 0) return "trial_final_day";
   if (daysRemaining < 0) return "trial_expired";
   return null;
