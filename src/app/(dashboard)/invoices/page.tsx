@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { listInvoices } from "@/lib/repositories/invoices";
 import { listLoads, getLoadById } from "@/lib/repositories/loads";
+import { listCustomers } from "@/lib/repositories/customers";
 import { getCurrentUserOrganization } from "@/lib/repositories/organizations";
 import { InvoiceTable } from "@/components/invoices/invoice-table";
 import { GenerateInvoiceDialog } from "@/components/invoices/generate-invoice-dialog";
@@ -18,14 +19,16 @@ export const metadata: Metadata = {
 };
 
 export default async function InvoicesPage() {
-  const [{ data: invoices }, deliveredLoads, podUploadedLoads, organization] = await Promise.all([
+  const [{ data: invoices }, deliveredLoads, podUploadedLoads, organization, { data: customers }] = await Promise.all([
     listInvoices({}, { page: 1, pageSize: 100 }),
     listLoads({ status: "delivered" }, { page: 1, pageSize: 50 }),
     listLoads({ status: "pod_uploaded" }, { page: 1, pageSize: 50 }),
     getCurrentUserOrganization(),
+    listCustomers({}, { page: 1, pageSize: 100 }),
   ]);
 
   const eligibleLoads = [...deliveredLoads.data, ...podUploadedLoads.data];
+  const customersById = Object.fromEntries(customers.map((c) => [c.id, c.name]));
 
   const invoiceLoadIds = Array.from(
     new Set(invoices.map((invoice) => invoice.loadId).filter((id): id is string => !!id))
@@ -65,7 +68,7 @@ export default async function InvoicesPage() {
         action={
           <div className="flex items-center gap-2">
             <SyncQuickBooksButton />
-            <GenerateInvoiceDialog eligibleLoads={eligibleLoads} />
+            <GenerateInvoiceDialog eligibleLoads={eligibleLoads} customersById={customersById} />
           </div>
         }
       />

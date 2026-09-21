@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,8 +33,27 @@ export function SettlementVoucherModal({
   const voucherNum =
     invoice.invoiceNumber || `SET-${invoice.id.slice(0, 8).toUpperCase()}`;
 
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      window.scrollTo(0, 0);
+      const scrollContainers = document.querySelectorAll(".overflow-y-auto");
+      scrollContainers.forEach((el) => {
+        el.scrollTop = 0;
+      });
+    };
+    window.addEventListener("beforeprint", handleBeforePrint);
+    return () => window.removeEventListener("beforeprint", handleBeforePrint);
+  }, []);
+
   const handlePrint = () => {
-    window.print();
+    window.scrollTo(0, 0);
+    const scrollContainers = document.querySelectorAll(".overflow-y-auto");
+    scrollContainers.forEach((el) => {
+      el.scrollTop = 0;
+    });
+    setTimeout(() => {
+      window.print();
+    }, 50);
   };
 
   return (
@@ -59,7 +78,7 @@ export function SettlementVoucherModal({
       )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-4xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white">
+        <DialogContent className="max-w-4xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white print:static print:top-auto print:left-auto print:translate-x-0 print:translate-y-0 print:transform-none print:w-full print:max-w-none print:max-h-none print:h-auto print:overflow-visible print:bg-white print:border-none print:p-0 print:m-0 print:block">
           {/* Action Header in Modal (Hidden when printing) */}
           <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-3.5 border-b border-slate-800 shrink-0 bg-slate-900/95 z-10 sticky top-0">
             <div className="flex items-center gap-3">
@@ -102,7 +121,7 @@ export function SettlementVoucherModal({
           </div>
 
           {/* Scrollable Document Viewport */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-slate-950/40">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-slate-950/40 print:bg-white print:p-0 print:m-0 print:overflow-visible print:block print:w-full">
             <SettlementVoucherView
               invoice={invoice}
               load={load}

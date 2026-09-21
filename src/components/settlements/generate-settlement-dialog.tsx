@@ -25,7 +25,19 @@ import { formatMoney } from "@/lib/format";
 import { generateSettlementAction } from "@/app/(dashboard)/settlements/actions";
 import type { Load } from "../../../types/domain";
 
-export function GenerateSettlementDialog({ eligibleLoads }: { eligibleLoads: Load[] }) {
+function loadOptionLabel(load: Load, carriersById: Record<string, string>): string {
+  const loadLabel = load.loadNumber || load.id.slice(0, 8);
+  const carrierName = (load.carrierId && carriersById[load.carrierId]) || "Unassigned carrier";
+  return `${loadLabel} — ${carrierName} — ${formatMoney(load.carrierPay)}`;
+}
+
+export function GenerateSettlementDialog({
+  eligibleLoads,
+  carriersById,
+}: {
+  eligibleLoads: Load[];
+  carriersById: Record<string, string>;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loadId, setLoadId] = useState<string>("");
@@ -76,14 +88,20 @@ export function GenerateSettlementDialog({ eligibleLoads }: { eligibleLoads: Loa
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="load">Load</Label>
-          <Select value={loadId} onValueChange={(value) => setLoadId(value ?? "")}>
+          <Select
+            value={loadId}
+            onValueChange={(value) => setLoadId(value ?? "")}
+            items={Object.fromEntries(
+              eligibleLoads.map((load) => [load.id, loadOptionLabel(load, carriersById)])
+            )}
+          >
             <SelectTrigger id="load" className="w-full text-foreground">
               <SelectValue placeholder="Select a load" />
             </SelectTrigger>
             <SelectContent>
               {eligibleLoads.map((load) => (
                 <SelectItem key={load.id} value={load.id}>
-                  {(load.loadNumber || load.id.slice(0, 8))} — {formatMoney(load.carrierPay)}
+                  {loadOptionLabel(load, carriersById)}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -84,7 +84,12 @@ export default async function SettlementsPage() {
         action={
           <div className="flex items-center gap-2">
             <ExportCsvButton />
-            <GenerateSettlementDialog eligibleLoads={eligibleLoads} />
+            <GenerateSettlementDialog
+              eligibleLoads={eligibleLoads}
+              carriersById={Object.fromEntries(
+                Object.values(carriersById).map((carrier) => [carrier.id, carrier.companyName])
+              )}
+            />
           </div>
         }
       />

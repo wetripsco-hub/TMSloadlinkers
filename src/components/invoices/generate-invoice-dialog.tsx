@@ -25,6 +25,12 @@ import { formatMoney } from "@/lib/format";
 import { generateInvoiceAction, listInvoiceEligibleLoadsAction } from "@/app/(dashboard)/invoices/actions";
 import type { Load } from "../../../types/domain";
 
+function loadOptionLabel(load: Load, customersById: Record<string, string>): string {
+  const loadLabel = load.loadNumber || load.id.slice(0, 8);
+  const customerName = (load.customerId && customersById[load.customerId]) || "Unknown customer";
+  return `${loadLabel} — ${customerName} — ${formatMoney(load.shipperRate)}`;
+}
+
 // `eligibleLoads` is the server-rendered snapshot from
 // app/(dashboard)/invoices/page.tsx (status in delivered/pod_uploaded only,
 // no check against existing invoices). It's kept only as the initial value
@@ -32,7 +38,13 @@ import type { Load } from "../../../types/domain";
 // opens, the real, correctly-scoped list (at least pod_uploaded AND no
 // existing shipper_invoice -- which also includes already-invoiced/settled
 // loads still missing one) is fetched fresh and replaces it.
-export function GenerateInvoiceDialog({ eligibleLoads: initialEligibleLoads }: { eligibleLoads: Load[] }) {
+export function GenerateInvoiceDialog({
+  eligibleLoads: initialEligibleLoads,
+  customersById,
+}: {
+  eligibleLoads: Load[];
+  customersById: Record<string, string>;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loadId, setLoadId] = useState<string>("");
@@ -110,14 +122,20 @@ export function GenerateInvoiceDialog({ eligibleLoads: initialEligibleLoads }: {
         ) : (
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="load">Load</Label>
-            <Select value={loadId} onValueChange={(value) => setLoadId(value ?? "")}>
+            <Select
+              value={loadId}
+              onValueChange={(value) => setLoadId(value ?? "")}
+              items={Object.fromEntries(
+                eligibleLoads.map((load) => [load.id, loadOptionLabel(load, customersById)])
+              )}
+            >
               <SelectTrigger id="load" className="w-full text-foreground">
                 <SelectValue placeholder={isLoadingEligible ? "Loading eligible loads..." : "Select a load"} />
               </SelectTrigger>
               <SelectContent>
                 {eligibleLoads.map((load) => (
                   <SelectItem key={load.id} value={load.id}>
-                    {(load.loadNumber || load.id.slice(0, 8))} — {formatMoney(load.shipperRate)}
+                    {loadOptionLabel(load, customersById)}
                   </SelectItem>
                 ))}
               </SelectContent>
