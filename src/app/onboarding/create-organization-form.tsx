@@ -113,7 +113,7 @@ export function CreateOrganizationForm() {
           name="workspaceType"
           control={control}
           render={({ field }) => (
-            <Select value={field.value ?? ""} onValueChange={field.onChange}>
+            <Select value={field.value ?? ""} onValueChange={field.onChange} items={workspaceTypeLabels}>
               <SelectTrigger id="workspaceType" className="w-full bg-white border-slate-200 text-slate-900 focus:ring-2 focus:ring-blue-500">
                 <SelectValue placeholder="Select a workspace type" />
               </SelectTrigger>

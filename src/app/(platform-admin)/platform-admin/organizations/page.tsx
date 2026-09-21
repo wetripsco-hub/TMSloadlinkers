@@ -19,6 +19,8 @@ function mapRpcRowToOrganizationRow(row: PlatformOrgRpcRow): PlatformOrganizatio
     seatCount: row.seat_count,
     trialEndsAt: row.trial_ends_at,
     createdAt: row.created_at,
+    accountStatus: row.account_status,
+    suspendedReason: row.suspended_reason,
   };
 }
 

@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { ArrowUpDown, Search } from "lucide-react";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/tailadmin/table";
 import { Badge, type BadgeColor } from "@/components/ui/tailadmin/badge";
+import { SuspendOrgDialog } from "@/components/platform-admin/suspend-org-dialog";
+import { ReactivateOrgButton } from "@/components/platform-admin/reactivate-org-button";
 
 export interface PlatformOrganizationRow {
   orgId: string;
@@ -14,6 +17,8 @@ export interface PlatformOrganizationRow {
   seatCount: number;
   trialEndsAt: string | null;
   createdAt: string;
+  accountStatus: string;
+  suspendedReason: string | null;
 }
 
 type SortKey = "name" | "planTier" | "subscriptionState" | "seatCount" | "createdAt";
@@ -157,12 +162,14 @@ export function OrgTable({ organizations }: { organizations: PlatformOrganizatio
             <TableCell isHeader>
               <SortableHeader label="Created" sortKeyName="createdAt" onToggle={toggleSort} />
             </TableCell>
+            <TableCell isHeader>Account status</TableCell>
+            <TableCell isHeader>Actions</TableCell>
           </tr>
         </TableHeader>
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="py-8 text-center text-slate-400">
+              <TableCell colSpan={9} className="py-8 text-center text-slate-400">
                 No tenant organizations match your search filters.
               </TableCell>
             </TableRow>
@@ -194,6 +201,37 @@ export function OrgTable({ organizations }: { organizations: PlatformOrganizatio
                 <TableCell>{org.seatCount}</TableCell>
                 <TableCell>{formatDate(org.trialEndsAt)}</TableCell>
                 <TableCell>{formatDate(org.createdAt)}</TableCell>
+                <TableCell>
+                  {org.accountStatus === "suspended" ? (
+                    <div className="flex flex-col gap-1">
+                      <Badge color="error" size="sm">
+                        Suspended
+                      </Badge>
+                      {org.suspendedReason ? (
+                        <span className="text-xs text-slate-500">{org.suspendedReason}</span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <Badge color="success" size="sm">
+                      Active
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/platform-admin/organizations/${org.orgId}/preview`}
+                      className="text-xs font-semibold text-brand-600 hover:underline"
+                    >
+                      Preview
+                    </Link>
+                    {org.accountStatus === "suspended" ? (
+                      <ReactivateOrgButton orgId={org.orgId} />
+                    ) : (
+                      <SuspendOrgDialog orgId={org.orgId} orgName={org.name} />
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))
           )}

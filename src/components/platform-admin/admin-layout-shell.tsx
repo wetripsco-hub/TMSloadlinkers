@@ -8,6 +8,7 @@ import {
   Building2,
   KeyRound,
   Ticket,
+  Megaphone,
   ShieldAlert,
   ShieldCheck,
   ArrowLeft,
@@ -48,6 +49,12 @@ const NAV_ITEMS = [
     name: "Audit Logs",
     href: "/platform-admin/audit-log",
     icon: ShieldAlert,
+    exact: false,
+  },
+  {
+    name: "Notifications",
+    href: "/platform-admin/notifications",
+    icon: Megaphone,
     exact: false,
   },
 ];
