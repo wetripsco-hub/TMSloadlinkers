@@ -40,6 +40,9 @@ export async function middleware(request: NextRequest) {
     "/documents",
     "/reports",
     "/driver-tracking",
+    "/messages",
+    "/quotes",
+    "/facilities",
   ];
   const isDashboardRoute = DASHBOARD_PREFIXES.some(
     (prefix) => request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`)
@@ -57,14 +60,35 @@ export async function middleware(request: NextRequest) {
   // module's data would still only ever see their own org's rows. This
   // only decides whether they're allowed to navigate to the route at all.
   if (user && isDashboardRoute) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, allowed_modules, organizations!profiles_org_id_fkey(account_status)")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    // account_status enforcement lives here, not RLS (021_platform_admin.sql /
+    // 069_platform_admin_org_suspension.sql): a platform admin still needs
+    // read access to a suspended org's data, so this only ever blocks
+    // navigation for that org's own (non-platform-admin) members.
+    const accountStatus = (
+      profile?.organizations as { account_status: string } | { account_status: string }[] | null
+    );
+    const isSuspended = Array.isArray(accountStatus)
+      ? accountStatus[0]?.account_status === "suspended"
+      : accountStatus?.account_status === "suspended";
+
+    if (isSuspended) {
+      const { data: isPlatformAdmin } = await supabase.rpc("is_platform_admin", {
+        uid: user.id,
+      });
+
+      if (!isPlatformAdmin) {
+        return NextResponse.redirect(new URL("/suspended", request.url));
+      }
+    }
+
     const matchedModule = resolveModuleForPath(request.nextUrl.pathname);
     if (matchedModule) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, allowed_modules")
-        .eq("id", user.id)
-        .maybeSingle();
-
       if (!isModuleAllowed(profile?.role, profile?.allowed_modules, matchedModule.key)) {
         // 'overview' is itself gated now, so the old hardcoded '/overview'
         // fallback could send a restricted member straight back into
@@ -114,6 +138,9 @@ export const config = {
     "/documents/:path*",
     "/reports/:path*",
     "/driver-tracking/:path*",
+    "/messages/:path*",
+    "/quotes/:path*",
+    "/facilities/:path*",
     "/platform-admin/:path*",
   ],
 };

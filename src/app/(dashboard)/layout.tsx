@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureUserOrganization } from "@/lib/services/ensure-user-organization";
 import { getAccessStatus } from "@/lib/subscription/guard";
+import { getUnreadStaffMessageCount } from "@/lib/repositories/load-notes";
 import { AccessBanner } from "@/components/billing/access-banner";
 import { SidebarProvider } from "@/context/SidebarContext";
 import DashboardShell from "@/layout/DashboardShell";
@@ -48,6 +49,8 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .maybeSingle();
 
+  const messagesUnreadCount = await getUnreadStaffMessageCount();
+
   return (
     <SidebarProvider
       orgName={organization?.name ?? null}
@@ -57,6 +60,7 @@ export default async function DashboardLayout({
       profileEmail={user.email ?? null}
       profileRole={profile?.role ?? null}
       profileAllowedModules={profile?.allowed_modules ?? []}
+      messagesUnreadCount={messagesUnreadCount}
     >
       <DashboardShell>
         <div className="space-y-6">

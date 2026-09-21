@@ -10,7 +10,6 @@ import {
   Menu,
   X,
   Search,
-  Bell,
   LogOut,
   User as UserIcon,
   Shield,
@@ -20,6 +19,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { seedDemoDataAction } from "@/app/(dashboard)/loads/actions";
+import { NotificationBell } from "@/components/layout/notification-bell";
 
 interface UserProfile {
   id: string;
@@ -188,15 +188,8 @@ export const AppHeader: React.FC = () => {
           <span className="hidden xs:inline">{isSeeding ? "Loading..." : "Load Sample Data"}</span>
         </button>
 
-        {/* Notifications Icon */}
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />
-        </button>
+        {/* Notifications */}
+        <NotificationBell />
 
         {/* User Profile Dropdown */}
         <div className="relative z-50">
