@@ -19,6 +19,9 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { firstAllowedModulePath } from "@/lib/domain/modules";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
+import { LoadlinkersLogo } from "@/components/icons";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid work email"),
@@ -29,35 +32,35 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 function LoginSkeleton() {
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white">
-      <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 lg:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-white text-slate-900">
+      <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />
-          <div className="h-5 w-32 rounded bg-white/10 animate-pulse" />
+          <div className="h-8 w-8 rounded-full bg-slate-200 animate-pulse" />
+          <div className="h-5 w-32 rounded bg-slate-200 animate-pulse" />
         </div>
       </header>
       <div className="relative flex flex-1 flex-col lg:flex-row">
-        <div className="flex w-full flex-col justify-center border-r border-white/10 bg-[#0E131F] px-6 py-8 sm:px-10 lg:w-[440px] xl:w-[480px]">
+        <div className="flex w-full flex-col justify-center border-r border-slate-200 bg-slate-50 px-6 py-8 sm:px-10 lg:w-[440px] xl:w-[480px]">
           <div className="w-full max-w-sm mx-auto space-y-6 animate-pulse">
             <div className="space-y-2">
-              <div className="h-7 w-48 rounded-lg bg-white/10" />
-              <div className="h-4 w-64 rounded bg-white/5" />
+              <div className="h-7 w-48 rounded-lg bg-slate-300" />
+              <div className="h-4 w-64 rounded bg-slate-200" />
             </div>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <div className="h-3 w-20 rounded bg-white/10" />
-                <div className="h-11 w-full rounded-xl bg-white/5" />
+                <div className="h-3 w-20 rounded bg-slate-300" />
+                <div className="h-11 w-full rounded-xl bg-slate-200" />
               </div>
               <div className="space-y-1.5">
-                <div className="h-3 w-20 rounded bg-white/10" />
-                <div className="h-11 w-full rounded-xl bg-white/5" />
+                <div className="h-3 w-20 rounded bg-slate-300" />
+                <div className="h-11 w-full rounded-xl bg-slate-200" />
               </div>
-              <div className="h-11 w-full rounded-xl bg-white/10" />
+              <div className="h-11 w-full rounded-xl bg-slate-300" />
             </div>
           </div>
         </div>
-        <div className="hidden flex-1 items-center justify-center bg-[#0B0F17] lg:flex">
-          <div className="h-24 w-64 rounded-2xl bg-white/5 animate-pulse" />
+        <div className="hidden flex-1 items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 lg:flex">
+          <div className="h-24 w-64 rounded-2xl bg-slate-200 animate-pulse" />
         </div>
       </div>
     </div>
@@ -72,6 +75,12 @@ export default function LoginPage() {
   );
 }
 
+const BACKGROUND_IMAGES = [
+  "/images/turvo-skyline.jpg",
+  "/images/solutions/bg-3pls.jpg",
+  "/images/solutions/bg-shippers.jpg",
+];
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -82,8 +91,13 @@ function LoginForm() {
   // Live Clock & Date for Turvo Right Wallpaper Display
   const [timeString, setTimeString] = useState<string>("");
   const [dateString, setDateString] = useState<string>("");
+  const [backgroundImage, setBackgroundImage] = useState<string>("");
 
   useEffect(() => {
+    // Select random background image
+    const randomImage = BACKGROUND_IMAGES[Math.floor(Math.random() * BACKGROUND_IMAGES.length)];
+    setBackgroundImage(randomImage);
+
     function updateClock() {
       const now = new Date();
       setTimeString(
@@ -117,87 +131,80 @@ function LoginForm() {
   async function onSubmit(values: LoginValues) {
     setFormError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword(values);
+    const { data, error } = await supabase.auth.signInWithPassword(values);
 
     if (error) {
       setFormError(error.message);
       return;
     }
 
-    const redirectTo = searchParams.get("redirectTo") ?? "/overview";
+    // An explicit redirectTo (bounced here from a protected route) is
+    // always honored as-is -- it's a deep link, not the restricted-access
+    // fallback. Only the default landing target needs to account for
+    // module access, now that 'overview' is itself gated: send a
+    // restricted member straight to the first module they actually have
+    // instead of '/overview', which would just bounce them again.
+    let redirectTo = searchParams.get("redirectTo");
+    if (!redirectTo) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, allowed_modules")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      redirectTo = firstAllowedModulePath(profile?.allowed_modules, profile?.role);
+    }
+
     router.push(redirectTo);
     router.refresh();
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white selection:bg-[#49c2f5] selection:text-[#0B0F17]">
-      {/* Turvo-style Top Brand Bar */}
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 backdrop-blur-md lg:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-white text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Top Brand Bar */}
+      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 backdrop-blur-md lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-3 transition-transform hover:opacity-90"
         >
-          {/* Circular Turvo Monogram Emblem */}
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0b7cc1] via-[#2b7ee2] to-[#49c2f5] p-[1.5px] shadow-sm shadow-[#49c2f5]/30">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0B0F17]">
-              <svg
-                className="h-4 w-4 text-[#49c2f5]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                <path d="m8 15 4-7 4 7" />
-                <path d="M9 13h6" />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-heading text-base font-bold tracking-tight text-white">
-              FreightLink <span className="text-[#49c2f5]">TMS</span>
-            </span>
-            <span className="hidden rounded bg-[#49c2f5]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#49c2f5] ring-1 ring-[#49c2f5]/30 sm:inline-block">
-              Enterprise Portal
-            </span>
-          </div>
+          <LoadlinkersLogo className="h-6 w-auto max-w-[170px]" />
+          <span className="hidden rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-600 ring-1 ring-indigo-200 sm:inline-block">
+            Enterprise Portal
+          </span>
         </Link>
 
-        <div className="flex items-center gap-4 text-xs text-slate-400">
+        <div className="flex items-center gap-4 text-xs">
           <Link
             href="/signup"
-            className="hidden font-medium text-slate-300 transition-colors hover:text-[#49c2f5] sm:inline-block"
+            className="hidden font-medium text-slate-600 transition-colors hover:text-indigo-600 sm:inline-block"
           >
             Start Free Trial
           </Link>
           <a
-            href="mailto:support@freightlinktms.com"
-            className="font-medium text-slate-400 transition-colors hover:text-white"
+            href="mailto:support@loadlinker.com"
+            className="font-medium text-slate-600 transition-colors hover:text-slate-900"
           >
             Contact Support
           </a>
         </div>
       </header>
 
-      {/* Main Split Layout: Left Form Panel + Right Full-screen Night City Skyline */}
+      {/* Main Split Layout: Left Form Panel + Right Background */}
       <div className="relative flex flex-1 flex-col lg:flex-row">
-        {/* Left Side: Enterprise Auth Panel */}
-        <section className="relative z-20 flex w-full flex-col justify-between border-r border-white/10 bg-[#0E131F] px-6 py-8 sm:px-10 sm:py-10 lg:w-[440px] xl:w-[480px]">
+        {/* Left Side: Auth Panel */}
+        <section className="relative z-20 flex w-full flex-col justify-between border-r border-slate-200 bg-slate-50 px-6 py-8 sm:px-10 sm:py-10 lg:w-[440px] xl:w-[480px]">
           {/* Subtle Ambient Radial Glow on Auth Panel */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#49c2f5]/10 blur-3xl"
+            className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-100/20 blur-3xl"
           />
 
           <div className="my-auto w-full max-w-sm mx-auto">
             {/* Form Header */}
             <div className="mb-6">
-              <h1 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 Sign in to your account
               </h1>
-              <p className="mt-1.5 text-xs text-slate-400 sm:text-sm">
+              <p className="mt-1.5 text-xs text-slate-600 sm:text-sm">
                 Enter your credentials to access your dispatch cockpit
               </p>
             </div>
@@ -219,24 +226,24 @@ function LoginForm() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="email"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Work Email
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.email
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100"
                   )}
                 >
                   <Mail
                     className={cn(
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.email
-                        ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        ? "text-rose-500"
+                        : "text-slate-400 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -246,12 +253,12 @@ function LoginForm() {
                     autoComplete="email"
                     aria-invalid={!!errors.email}
                     disabled={isSubmitting}
-                    className="h-11 w-full bg-transparent pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-11 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("email")}
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-xs font-medium text-rose-400">
+                  <p className="text-xs font-medium text-rose-600">
                     {errors.email.message}
                   </p>
                 )}
@@ -261,24 +268,24 @@ function LoginForm() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="password"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Password
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.password
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100"
                   )}
                 >
                   <Lock
                     className={cn(
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.password
-                        ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        ? "text-rose-500"
+                        : "text-slate-400 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -288,14 +295,14 @@ function LoginForm() {
                     autoComplete="current-password"
                     aria-invalid={!!errors.password}
                     disabled={isSubmitting}
-                    className="h-11 w-full bg-transparent pl-10 pr-11 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-11 w-full bg-transparent pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("password")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     tabIndex={-1}
-                    className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:text-white focus:outline-hidden"
+                    className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:text-slate-600 focus:outline-hidden"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -306,7 +313,7 @@ function LoginForm() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs font-medium text-rose-400">
+                  <p className="text-xs font-medium text-rose-600">
                     {errors.password.message}
                   </p>
                 )}
@@ -325,31 +332,31 @@ function LoginForm() {
                     className={cn(
                       "flex h-4 w-4 items-center justify-center rounded border transition-all duration-150",
                       rememberMe
-                        ? "border-[#2b7ee2] bg-[#2b7ee2] text-white"
-                        : "border-white/20 bg-[#0B0F17] group-hover:border-white/40"
+                        ? "border-indigo-600 bg-indigo-600 text-white"
+                        : "border-slate-300 bg-white group-hover:border-slate-400"
                     )}
                   >
                     {rememberMe && <Check className="h-3 w-3 stroke-[3]" />}
                   </span>
-                  <span className="text-xs text-slate-300 transition-colors group-hover:text-white">
+                  <span className="text-xs text-slate-700 transition-colors group-hover:text-slate-900">
                     Remember me
                   </span>
                 </label>
 
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-[#49c2f5] transition-colors hover:text-[#7cd4fd] hover:underline"
+                  className="text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-700 hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              {/* Turvo Blue/Cyan Action Button */}
+              {/* Sign In Button */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A3E0] via-[#2488E5] to-[#2B7EE2] px-4 text-sm font-semibold text-white shadow-lg shadow-[#00A3E0]/20 transition-all duration-200 hover:from-[#22B3EB] hover:to-[#368AF0] hover:shadow-[#00A3E0]/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
@@ -365,106 +372,105 @@ function LoginForm() {
 
             {/* Divider */}
             <div className="relative my-6 flex items-center justify-center">
-              <div className="w-full border-t border-white/10" />
-              <span className="absolute bg-[#0E131F] px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <div className="w-full border-t border-slate-300" />
+              <span className="absolute bg-slate-50 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                 Or continue with
               </span>
             </div>
 
+            {/* Google OAuth */}
+            <GoogleAuthButton redirectTo={searchParams.get("redirectTo") ?? undefined} />
+
             {/* Disabled Enterprise SSO Button */}
-            <div>
+            <div className="mt-3">
               <button
                 type="button"
                 disabled
-                className="group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.02] px-4 text-sm font-medium text-slate-400 opacity-60 cursor-not-allowed transition-all"
+                className="group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-slate-100 px-4 text-sm font-medium text-slate-500 opacity-60 cursor-not-allowed transition-all"
                 title="Enterprise Single Sign-On (SAML 2.0 / Okta) is available on Enterprise tier"
               >
                 <Building2 className="h-4 w-4 text-slate-400" />
                 <span>Enterprise SSO (SAML 2.0 / Okta)</span>
-                <span className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <span className="ml-auto rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                   Enterprise
                 </span>
               </button>
             </div>
 
-            {/* 14-Day Free Trial Link */}
-            <div className="mt-6 text-center text-xs text-slate-400">
+            {/* 7-Day Free Trial Link */}
+            <div className="mt-6 text-center text-xs text-slate-600">
               Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
-                className="font-medium text-[#49c2f5] transition-colors hover:text-[#7cd4fd] hover:underline"
+                className="font-medium text-indigo-600 transition-colors hover:text-indigo-700 hover:underline"
               >
-                Start a 14-day free trial
+                Start a 7-day free trial
               </Link>
             </div>
           </div>
 
           {/* Left Footer: Legal & Support */}
-          <footer className="mt-8 pt-4 border-t border-white/5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
-            <Link href="/terms" className="transition-colors hover:text-slate-300">
+          <footer className="mt-8 pt-4 border-t border-slate-200 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-600">
+            <Link href="/terms" className="transition-colors hover:text-slate-900">
               Terms of Service
             </Link>
-            <span className="h-1 w-1 rounded-full bg-slate-700" />
-            <Link href="/privacy" className="transition-colors hover:text-slate-300">
+            <span className="h-1 w-1 rounded-full bg-slate-300" />
+            <Link href="/privacy" className="transition-colors hover:text-slate-900">
               Privacy Policy
             </Link>
-            <span className="h-1 w-1 rounded-full bg-slate-700" />
+            <span className="h-1 w-1 rounded-full bg-slate-300" />
             <a
-              href="mailto:support@freightlinktms.com"
-              className="transition-colors hover:text-slate-300"
+              href="mailto:support@loadlinker.com"
+              className="transition-colors hover:text-slate-900"
             >
               Support
             </a>
           </footer>
         </section>
 
-        {/* Right Side: Full-Bleed Night Skyline with Turvo-Style Live Clock */}
+        {/* Right Side: Background Image */}
         <section
-          className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-[#0B0F17] lg:flex"
-          aria-label="Portal Atmosphere"
+          className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden lg:flex"
+          style={{
+            backgroundImage: backgroundImage ? `url('${backgroundImage}')` : "url('/images/turvo-skyline.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+          aria-label="Portal Background"
         >
-          {/* Background Wallpaper Image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
-            style={{
-              backgroundImage: `url('/images/turvo-skyline.jpg')`,
-            }}
-          />
-
-          {/* Deep Cinematic Overlay & Ambient Radial Glows */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17]/80 via-transparent to-[#0B0F17]/60" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0E131F] via-transparent to-transparent" />
+          {/* Overlay for better contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-slate-900/30" />
           <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
 
-          {/* Live Turvo-Style Giant Clock & Date Display */}
-          <div className="relative z-10 flex flex-col items-center text-center select-none px-6 py-8 rounded-3xl backdrop-blur-[2px] bg-black/10">
+          {/* Live Clock & Date Display */}
+          <div className="relative z-10 flex flex-col items-center text-center select-none px-6 py-8 rounded-3xl backdrop-blur-md bg-slate-900/30 border border-white/20">
             <div
-              className="font-heading text-6xl font-light tracking-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] xl:text-8xl"
+              className="font-heading text-6xl font-light tracking-tight text-white xl:text-8xl"
               suppressHydrationWarning
             >
               {timeString || "12:00 PM"}
             </div>
             <div
-              className="mt-3 text-xl font-normal tracking-wide text-slate-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] xl:text-2xl"
+              className="mt-3 text-xl font-normal tracking-wide text-slate-200 xl:text-2xl"
               suppressHydrationWarning
             >
               {dateString || "Loading date..."}
             </div>
-            <div className="mt-6 flex items-center gap-2 rounded-full border border-white/20 bg-[#0B0F17]/70 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-slate-300 shadow-lg shadow-black/40">
+            <div className="mt-6 flex items-center gap-2 rounded-full border border-white/30 bg-slate-900/50 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-slate-100">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00d084] opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00d084]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              <span>FreightLink Global Logistics Network Active</span>
+              <span>Loadlinker TMS Global Network Active</span>
             </div>
           </div>
 
-          {/* Bottom Right Attribution / Status Pill */}
+          {/* Bottom Right Attribution */}
           <div className="absolute bottom-6 right-8 z-10 hidden text-right xl:block">
-            <p className="text-[11px] font-medium text-white/70 drop-shadow-md">
+            <p className="text-[11px] font-medium text-slate-200">
               Secure Operations Dispatch Node 01
             </p>
-            <p className="text-[10px] text-white/50 drop-shadow-sm">
+            <p className="text-[10px] text-slate-400">
               99.99% Uptime SLA • Encrypted SAML 2.0
             </p>
           </div>

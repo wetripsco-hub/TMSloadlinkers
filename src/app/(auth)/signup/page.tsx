@@ -23,6 +23,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import {
   Select,
   SelectContent,
@@ -53,15 +54,15 @@ const workspaceTypeLabels: Record<(typeof workspaceTypes)[number], string> = {
 
 function SignupSkeleton() {
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white">
-      <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 lg:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-white text-slate-900">
+      <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 lg:px-8">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />
           <div className="h-5 w-32 rounded bg-white/10 animate-pulse" />
         </div>
       </header>
       <div className="relative flex flex-1 flex-col lg:flex-row">
-        <div className="flex w-full flex-col justify-center border-r border-white/10 bg-[#0E131F] px-6 py-8 sm:px-10 lg:w-[480px] xl:w-[520px]">
+        <div className="flex w-full flex-col justify-center border-r border-slate-200 bg-slate-50 px-6 py-8 sm:px-10 lg:w-[480px] xl:w-[520px]">
           <div className="w-full max-w-md mx-auto space-y-5 animate-pulse">
             <div className="space-y-2">
               <div className="h-7 w-48 rounded-lg bg-white/10" />
@@ -92,7 +93,7 @@ function SignupSkeleton() {
             </div>
           </div>
         </div>
-        <div className="hidden flex-1 items-center justify-center bg-[#0B0F17] lg:flex">
+        <div className="hidden flex-1 items-center justify-center bg-white lg:flex">
           <div className="h-24 w-64 rounded-2xl bg-white/5 animate-pulse" />
         </div>
       </div>
@@ -226,17 +227,17 @@ function SignupForm() {
   // Check Email State Screen
   if (checkEmail) {
     return (
-      <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white selection:bg-[#49c2f5] selection:text-[#0B0F17]">
+      <div className="flex min-h-screen w-full flex-col bg-white text-slate-900 selection:bg-[#49c2f5] selection:text-[#0B0F17]">
         {/* Header Bar */}
-        <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 backdrop-blur-md lg:px-8">
+        <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur-md lg:px-8">
           <Link
             href="/"
             className="flex items-center gap-3 transition-transform hover:opacity-90"
           >
             <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0b7cc1] via-[#2b7ee2] to-[#49c2f5] p-[1.5px] shadow-sm shadow-[#49c2f5]/30">
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0B0F17]">
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
                 <svg
-                  className="h-4 w-4 text-[#49c2f5]"
+                  className="h-4 w-4 text-indigo-600"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -250,13 +251,13 @@ function SignupForm() {
                 </svg>
               </div>
             </div>
-            <span className="font-heading text-base font-bold tracking-tight text-white">
-              FreightLink <span className="text-[#49c2f5]">TMS</span>
+            <span className="font-heading text-base font-bold tracking-tight text-slate-900">
+              FreightLink <span className="text-indigo-600">TMS</span>
             </span>
           </Link>
           <Link
             href="/login"
-            className="text-xs font-medium text-slate-300 hover:text-[#49c2f5]"
+            className="text-xs font-medium text-slate-700 hover:text-indigo-600"
           >
             Sign In
           </Link>
@@ -268,24 +269,24 @@ function SignupForm() {
             className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#49c2f5]/15 via-[#2b7ee2]/10 to-transparent blur-3xl"
           />
 
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[#141824]/90 p-8 text-center shadow-2xl shadow-black/70 backdrop-blur-xl ring-1 ring-white/5">
+          <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-[#141824]/90 p-8 text-center shadow-2xl shadow-black/70 backdrop-blur-xl ring-1 ring-white/5">
             <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#0b7cc1] via-[#2b7ee2] to-[#49c2f5] p-[1.5px] shadow-lg shadow-[#49c2f5]/20">
-              <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-[#0E131F]">
-                <MailCheck className="h-7 w-7 text-[#49c2f5]" />
+              <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-50">
+                <MailCheck className="h-7 w-7 text-indigo-600" />
               </div>
             </div>
 
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-white">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-slate-900">
               Check your email
             </h1>
-            <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               We sent a confirmation link to{" "}
-              <span className="font-semibold text-white">{submittedEmail || "your inbox"}</span>.
+              <span className="font-semibold text-slate-900">{submittedEmail || "your inbox"}</span>.
               Follow it to verify your account and activate your dispatch cockpit.
             </p>
 
-            <div className="mt-6 rounded-xl border border-white/10 bg-[#0B0F17]/80 p-4 text-left text-xs text-slate-400 space-y-2">
-              <div className="flex items-center gap-2 text-slate-300 font-medium">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white/80 p-4 text-left text-xs text-slate-600 space-y-2">
+              <div className="flex items-center gap-2 text-slate-700 font-medium">
                 <CheckCircle2 className="h-4 w-4 text-[#00d084]" />
                 <span>Next steps</span>
               </div>
@@ -297,7 +298,7 @@ function SignupForm() {
             <div className="mt-6">
               <Link
                 href="/login"
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A3E0] via-[#2488E5] to-[#2B7EE2] px-4 text-sm font-semibold text-white shadow-lg shadow-[#00A3E0]/20 transition-all hover:from-[#22B3EB] hover:to-[#368AF0]"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-slate-900 shadow-lg shadow-indigo-600/20 transition-all hover:from-indigo-700 hover:to-indigo-600"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back to Sign In</span>
@@ -310,18 +311,18 @@ function SignupForm() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white selection:bg-[#49c2f5] selection:text-[#0B0F17]">
+    <div className="flex min-h-screen w-full flex-col bg-white text-slate-900 selection:bg-[#49c2f5] selection:text-[#0B0F17]">
       {/* Top Brand Bar */}
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 backdrop-blur-md lg:px-8">
+      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur-md lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-3 transition-transform hover:opacity-90"
         >
           {/* Circular Turvo Monogram Emblem */}
           <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0b7cc1] via-[#2b7ee2] to-[#49c2f5] p-[1.5px] shadow-sm shadow-[#49c2f5]/30">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0B0F17]">
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
               <svg
-                className="h-4 w-4 text-[#49c2f5]"
+                className="h-4 w-4 text-indigo-600"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -336,27 +337,27 @@ function SignupForm() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-heading text-base font-bold tracking-tight text-white">
-              FreightLink <span className="text-[#49c2f5]">TMS</span>
+            <span className="font-heading text-base font-bold tracking-tight text-slate-900">
+              FreightLink <span className="text-indigo-600">TMS</span>
             </span>
-            <span className="hidden rounded bg-[#49c2f5]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#49c2f5] ring-1 ring-[#49c2f5]/30 sm:inline-block">
+            <span className="hidden rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-600 ring-1 ring-indigo-200/30 sm:inline-block">
               Enterprise Portal
             </span>
           </div>
         </Link>
 
-        <div className="flex items-center gap-4 text-xs text-slate-400">
+        <div className="flex items-center gap-4 text-xs text-slate-600">
           <span className="hidden sm:inline-block">Already have an account?</span>
           <Link
             href="/login"
-            className="font-semibold text-[#49c2f5] transition-colors hover:text-[#7cd4fd] hover:underline"
+            className="font-semibold text-indigo-600 transition-colors hover:text-[#7cd4fd] hover:underline"
           >
             Sign In
           </Link>
           <span className="hidden h-3 w-px bg-white/15 sm:inline-block" />
           <a
             href="mailto:support@freightlinktms.com"
-            className="hidden font-medium text-slate-400 transition-colors hover:text-white sm:inline-block"
+            className="hidden font-medium text-slate-600 transition-colors hover:text-slate-900 sm:inline-block"
           >
             Contact Support
           </a>
@@ -366,21 +367,21 @@ function SignupForm() {
       {/* Main Split Layout: Left Form Panel + Right Full-screen Night City Skyline */}
       <div className="relative flex flex-1 flex-col lg:flex-row">
         {/* Left Side: Enterprise Auth Panel */}
-        <section className="relative z-20 flex w-full flex-col justify-between border-r border-white/10 bg-[#0E131F] px-6 py-8 sm:px-10 sm:py-9 lg:w-[480px] xl:w-[520px] lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto">
+        <section className="relative z-20 flex w-full flex-col justify-between border-r border-slate-200 bg-slate-50 px-6 py-8 sm:px-10 sm:py-9 lg:w-[480px] xl:w-[520px] lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto">
           {/* Subtle Ambient Radial Glow */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#49c2f5]/10 blur-3xl"
+            className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-50 blur-3xl"
           />
 
           <div className="w-full max-w-md mx-auto my-auto">
             {/* Form Header */}
             <div className="mb-5">
-              <h1 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 Create your account
               </h1>
-              <p className="mt-1.5 text-xs text-slate-400 sm:text-sm">
-                Start your 14-day free trial. No credit card required.
+              <p className="mt-1.5 text-xs text-slate-600 sm:text-sm">
+                Start your 7-day free trial. No credit card required.
               </p>
             </div>
 
@@ -401,16 +402,16 @@ function SignupForm() {
               <div className="space-y-1">
                 <label
                   htmlFor="orgName"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Company / Organization Name
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.orgName
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100/20"
                   )}
                 >
                   <Building2
@@ -418,7 +419,7 @@ function SignupForm() {
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.orgName
                         ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        : "text-slate-600 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -428,7 +429,7 @@ function SignupForm() {
                     autoComplete="organization"
                     aria-invalid={!!errors.orgName}
                     disabled={isSubmitting}
-                    className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("orgName")}
                   />
                 </div>
@@ -443,12 +444,12 @@ function SignupForm() {
               <div className="space-y-1">
                 <label
                   htmlFor="workspaceType"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Workspace Type
                 </label>
                 <div className="relative flex items-center">
-                  <Briefcase className="pointer-events-none absolute left-3.5 h-4 w-4 text-slate-400 z-10" />
+                  <Briefcase className="pointer-events-none absolute left-3.5 h-4 w-4 text-slate-600 z-10" />
                   <Controller
                     name="workspaceType"
                     control={control}
@@ -456,24 +457,25 @@ function SignupForm() {
                       <Select
                         value={field.value ?? ""}
                         onValueChange={field.onChange}
+                        items={workspaceTypeLabels}
                       >
                         <SelectTrigger
                           id="workspaceType"
                           className={cn(
-                            "h-10 w-full rounded-xl border bg-[#0B0F17] pl-10 pr-3.5 text-sm text-white transition-all duration-200",
+                            "h-10 w-full rounded-xl border bg-white pl-10 pr-3.5 text-sm text-slate-900 transition-all duration-200",
                             errors.workspaceType
                               ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                              : "border-white/15 hover:border-white/25 focus-visible:border-[#49c2f5] focus-visible:ring-2 focus-visible:ring-[#49c2f5]/20"
+                              : "border-slate-300 hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-200/20"
                           )}
                         >
                           <SelectValue placeholder="Select a workspace type" />
                         </SelectTrigger>
-                        <SelectContent className="border-white/10 bg-[#141824] text-white shadow-xl">
+                        <SelectContent className="border-slate-200 bg-[#141824] text-slate-900 shadow-xl">
                           {workspaceTypes.map((type) => (
                             <SelectItem
                               key={type}
                               value={type}
-                              className="cursor-pointer text-slate-200 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white"
+                              className="cursor-pointer text-slate-200 hover:bg-white/10 hover:text-slate-900 focus:bg-white/10 focus:text-slate-900"
                             >
                               {workspaceTypeLabels[type]}
                             </SelectItem>
@@ -494,16 +496,16 @@ function SignupForm() {
               <div className="space-y-1">
                 <label
                   htmlFor="fullName"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Full Name
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.fullName
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100/20"
                   )}
                 >
                   <User
@@ -511,7 +513,7 @@ function SignupForm() {
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.fullName
                         ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        : "text-slate-600 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -521,7 +523,7 @@ function SignupForm() {
                     autoComplete="name"
                     aria-invalid={!!errors.fullName}
                     disabled={isSubmitting}
-                    className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("fullName")}
                   />
                 </div>
@@ -536,16 +538,16 @@ function SignupForm() {
               <div className="space-y-1">
                 <label
                   htmlFor="email"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Work Email
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.email
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100/20"
                   )}
                 >
                   <Mail
@@ -553,7 +555,7 @@ function SignupForm() {
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.email
                         ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        : "text-slate-600 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -563,7 +565,7 @@ function SignupForm() {
                     autoComplete="email"
                     aria-invalid={!!errors.email}
                     disabled={isSubmitting}
-                    className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("email")}
                   />
                 </div>
@@ -578,16 +580,16 @@ function SignupForm() {
               <div className="space-y-1">
                 <label
                   htmlFor="password"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Password
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.password
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100/20"
                   )}
                 >
                   <Lock
@@ -595,7 +597,7 @@ function SignupForm() {
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.password
                         ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        : "text-slate-600 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -605,14 +607,14 @@ function SignupForm() {
                     autoComplete="new-password"
                     aria-invalid={!!errors.password}
                     disabled={isSubmitting}
-                    className="h-10 w-full bg-transparent pl-10 pr-11 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-10 w-full bg-transparent pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("password")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     tabIndex={-1}
-                    className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:text-white focus:outline-hidden"
+                    className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition-colors hover:text-slate-900 focus:outline-hidden"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -634,11 +636,11 @@ function SignupForm() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A3E0] via-[#2488E5] to-[#2B7EE2] px-4 text-sm font-semibold text-white shadow-lg shadow-[#00A3E0]/20 transition-all duration-200 hover:from-[#22B3EB] hover:to-[#368AF0] hover:shadow-[#00A3E0]/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-slate-900 shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
                       <span>Creating dispatcher account...</span>
                     </>
                   ) : (
@@ -648,12 +650,23 @@ function SignupForm() {
               </div>
             </form>
 
+            {/* Divider */}
+            <div className="relative my-5 flex items-center justify-center">
+              <div className="w-full border-t border-slate-200" />
+              <span className="absolute bg-slate-50 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                Or continue with
+              </span>
+            </div>
+
+            {/* Google OAuth */}
+            <GoogleAuthButton redirectTo={searchParams.get("redirectTo") ?? undefined} />
+
             {/* Bottom Link to Sign In */}
-            <div className="mt-5 text-center text-xs text-slate-400">
+            <div className="mt-5 text-center text-xs text-slate-600">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-semibold text-[#49c2f5] transition-colors hover:text-[#7cd4fd] hover:underline"
+                className="font-semibold text-indigo-600 transition-colors hover:text-[#7cd4fd] hover:underline"
               >
                 Sign in
               </Link>
@@ -661,18 +674,18 @@ function SignupForm() {
           </div>
 
           {/* Left Footer: Legal & Support */}
-          <footer className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
-            <Link href="/terms" className="transition-colors hover:text-slate-300">
+          <footer className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-600">
+            <Link href="/terms" className="transition-colors hover:text-slate-700">
               Terms of Service
             </Link>
             <span className="h-1 w-1 rounded-full bg-slate-700" />
-            <Link href="/privacy" className="transition-colors hover:text-slate-300">
+            <Link href="/privacy" className="transition-colors hover:text-slate-700">
               Privacy Policy
             </Link>
             <span className="h-1 w-1 rounded-full bg-slate-700" />
             <a
               href="mailto:support@freightlinktms.com"
-              className="transition-colors hover:text-slate-300"
+              className="transition-colors hover:text-slate-700"
             >
               Support
             </a>
@@ -681,7 +694,7 @@ function SignupForm() {
 
         {/* Right Side: Full-Bleed Night Skyline with Turvo-Style Live Clock */}
         <section
-          className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-[#0B0F17] lg:flex"
+          className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-white lg:flex"
           aria-label="Portal Atmosphere"
         >
           {/* Background Wallpaper Image */}
@@ -700,7 +713,7 @@ function SignupForm() {
           {/* Live Turvo-Style Giant Clock & Date Display */}
           <div className="relative z-10 flex flex-col items-center text-center select-none px-6 py-8 rounded-3xl backdrop-blur-[2px] bg-black/10">
             <div
-              className="font-heading text-6xl font-light tracking-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] xl:text-8xl"
+              className="font-heading text-6xl font-light tracking-tight text-slate-900 drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] xl:text-8xl"
               suppressHydrationWarning
             >
               {timeString || "12:00 PM"}
@@ -711,7 +724,7 @@ function SignupForm() {
             >
               {dateString || "Loading date..."}
             </div>
-            <div className="mt-6 flex items-center gap-2 rounded-full border border-white/20 bg-[#0B0F17]/70 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-slate-300 shadow-lg shadow-black/40">
+            <div className="mt-6 flex items-center gap-2 rounded-full border border-white/20 bg-white/70 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-slate-700 shadow-lg shadow-black/40">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00d084] opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00d084]" />
@@ -722,11 +735,11 @@ function SignupForm() {
 
           {/* Bottom Right Attribution / Status Pill */}
           <div className="absolute bottom-6 right-8 z-10 hidden text-right xl:block">
-            <p className="text-[11px] font-medium text-white/70 drop-shadow-md">
+            <p className="text-[11px] font-medium text-slate-900/70 drop-shadow-md">
               Secure Operations Onboarding Node
             </p>
-            <p className="text-[10px] text-white/50 drop-shadow-sm">
-              Instant 14-Day Sandbox Access • No Card Required
+            <p className="text-[10px] text-slate-900/50 drop-shadow-sm">
+              Instant 7-Day Sandbox Access • No Card Required
             </p>
           </div>
         </section>

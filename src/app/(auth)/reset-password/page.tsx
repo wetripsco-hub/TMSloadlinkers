@@ -27,8 +27,8 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0B0F17]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#49c2f5]" />
+        <div className="flex min-h-screen items-center justify-center bg-white">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
       }
     >
@@ -84,23 +84,23 @@ function ResetPasswordForm() {
 
   if (checkingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0B0F17]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#49c2f5]" />
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#0B0F17] text-white selection:bg-[#49c2f5] selection:text-[#0B0F17]">
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0F17]/95 px-5 backdrop-blur-md lg:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-white text-slate-900 selection:bg-[#49c2f5] selection:text-[#0B0F17]">
+      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur-md lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-3 transition-transform hover:opacity-90"
         >
           <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0b7cc1] via-[#2b7ee2] to-[#49c2f5] p-[1.5px] shadow-sm shadow-[#49c2f5]/30">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0B0F17]">
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
               <svg
-                className="h-4 w-4 text-[#49c2f5]"
+                className="h-4 w-4 text-indigo-600"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -115,10 +115,10 @@ function ResetPasswordForm() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-heading text-base font-bold tracking-tight text-white">
-              FreightLink <span className="text-[#49c2f5]">TMS</span>
+            <span className="font-heading text-base font-bold tracking-tight text-slate-900">
+              FreightLink <span className="text-indigo-600">TMS</span>
             </span>
-            <span className="hidden rounded bg-[#49c2f5]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#49c2f5] ring-1 ring-[#49c2f5]/30 sm:inline-block">
+            <span className="hidden rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-600 ring-1 ring-indigo-200/30 sm:inline-block">
               Enterprise Portal
             </span>
           </div>
@@ -133,21 +133,21 @@ function ResetPasswordForm() {
 
         <div className="relative z-10 w-full max-w-md">
           <div className="mb-6 text-center">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Set a new password
             </h1>
-            <p className="mt-1.5 text-xs text-slate-400 sm:text-sm">
+            <p className="mt-1.5 text-xs text-slate-600 sm:text-sm">
               Choose a new password for your account
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#141824]/90 p-6 shadow-2xl shadow-black/70 backdrop-blur-xl ring-1 ring-white/5 sm:p-8">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/50 backdrop-blur-xl ring-1 ring-slate-200/50 sm:p-8">
             {formError && (
               <div
                 role="alert"
-                className="mb-5 flex items-start gap-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300"
+                className="mb-5 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
               >
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-400" />
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-600" />
                 <div className="flex-1 font-normal leading-relaxed">{formError}</div>
               </div>
             )}
@@ -156,16 +156,16 @@ function ResetPasswordForm() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="password"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   New Password
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.password
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100/20"
                   )}
                 >
                   <Lock
@@ -173,7 +173,7 @@ function ResetPasswordForm() {
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.password
                         ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        : "text-slate-600 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -183,14 +183,14 @@ function ResetPasswordForm() {
                     autoComplete="new-password"
                     aria-invalid={!!errors.password}
                     disabled={isSubmitting}
-                    className="h-11 w-full bg-transparent pl-10 pr-11 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-11 w-full bg-transparent pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("password")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     tabIndex={-1}
-                    className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:text-white focus:outline-hidden"
+                    className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition-colors hover:text-slate-900 focus:outline-hidden"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -208,16 +208,16 @@ function ResetPasswordForm() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="confirmPassword"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700"
                 >
                   Confirm New Password
                 </label>
                 <div
                   className={cn(
-                    "group relative flex items-center rounded-xl border bg-[#0B0F17] transition-all duration-200",
+                    "group relative flex items-center rounded-xl border bg-white transition-all duration-200",
                     errors.confirmPassword
                       ? "border-rose-500/60 ring-2 ring-rose-500/20"
-                      : "border-white/15 hover:border-white/25 focus-within:border-[#49c2f5] focus-within:ring-2 focus-within:ring-[#49c2f5]/20"
+                      : "border-slate-300 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100/20"
                   )}
                 >
                   <Lock
@@ -225,7 +225,7 @@ function ResetPasswordForm() {
                       "pointer-events-none absolute left-3.5 h-4 w-4 transition-colors",
                       errors.confirmPassword
                         ? "text-rose-400"
-                        : "text-slate-400 group-focus-within:text-[#49c2f5]"
+                        : "text-slate-600 group-focus-within:text-indigo-600"
                     )}
                   />
                   <input
@@ -235,7 +235,7 @@ function ResetPasswordForm() {
                     autoComplete="new-password"
                     aria-invalid={!!errors.confirmPassword}
                     disabled={isSubmitting}
-                    className="h-11 w-full bg-transparent pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-11 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("confirmPassword")}
                   />
                 </div>
@@ -250,11 +250,11 @@ function ResetPasswordForm() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A3E0] via-[#2488E5] to-[#2B7EE2] px-4 text-sm font-semibold text-white shadow-lg shadow-[#00A3E0]/20 transition-all duration-200 hover:from-[#22B3EB] hover:to-[#368AF0] hover:shadow-[#00A3E0]/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-slate-900 shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
                       <span>Updating password...</span>
                     </>
                   ) : (
