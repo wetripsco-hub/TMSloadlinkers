@@ -10,40 +10,33 @@ interface TopBarProps {
 
 export function TopBar({ onOpenSearch }: TopBarProps) {
   return (
-    <div className="bg-[#111015] border-b border-white/10 text-xs text-[#a0a0aa] py-2 px-4 sm:px-8">
+    <div className="bg-slate-100 border-b border-slate-200 text-xs text-slate-600 py-2 px-4 sm:px-8">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs">
           <span>Do you have unnecessary costs and risks using a legacy TMS? 🧐</span>
           <Link
-            href="#white-papers"
-            className="text-[#49c2f5] hover:text-[#5dd0ff] font-medium underline underline-offset-2 transition-colors"
+            href="#pricing"
+            className="text-blue-600 hover:text-blue-700 font-medium underline underline-offset-2 transition-colors"
           >
-            Learn More Here.
+            See Pricing.
           </Link>
         </div>
 
         <div className="hidden sm:flex items-center gap-4">
           <button
             onClick={onOpenSearch}
-            className="flex items-center gap-1.5 text-white/80 hover:text-[#49c2f5] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
             aria-label="Open Search"
           >
             <Search className="w-3.5 h-3.5" />
             <span>Search</span>
           </button>
-          <span className="text-white/20">|</span>
+          <span className="text-slate-300">|</span>
           <Link
             href="/login"
-            className="text-white/80 hover:text-[#49c2f5] transition-colors"
+            className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
           >
             Login
-          </Link>
-          <span className="text-white/20">|</span>
-          <Link
-            href="#contact"
-            className="text-white/80 hover:text-[#49c2f5] transition-colors"
-          >
-            Contact Us
           </Link>
         </div>
       </div>

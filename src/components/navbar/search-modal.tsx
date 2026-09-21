@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { Search, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { PLANS } from "@/lib/stripe/plans";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -34,40 +35,43 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   if (!isOpen) return null;
 
   const popularSearches = [
-    { title: "TMS Overview", href: "#tms" },
-    { title: "3PL Solutions", href: "#3pls" },
-    { title: "Freight Brokers", href: "#freight-brokers" },
-    { title: "ROI Calculator", href: "#roi-calculator" },
-    { title: "Driver App", href: "#driver-app" },
-    { title: "Integration Hub", href: "#integrations" },
+    { title: "Features", href: "#features" },
+    { title: "How It Works", href: "#how-it-works" },
+    { title: "Pricing", href: "#pricing" },
+    { title: "FAQ", href: "#faq" },
+    { title: `${PLANS.starter.name} plan`, href: "#pricing" },
+    { title: `${PLANS.growth.name} plan`, href: "#pricing" },
+    { title: `${PLANS.enterprise.name} plan`, href: "#pricing" },
+    { title: "Sign up", href: "/signup" },
+    { title: "Log in", href: "/login" },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-2xl bg-[#18171d] border border-white/15 rounded-2xl p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white/60 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors"
           aria-label="Close search"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-3 border-b border-white/15 pb-4 mb-6">
-          <Search className="w-6 h-6 text-[#49c2f5]" />
+        <div className="flex items-center gap-3 border-b border-slate-200 pb-4 mb-6">
+          <Search className="w-6 h-6 text-blue-600" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Search Loadlinkers..."
-            className="w-full bg-transparent text-xl font-medium text-white placeholder:text-white/40 focus:outline-none"
+            className="w-full bg-transparent text-xl font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
           />
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
             Popular Searches
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -76,10 +80,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 key={item.title}
                 href={item.href}
                 onClick={onClose}
-                className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 text-white/90 hover:text-[#49c2f5] transition-all group"
+                className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-100 transition-all group"
               >
                 <span>{item.title}</span>
-                <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-[#49c2f5] group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
               </Link>
             ))}
           </div>

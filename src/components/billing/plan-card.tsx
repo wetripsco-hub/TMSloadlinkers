@@ -5,17 +5,10 @@ import { Check, Loader2 } from "lucide-react";
 import { createCheckoutSession } from "@/app/(dashboard)/settings/billing/actions";
 import type { PlanDefinition } from "@/lib/stripe/plans";
 
-const FEATURES: Record<string, string[]> = {
-  starter: ["3 seats", "Unlimited loads", "Rate confirmations", "Basic reporting"],
-  growth: ["10 seats", "Everything in Starter", "Carrier compliance tracking", "Priority support"],
-  enterprise: ["50 seats", "Everything in Growth", "Custom integrations", "Dedicated account manager"],
-};
-
-const PRICE_LABELS: Record<string, string> = {
-  starter: "Free trial",
-  growth: "$149/mo",
-  enterprise: "$399/mo",
-};
+function priceLabel(plan: PlanDefinition): string {
+  if (plan.monthlyPriceUsd === null) return "Custom pricing";
+  return `$${plan.monthlyPriceUsd}/mo`;
+}
 
 export function PlanCard({
   plan,
@@ -25,7 +18,7 @@ export function PlanCard({
   isCurrent: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
-  const features = FEATURES[plan.tier] ?? [];
+  const features = plan.features;
 
   const handleUpgrade = () => {
     startTransition(() => {
@@ -53,7 +46,7 @@ export function PlanCard({
       </div>
 
       <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-        {PRICE_LABELS[plan.tier] ?? ""}
+        {priceLabel(plan)}
       </p>
 
       <ul className="mt-4 flex-1 space-y-2">

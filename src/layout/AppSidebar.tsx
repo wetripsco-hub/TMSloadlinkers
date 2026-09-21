@@ -21,6 +21,9 @@ import {
   Settings,
   HelpCircle,
   ClipboardCheck,
+  MessageSquare,
+  Handshake,
+  Warehouse,
 } from "lucide-react";
 
 interface NavItem {
@@ -42,8 +45,11 @@ const navSections: NavSection[] = [
     items: [
       { name: "Overview", path: "/overview", icon: LayoutDashboard },
       { name: "Loads", path: "/loads", icon: Package, tourId: "nav-loads" },
+      { name: "Messages", path: "/messages", icon: MessageSquare, tourId: "nav-messages" },
+      { name: "Quotes", path: "/quotes", icon: Handshake, tourId: "nav-quotes" },
       { name: "Carriers", path: "/carriers", icon: Truck, tourId: "nav-carriers" },
       { name: "Customers", path: "/customers", icon: Building2 },
+      { name: "Facilities", path: "/facilities", icon: Warehouse },
     ],
   },
   {
@@ -83,6 +89,7 @@ export const AppSidebar: React.FC = () => {
     profileEmail,
     profileRole,
     profileAllowedModules,
+    messagesUnreadCount,
   } = useSidebar();
   const pathname = usePathname();
 
@@ -188,6 +195,7 @@ export const AppSidebar: React.FC = () => {
               {section.items.map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.path);
+                const unreadCount = item.path === "/messages" ? messagesUnreadCount : 0;
 
                 return (
                   <li key={item.name}>
@@ -201,19 +209,35 @@ export const AppSidebar: React.FC = () => {
                           : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
                       } ${!isVisibleExpanded ? "justify-center px-2 border-l-0 rounded-lg" : ""}`}
                     >
-                      <IconComponent
-                        strokeWidth={1.75}
-                        className={`h-5 w-5 shrink-0 transition-colors ${
-                          active
-                            ? "text-blue-600"
-                            : "text-slate-400 group-hover:text-slate-600"
-                        }`}
-                      />
+                      <span className="relative shrink-0">
+                        <IconComponent
+                          strokeWidth={1.75}
+                          className={`h-5 w-5 transition-colors ${
+                            active
+                              ? "text-blue-600"
+                              : "text-slate-400 group-hover:text-slate-600"
+                          }`}
+                        />
+                        {!isVisibleExpanded && unreadCount > 0 && (
+                          <span
+                            className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-rose-500"
+                            aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                          />
+                        )}
+                      </span>
                       {isVisibleExpanded && (
-                        <span className="truncate">{item.name}</span>
+                        <span className="flex-1 truncate">{item.name}</span>
+                      )}
+                      {isVisibleExpanded && unreadCount > 0 && (
+                        <span
+                          className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white"
+                          aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                        >
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
                       )}
                       {isVisibleExpanded && active && (
-                        <ChevronRight className="ml-auto h-4 w-4 text-blue-600 opacity-80" />
+                        <ChevronRight className="h-4 w-4 text-blue-600 opacity-80" />
                       )}
                     </Link>
                   </li>
@@ -231,7 +255,7 @@ export const AppSidebar: React.FC = () => {
             <div className="flex items-center justify-between text-xs font-semibold">
               <span className="flex items-center gap-1.5 text-slate-800">
                 <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                14-Day Free Trial
+                7-Day Free Trial
               </span>
               <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                 Active
@@ -242,7 +266,7 @@ export const AppSidebar: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="flex justify-center py-1" title="14-Day Free Trial Active">
+          <div className="flex justify-center py-1" title="7-Day Free Trial Active">
             <span className="h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
           </div>
         )}

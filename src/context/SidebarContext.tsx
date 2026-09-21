@@ -15,6 +15,7 @@ type SidebarContextType = {
   profileEmail: string | null;
   profileRole: string | null;
   profileAllowedModules: string[];
+  messagesUnreadCount: number;
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
   setIsHovered: (isHovered: boolean) => void;
@@ -41,6 +42,7 @@ export const SidebarProvider: React.FC<{
   profileEmail?: string | null;
   profileRole?: string | null;
   profileAllowedModules?: string[];
+  messagesUnreadCount?: number;
 }> = ({
   children,
   orgName = null,
@@ -50,6 +52,7 @@ export const SidebarProvider: React.FC<{
   profileEmail = null,
   profileRole = null,
   profileAllowedModules = [],
+  messagesUnreadCount = 0,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -102,6 +105,7 @@ export const SidebarProvider: React.FC<{
         profileEmail,
         profileRole,
         profileAllowedModules,
+        messagesUnreadCount,
         toggleSidebar,
         toggleMobileSidebar,
         setIsHovered,
