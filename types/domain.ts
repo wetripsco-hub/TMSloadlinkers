@@ -84,6 +84,7 @@ export interface Load {
   lastKnownLng: number | null;
   lastPingAt: ISODateTime | null;
 
+  isDemo: boolean;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

@@ -671,6 +671,7 @@ export type Database = {
           driver_phone: string | null
           equipment_type: string | null
           id: string
+          is_demo: boolean
           last_known_lat: number | null
           last_known_lng: number | null
           last_ping_at: string | null
@@ -717,6 +718,7 @@ export type Database = {
           driver_phone?: string | null
           equipment_type?: string | null
           id?: string
+          is_demo?: boolean
           last_known_lat?: number | null
           last_known_lng?: number | null
           last_ping_at?: string | null
@@ -763,6 +765,7 @@ export type Database = {
           driver_phone?: string | null
           equipment_type?: string | null
           id?: string
+          is_demo?: boolean
           last_known_lat?: number | null
           last_known_lng?: number | null
           last_ping_at?: string | null

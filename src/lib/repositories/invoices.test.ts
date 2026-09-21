@@ -129,6 +129,7 @@ function makeFakeLoad(overrides: Partial<Load> = {}): Load {
     lastKnownLat: null,
     lastKnownLng: null,
     lastPingAt: null,
+    isDemo: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
