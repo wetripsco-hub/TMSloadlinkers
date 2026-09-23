@@ -18,11 +18,25 @@ import { EditAccessDialog } from "@/components/team/edit-access-dialog";
 const ROLE_BADGE: Record<MemberRole, BadgeColor> = {
   owner: "primary",
   admin: "info",
+  org_admin: "info",
   member: "success",
+  broker_agent: "success",
+  dispatcher_agent: "success",
+  accountant: "warning",
   viewer: "light",
+  read_only_viewer: "light",
 };
 
-const INVITABLE_ROLES: MemberRole[] = ["member", "admin", "viewer"];
+const INVITABLE_ROLES: MemberRole[] = [
+  "admin",
+  "org_admin",
+  "broker_agent",
+  "dispatcher_agent",
+  "accountant",
+  "member",
+  "viewer",
+  "read_only_viewer",
+];
 const ALL_MODULE_KEYS = APP_MODULES.map((m) => m.key);
 
 export function TeamPanel({ team }: { team: TeamOverview }) {

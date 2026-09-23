@@ -45,7 +45,7 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role, allowed_modules")
+    .select("full_name, role, allowed_modules, email")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -57,7 +57,7 @@ export default async function DashboardLayout({
       orgLogoUrl={organization?.logo_url ?? null}
       workspaceType={organization?.workspace_type ?? null}
       profileFullName={profile?.full_name ?? (user.user_metadata?.full_name as string | undefined) ?? null}
-      profileEmail={user.email ?? null}
+      profileEmail={profile?.email ?? user.email ?? null}
       profileRole={profile?.role ?? null}
       profileAllowedModules={profile?.allowed_modules ?? []}
       messagesUnreadCount={messagesUnreadCount}

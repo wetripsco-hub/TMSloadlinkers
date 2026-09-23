@@ -36,6 +36,7 @@ interface LoadRow {
   last_known_lng: number | null;
   last_ping_at: string | null;
   is_demo?: boolean;
+  cancel_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -387,6 +388,67 @@ export async function updateDriverInfo(loadId: UUID, fields: DriverInfoInput): P
       trailer_number: fields.trailerNumber,
     })
     .eq("id", loadId)
+    .select(LOAD_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToLoad(data as unknown as LoadRow);
+}
+
+export interface UpdateLoadInput {
+  customerId: UUID | null;
+  origin: string | null;
+  destination: string | null;
+  pickupDate: string | null;
+  deliveryDate: string | null;
+  shipperRate: Cents;
+  carrierPay: Cents;
+  equipmentType: string | null;
+  commodity: string | null;
+  weightLbs: number | null;
+}
+
+export async function updateLoad(id: UUID, input: UpdateLoadInput): Promise<Load> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("loads")
+    .update({
+      customer_id: input.customerId ?? null,
+      origin: input.origin ?? null,
+      destination: input.destination ?? null,
+      pickup_date: input.pickupDate ?? null,
+      delivery_date: input.deliveryDate ?? null,
+      shipper_rate: Number(centsToMoney(input.shipperRate)),
+      carrier_pay: Number(centsToMoney(input.carrierPay)),
+      equipment_type: input.equipmentType ?? null,
+      commodity: input.commodity ?? null,
+      weight_lbs: input.weightLbs ?? null,
+    })
+    .eq("id", id)
+    .select(LOAD_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToLoad(data as unknown as LoadRow);
+}
+
+export async function cancelLoad(id: UUID, reason: string): Promise<Load> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("loads")
+    .update({
+      status: "cancelled",
+      cancel_reason: reason.trim() || null,
+    })
+    .eq("id", id)
     .select(LOAD_COLUMNS)
     .single();
 

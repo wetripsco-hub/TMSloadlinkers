@@ -358,9 +358,11 @@ export function LoadMapHero({ load, customer }: LoadMapHeroProps) {
         </div>
 
         {/* Right Column (Interactive Leaflet Route Map) */}
-        <div className="lg:col-span-6 xl:col-span-7 relative min-h-[320px] lg:min-h-[380px] border-t lg:border-t-0 lg:border-l border-slate-200/80 bg-slate-50 overflow-hidden flex flex-col">
+        {/* isolate creates a new stacking context so the map's z-[400] pills
+            stay contained and cannot paint above the modal overlay (z-50). */}
+        <div className="lg:col-span-6 xl:col-span-7 relative isolate min-h-[320px] lg:min-h-[380px] border-t lg:border-t-0 lg:border-l border-slate-200/80 bg-slate-50 overflow-hidden flex flex-col">
           {/* Map Header Floating Overlay Badges */}
-          <div className="absolute top-3 left-3 z-[400] flex items-center gap-2 pointer-events-none">
+          <div className="absolute top-3 left-3 z-[400] flex flex-wrap items-center gap-x-2 gap-y-1.5 pointer-events-none">
             <div className="flex items-center gap-1.5 rounded-md bg-white/95 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-slate-800 shadow-sm border border-slate-200/80 pointer-events-auto">
               <Compass className="h-3.5 w-3.5 text-blue-600" />
               <span>Route Plan</span>

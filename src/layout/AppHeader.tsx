@@ -15,10 +15,8 @@ import {
   Shield,
   ShieldCheck,
   Layers,
-  Sparkles,
   CreditCard,
 } from "lucide-react";
-import { seedDemoDataAction } from "@/app/(dashboard)/loads/actions";
 import { NotificationBell } from "@/components/layout/notification-bell";
 
 interface UserProfile {
@@ -35,7 +33,6 @@ export const AppHeader: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
 
   useEffect(() => {
@@ -92,18 +89,6 @@ export const AppHeader: React.FC = () => {
       console.error("Sign out error:", err);
     } finally {
       setIsSigningOut(false);
-    }
-  };
-
-  const handleSeedDemoData = async () => {
-    try {
-      setIsSeeding(true);
-      await seedDemoDataAction();
-      router.refresh();
-    } catch (err) {
-      console.error("Error seeding demo data:", err);
-    } finally {
-      setIsSeeding(false);
     }
   };
 
@@ -175,18 +160,6 @@ export const AppHeader: React.FC = () => {
             <span className="hidden sm:inline">Platform Admin</span>
           </Link>
         )}
-
-        {/* Seed Demo Data Button */}
-        <button
-          type="button"
-          onClick={handleSeedDemoData}
-          disabled={isSeeding}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/80 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-all shadow-2xs"
-          title="Inject sample shippers, carriers, loads & invoices"
-        >
-          <Sparkles className={`h-3.5 w-3.5 text-blue-600 ${isSeeding ? "animate-spin" : ""}`} />
-          <span className="hidden xs:inline">{isSeeding ? "Loading..." : "Load Sample Data"}</span>
-        </button>
 
         {/* Notifications */}
         <NotificationBell />
@@ -263,15 +236,6 @@ export const AppHeader: React.FC = () => {
               >
                 <CreditCard className="h-4 w-4 text-slate-500" />
                 Billing
-              </DropdownItem>
-              <DropdownItem
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  handleSeedDemoData();
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-blue-600" />
-                Load Sample Data
               </DropdownItem>
             </div>
 

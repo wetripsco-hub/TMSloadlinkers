@@ -62,6 +62,34 @@ function normalizeDriverPhone(raw: string): string {
 
 const E164_PATTERN = /^\+[1-9]\d{1,14}$/;
 
+export const editLoadSchema = z.object({
+  customerId: z.string().trim().optional().or(z.literal("")),
+  origin: z.string().trim().min(1, "Origin is required"),
+  destination: z.string().trim().min(1, "Destination is required"),
+  pickupDate: z.string().optional().or(z.literal("")),
+  deliveryDate: z.string().optional().or(z.literal("")),
+  shipperRate: z
+    .string()
+    .trim()
+    .min(1, "Shipper rate is required")
+    .regex(/^\d+(\.\d{1,2})?$/, "Enter a valid dollar amount (e.g. 3200 or 3200.00)"),
+  carrierPay: z
+    .string()
+    .trim()
+    .min(1, "Carrier pay is required")
+    .regex(/^\d+(\.\d{1,2})?$/, "Enter a valid dollar amount"),
+  equipmentType: z.string().trim().optional().or(z.literal("")),
+  commodity: z.string().trim().optional().or(z.literal("")),
+  weightLbs: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || /^\d+$/.test(v), "Enter a whole number of pounds"),
+});
+
+export type EditLoadValues = z.infer<typeof editLoadSchema>;
+
 export const driverDispatchSchema = z.object({
   driverName: z.string().trim().max(120).optional().or(z.literal("")),
   driverPhone: z

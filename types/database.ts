@@ -652,6 +652,7 @@ export type Database = {
           arrived_at_pickup_at: string | null
           assigned_user_id: string | null
           broker_margin: number | null
+          cancel_reason: string | null
           carrier_id: string | null
           carrier_pay: number
           commodity: string | null
@@ -699,6 +700,7 @@ export type Database = {
           arrived_at_pickup_at?: string | null
           assigned_user_id?: string | null
           broker_margin?: number | null
+          cancel_reason?: string | null
           carrier_id?: string | null
           carrier_pay?: number
           commodity?: string | null
@@ -746,6 +748,7 @@ export type Database = {
           arrived_at_pickup_at?: string | null
           assigned_user_id?: string | null
           broker_margin?: number | null
+          cancel_reason?: string | null
           carrier_id?: string | null
           carrier_pay?: number
           commodity?: string | null
@@ -1836,7 +1839,16 @@ export type Database = {
         | "freight_brokerage"
         | "truck_dispatch"
         | "hybrid_enterprise"
-      user_role_type: "owner" | "admin" | "member" | "viewer"
+      user_role_type:
+        | "owner"
+        | "admin"
+        | "member"
+        | "viewer"
+        | "org_admin"
+        | "broker_agent"
+        | "dispatcher_agent"
+        | "accountant"
+        | "read_only_viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2009,7 +2021,17 @@ export const Constants = {
         "truck_dispatch",
         "hybrid_enterprise",
       ],
-      user_role_type: ["owner", "admin", "member", "viewer"],
+      user_role_type: [
+        "owner",
+        "admin",
+        "member",
+        "viewer",
+        "org_admin",
+        "broker_agent",
+        "dispatcher_agent",
+        "accountant",
+        "read_only_viewer",
+      ],
     },
   },
 } as const

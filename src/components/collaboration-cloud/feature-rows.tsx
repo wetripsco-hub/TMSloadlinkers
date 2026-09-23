@@ -20,8 +20,8 @@ const featureRows: Omit<FeatureRow, "ctaText" | "ctaHref">[] = [
     title: "Transportation Management Software",
     description:
       "Automate order-to-shipment activities while eliminating check calls, texts, and emails. Reduce freight management costs and ship faster with 100% traceability, live tracking, and predictive planning through tighter inventory controls.",
-    imageSrc: "/images/features/turvo-tms.png",
-    imageAlt: "Loadlinkers TMS Dashboard Interface",
+    imageSrc: "/images/screenshots/screenshot-loads.png",
+    imageAlt: "FreightLink TMS loads management interface",
     reverse: true,
   },
   {

@@ -1,17 +1,46 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getNextStatus } from "@/lib/domain/load-status";
-import { getLoadById, updateLoadStatus, assignCarrier, updateDriverInfo } from "@/lib/repositories/loads";
+import { parseCents } from "@/lib/money";
+import { getNextStatus, isTerminalStatus } from "@/lib/domain/load-status";
+import {
+  getLoadById,
+  updateLoadStatus,
+  updateLoad,
+  cancelLoad,
+  assignCarrier,
+  updateDriverInfo,
+} from "@/lib/repositories/loads";
 import { createShipperInvoiceIfMissing } from "@/lib/repositories/invoices";
 import {
   listLoadNotes as listLoadNotesRow,
   insertStaffLoadNote,
   markLoadNotesRead as markLoadNotesReadRow,
 } from "@/lib/repositories/load-notes";
-import { driverDispatchSchema, type DriverDispatchValues } from "@/lib/validations/load";
+import { driverDispatchSchema, editLoadSchema, type DriverDispatchValues, type EditLoadValues } from "@/lib/validations/load";
+import { canWriteLoads } from "@/lib/auth/load-permissions";
 import { createClient } from "@/lib/supabase/server";
 import type { Load, LoadNote, UUID } from "../../../../../types/domain";
+
+async function assertCanWriteLoads(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!canWriteLoads(profile?.role)) {
+    throw new Error(
+      "Your role does not permit editing loads. Contact your organization administrator."
+    );
+  }
+}
 
 // Additive, backward-compatible: still structurally a Load (every existing
 // field a caller reads, e.g. `updated.status`, is unchanged), with one
@@ -62,7 +91,55 @@ export async function advanceLoadStatus(loadId: UUID): Promise<AdvanceLoadStatus
 }
 
 export async function assignCarrierToLoad(loadId: UUID, carrierId: UUID): Promise<Load> {
+  await assertCanWriteLoads();
   const updated = await assignCarrier(loadId, carrierId);
+  revalidatePath(`/loads/${loadId}`);
+  revalidatePath("/loads");
+  return updated;
+}
+
+export async function updateLoadDetails(loadId: UUID, values: EditLoadValues): Promise<Load> {
+  await assertCanWriteLoads();
+
+  const parsed = editLoadSchema.parse(values);
+
+  const updated = await updateLoad(loadId, {
+    customerId: parsed.customerId || null,
+    origin: parsed.origin,
+    destination: parsed.destination,
+    pickupDate: parsed.pickupDate ? new Date(parsed.pickupDate).toISOString() : null,
+    deliveryDate: parsed.deliveryDate ? new Date(parsed.deliveryDate).toISOString() : null,
+    shipperRate: parseCents(parsed.shipperRate),
+    carrierPay: parseCents(parsed.carrierPay),
+    equipmentType: parsed.equipmentType || null,
+    commodity: parsed.commodity || null,
+    weightLbs: parsed.weightLbs ? Number(parsed.weightLbs) : null,
+  });
+
+  revalidatePath(`/loads/${loadId}`);
+  revalidatePath("/loads");
+  return updated;
+}
+
+export async function cancelLoadAction(loadId: UUID, reason: string): Promise<Load> {
+  await assertCanWriteLoads();
+
+  const trimmed = reason.trim();
+  if (!trimmed) throw new Error("Please provide a reason for cancellation");
+  if (trimmed.length > 500) throw new Error("Reason must be 500 characters or fewer");
+
+  const load = await getLoadById(loadId);
+  if (!load) throw new Error("Load not found");
+  if (isTerminalStatus(load.status)) {
+    throw new Error(
+      load.status === "cancelled"
+        ? "This load is already cancelled"
+        : "A settled load cannot be cancelled"
+    );
+  }
+
+  const updated = await cancelLoad(loadId, trimmed);
+
   revalidatePath(`/loads/${loadId}`);
   revalidatePath("/loads");
   return updated;

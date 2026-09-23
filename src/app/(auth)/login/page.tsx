@@ -76,7 +76,7 @@ export default function LoginPage() {
 }
 
 const BACKGROUND_IMAGES = [
-  "/images/turvo-skyline.jpg",
+  "/images/auth-skyline.jpg",
   "/images/solutions/bg-3pls.jpg",
   "/images/solutions/bg-shippers.jpg",
 ];
@@ -432,7 +432,7 @@ function LoginForm() {
         <section
           className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden lg:flex"
           style={{
-            backgroundImage: backgroundImage ? `url('${backgroundImage}')` : "url('/images/turvo-skyline.jpg')",
+            backgroundImage: backgroundImage ? `url('${backgroundImage}')` : "url('/images/auth-skyline.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

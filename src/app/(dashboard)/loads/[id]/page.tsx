@@ -5,14 +5,18 @@ import { LoadMapHero } from "@/components/loads/load-map-hero";
 import { LoadDetailTabs } from "@/components/loads/load-detail-tabs";
 import { LoadNotesPanel } from "@/components/loads/load-notes-panel";
 import { SendTrackingLinkButton } from "@/components/loads/send-tracking-link-button";
+import { LoadDetailActions } from "@/components/loads/load-detail-actions";
 import { RateConfirmationModal } from "@/components/documents/rate-confirmation-modal";
 import { getLoadById } from "@/lib/repositories/loads";
 import { getCarrierById, listCarriers } from "@/lib/repositories/carriers";
-import { getCustomerById } from "@/lib/repositories/customers";
+import { getCustomerById, listCustomers } from "@/lib/repositories/customers";
 import { listAuditEvents } from "@/lib/repositories/audit";
 import { listLoadNotes } from "@/lib/repositories/load-notes";
 import { getOrganizationById } from "@/lib/repositories/organizations";
 import { listQuotesForLoad, listNegotiationEventsForQuote } from "@/lib/repositories/quotes";
+import { canWriteLoads } from "@/lib/auth/load-permissions";
+import { isTerminalStatus } from "@/lib/domain/load-status";
+import { createClient } from "@/lib/supabase/server";
 import { FileText, Navigation, Printer } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +33,17 @@ export default async function LoadDetailPage({
     notFound();
   }
 
-  const [carrier, customer, auditEvents, { data: availableCarriers }, organization, notes, quotes] =
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profileData } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const userRole = profileData?.role ?? "viewer";
+  const canWrite = canWriteLoads(userRole) && !isTerminalStatus(load.status);
+
+  const [carrier, customer, auditEvents, { data: availableCarriers }, organization, notes, quotes, { data: allCustomers }] =
     await Promise.all([
       load.carrierId ? getCarrierById(load.carrierId) : Promise.resolve(null),
       load.customerId ? getCustomerById(load.customerId) : Promise.resolve(null),
@@ -38,6 +52,7 @@ export default async function LoadDetailPage({
       getOrganizationById(load.orgId),
       listLoadNotes(load.id),
       listQuotesForLoad(load.id),
+      listCustomers({}, { page: 1, pageSize: 200 }),
     ]);
 
   // Newest quote is the active negotiation thread; older quotes (a
@@ -68,6 +83,10 @@ export default async function LoadDetailPage({
             </Link>
 
             <SendTrackingLinkButton loadId={load.id} driverPhone={load.driverPhone} />
+
+            {canWrite && (
+              <LoadDetailActions load={load} customers={allCustomers ?? []} />
+            )}
 
             {/* Instant Rate Con Preview / Print Modal */}
             <RateConfirmationModal

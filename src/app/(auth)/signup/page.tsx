@@ -23,6 +23,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { LoadlinkersLogo } from "@/components/icons";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import {
   Select,
@@ -147,12 +148,22 @@ function SignupForm() {
   const {
     register,
     control,
+    watch,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: { workspaceType: "freight_brokerage" },
   });
+
+  const watchedWorkspaceType = watch("workspaceType");
+
+  const ctaLabelMap: Record<(typeof workspaceTypes)[number], string> = {
+    freight_brokerage: "Create Broker Account",
+    truck_dispatch: "Create Dispatcher Account",
+    hybrid_enterprise: "Create Enterprise Account",
+  };
+  const ctaLabel = ctaLabelMap[watchedWorkspaceType] ?? "Create Account";
 
   async function onSubmit(values: SignupValues) {
     setFormError(null);
@@ -316,34 +327,12 @@ function SignupForm() {
       <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur-md lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-3 transition-transform hover:opacity-90"
+          className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
         >
-          {/* Circular Turvo Monogram Emblem */}
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0b7cc1] via-[#2b7ee2] to-[#49c2f5] p-[1.5px] shadow-sm shadow-[#49c2f5]/30">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
-              <svg
-                className="h-4 w-4 text-indigo-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                <path d="m8 15 4-7 4 7" />
-                <path d="M9 13h6" />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-heading text-base font-bold tracking-tight text-slate-900">
-              FreightLink <span className="text-indigo-600">TMS</span>
-            </span>
-            <span className="hidden rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-600 ring-1 ring-indigo-200/30 sm:inline-block">
-              Enterprise Portal
-            </span>
-          </div>
+          <LoadlinkersLogo className="h-6 w-auto max-w-[150px]" />
+          <span className="hidden rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-600 ring-1 ring-indigo-200/30 sm:inline-block">
+            Enterprise Portal
+          </span>
         </Link>
 
         <div className="flex items-center gap-4 text-xs text-slate-600">
@@ -371,7 +360,7 @@ function SignupForm() {
           {/* Subtle Ambient Radial Glow */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-50 blur-3xl"
+            className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-100/20 blur-3xl"
           />
 
           <div className="w-full max-w-md mx-auto my-auto">
@@ -636,15 +625,15 @@ function SignupForm() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-slate-900 shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
-                      <span>Creating dispatcher account...</span>
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <span>Creating account...</span>
                     </>
                   ) : (
-                    <span>Create Dispatcher Account</span>
+                    <span>{ctaLabel}</span>
                   )}
                 </button>
               </div>
@@ -701,7 +690,7 @@ function SignupForm() {
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
             style={{
-              backgroundImage: `url('/images/turvo-skyline.jpg')`,
+              backgroundImage: `url('/images/auth-skyline.jpg')`,
             }}
           />
 
@@ -710,24 +699,24 @@ function SignupForm() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#0E131F] via-transparent to-transparent" />
           <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
 
-          {/* Live Turvo-Style Giant Clock & Date Display */}
-          <div className="relative z-10 flex flex-col items-center text-center select-none px-6 py-8 rounded-3xl backdrop-blur-[2px] bg-black/10">
+          {/* Live Clock & Date Display */}
+          <div className="relative z-10 flex flex-col items-center text-center select-none px-6 py-8 rounded-3xl backdrop-blur-md bg-slate-900/30 border border-white/20">
             <div
-              className="font-heading text-6xl font-light tracking-tight text-slate-900 drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] xl:text-8xl"
+              className="font-heading text-6xl font-light tracking-tight text-white xl:text-8xl"
               suppressHydrationWarning
             >
               {timeString || "12:00 PM"}
             </div>
             <div
-              className="mt-3 text-xl font-normal tracking-wide text-slate-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] xl:text-2xl"
+              className="mt-3 text-xl font-normal tracking-wide text-slate-200 xl:text-2xl"
               suppressHydrationWarning
             >
               {dateString || "Loading date..."}
             </div>
-            <div className="mt-6 flex items-center gap-2 rounded-full border border-white/20 bg-white/70 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-slate-700 shadow-lg shadow-black/40">
+            <div className="mt-6 flex items-center gap-2 rounded-full border border-white/30 bg-slate-900/50 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-slate-100">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00d084] opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00d084]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
               <span>FreightLink Global Logistics Network Active</span>
             </div>
