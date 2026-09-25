@@ -10,6 +10,7 @@ export async function createCustomerAction(input: CreateCustomerInput) {
 
   const customer = await createCustomer({
     name: input.name.trim(),
+    contactName: input.contactName?.trim() || null,
     email: input.email?.trim() || null,
     phone: input.phone?.trim() || null,
     billingAddress: input.billingAddress?.trim() || null,

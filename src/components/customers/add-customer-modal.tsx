@@ -10,7 +10,7 @@ import {
   TailAdminButton,
 } from "@/components/ui/tailadmin/form-elements";
 import { createCustomerAction } from "@/app/(dashboard)/customers/actions";
-import { Plus, Building2, Mail, Phone } from "lucide-react";
+import { Plus, Building2, Mail, Phone, User } from "lucide-react";
 
 export interface AddCustomerModalProps {
   isOpen?: boolean;
@@ -41,6 +41,7 @@ export function AddCustomerModal({
   const router = useRouter();
 
   const [name, setName] = useState("");
+  const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
@@ -58,12 +59,14 @@ export function AddCustomerModal({
       setIsSubmitting(true);
       await createCustomerAction({
         name: name.trim(),
+        contactName: contactName.trim() || null,
         email: email.trim() || null,
         phone: phone.trim() || null,
         billingAddress: billingAddress.trim() || null,
       });
 
       setName("");
+      setContactName("");
       setEmail("");
       setPhone("");
       setBillingAddress("");
@@ -121,6 +124,17 @@ export function AddCustomerModal({
               onChange={(e) => setName(e.target.value)}
               startIcon={<Building2 className="h-4 w-4" />}
               required
+            />
+          </div>
+
+          <div>
+            <TailAdminLabel htmlFor="cust-contact-name">Contact Person</TailAdminLabel>
+            <TailAdminInput
+              id="cust-contact-name"
+              placeholder="e.g. Sarah Jenkins"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              startIcon={<User className="h-4 w-4" />}
             />
           </div>
 

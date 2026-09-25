@@ -144,6 +144,7 @@ export type Database = {
       customers: {
         Row: {
           billing_address: string | null
+          contact_name: string | null
           created_at: string
           email: string | null
           id: string
@@ -154,6 +155,7 @@ export type Database = {
         }
         Insert: {
           billing_address?: string | null
+          contact_name?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -164,6 +166,7 @@ export type Database = {
         }
         Update: {
           billing_address?: string | null
+          contact_name?: string | null
           created_at?: string
           email?: string | null
           id?: string

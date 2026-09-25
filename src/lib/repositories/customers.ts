@@ -5,6 +5,7 @@ export interface CustomerRecord {
   id: string;
   orgId: string;
   name: string;
+  contactName: string | null;
   email: string | null;
   phone: string | null;
   billingAddress: string | null;
@@ -16,6 +17,7 @@ interface CustomerRow {
   id: string;
   org_id: string;
   name: string;
+  contact_name: string | null;
   email: string | null;
   phone: string | null;
   billing_address: string | null;
@@ -24,13 +26,14 @@ interface CustomerRow {
 }
 
 const CUSTOMER_COLUMNS =
-  "id, org_id, name, email, phone, billing_address, created_at, updated_at";
+  "id, org_id, name, contact_name, email, phone, billing_address, created_at, updated_at";
 
 function mapRowToCustomer(row: CustomerRow): CustomerRecord {
   return {
     id: row.id,
     orgId: row.org_id,
     name: row.name,
+    contactName: row.contact_name,
     email: row.email,
     phone: row.phone,
     billingAddress: row.billing_address,
@@ -58,6 +61,7 @@ export interface ListCustomersResult {
 
 export interface CreateCustomerInput {
   name: string;
+  contactName?: string | null;
   email?: string | null;
   phone?: string | null;
   billingAddress?: string | null;
@@ -157,6 +161,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
     .insert({
       org_id: orgId,
       name: input.name,
+      contact_name: input.contactName ?? null,
       email: input.email ?? null,
       phone: input.phone ?? null,
       billing_address: input.billingAddress ?? null,

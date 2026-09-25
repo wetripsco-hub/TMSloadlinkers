@@ -38,10 +38,11 @@ export function CustomerTable({
     const q = searchTerm.toLowerCase();
     return customers.filter((c) => {
       const matchName = c.name.toLowerCase().includes(q);
+      const matchContactName = (c.contactName || "").toLowerCase().includes(q);
       const matchEmail = (c.email || "").toLowerCase().includes(q);
       const matchAddress = (c.billingAddress || "").toLowerCase().includes(q);
       const matchPhone = (c.phone || "").toLowerCase().includes(q);
-      return matchName || matchEmail || matchAddress || matchPhone;
+      return matchName || matchContactName || matchEmail || matchAddress || matchPhone;
     });
   }, [customers, searchTerm]);
 
@@ -148,6 +149,11 @@ export function CustomerTable({
                   {/* Billing Contact */}
                   <TableCell className="py-3.5 px-4">
                     <div className="flex flex-col gap-1 text-sm text-slate-800">
+                      {customer.contactName && (
+                        <span className="font-semibold text-slate-900 text-sm">
+                          {customer.contactName}
+                        </span>
+                      )}
                       {customer.email ? (
                         <a
                           href={`mailto:${customer.email}`}
