@@ -1159,12 +1159,14 @@ export function DriverCheckin({
           )}
         </div>
 
-        {/* Floating Action Button (FAB) (Screenshot 4/5: Circular Blue Lightning Bolt ⚡ for Instant GPS Ping) */}
+        {/* Floating Action Button (FAB) for Instant GPS Ping -- labeled so
+            drivers immediately know what tapping it does, instead of a bare
+            icon they have to guess at. */}
         <div className="sticky bottom-4 right-4 flex justify-end px-4 pointer-events-none">
           <button
             type="button"
             onClick={handleInstantGpsPing}
-            className={`pointer-events-auto w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`pointer-events-auto flex items-center gap-2 rounded-full px-5 py-3.5 shadow-2xl transition-all cursor-pointer active:scale-95 text-sm font-semibold whitespace-nowrap ${
               pingStatus === "pinging"
                 ? "bg-blue-500 animate-pulse text-white"
                 : pingStatus === "success"
@@ -1172,14 +1174,23 @@ export function DriverCheckin({
                 : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-blue-500/30"
             }`}
             title="Send Instant GPS Ping to Dispatch"
-            aria-label="Send Instant GPS Ping"
+            aria-label="Click here to share your location"
           >
             {pingStatus === "pinging" ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                <span>Sharing location...</span>
+              </>
             ) : pingStatus === "success" ? (
-              <Check className="w-6 h-6 stroke-[3]" />
+              <>
+                <Check className="w-4 h-4 stroke-[3] shrink-0" />
+                <span>Location shared</span>
+              </>
             ) : (
-              <Zap className="w-6 h-6 fill-white" />
+              <>
+                <Zap className="w-4 h-4 fill-white shrink-0" />
+                <span>Click here to share your location</span>
+              </>
             )}
           </button>
         </div>
