@@ -173,7 +173,7 @@ export const AppSidebar: React.FC = () => {
                 {orgName ?? "Workspace"}
               </span>
               <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
-                Freight TMS
+                Loadlinkers
               </span>
             </div>
           )}

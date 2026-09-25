@@ -18,7 +18,7 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     id: "welcome",
-    title: "Welcome to FreightLink TMS",
+    title: "Welcome to Loadlinkers",
     content:
       "Your command center for freight operations. Monitor live revenues, profit margins, and shipment volume in real-time.",
     targetSelector: "#overview-header",
