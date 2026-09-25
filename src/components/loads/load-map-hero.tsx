@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { createClient } from "@/lib/supabase/client";
 import {
   Bookmark,
   ArrowRight,
@@ -172,10 +173,36 @@ export function LoadMapHero({ load, customer }: LoadMapHeroProps) {
   const customerName = customer?.name || load.origin?.facilityName || "Direct Shipper";
   const customerInitial = customerName.charAt(0).toUpperCase();
 
-  // Driver telemetry if available
+  // Driver telemetry -- seeded from the server-rendered load, then kept live
+  // via Supabase Realtime so a driver sharing a new GPS ping (through the
+  // public /track/[token] page) moves the marker here without a page reload.
+  const [driverPosition, setDriverPosition] = useState({
+    lat: load.lastKnownLat,
+    lng: load.lastKnownLng,
+  });
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`load-map-${load.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "loads", filter: `id=eq.${load.id}` },
+        (payload) => {
+          const row = payload.new as { last_known_lat: number | null; last_known_lng: number | null };
+          setDriverPosition({ lat: row.last_known_lat, lng: row.last_known_lng });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [load.id]);
+
   const driverLocation =
-    load.lastKnownLat && load.lastKnownLng
-      ? { lat: load.lastKnownLat, lng: load.lastKnownLng }
+    driverPosition.lat !== null && driverPosition.lng !== null
+      ? { lat: driverPosition.lat, lng: driverPosition.lng }
       : null;
 
   return (

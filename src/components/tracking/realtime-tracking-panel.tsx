@@ -1,11 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Check, Copy, Radio } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { GpsPing } from "@/lib/repositories/tracking";
+import type { LoadStop } from "../../../types/domain";
+
+// Dynamic import with SSR disabled -- Leaflet touches window at module load
+const RouteLeafletMap = dynamic(() => import("@/components/loads/route-leaflet-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full min-h-[280px] flex flex-col items-center justify-center bg-slate-50 text-slate-400 gap-2">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      <span className="text-xs font-medium">Loading live map...</span>
+    </div>
+  ),
+});
 
 interface RealtimeTrackingPanelProps {
   loadId: string;
@@ -18,6 +31,8 @@ interface RealtimeTrackingPanelProps {
   lastKnownLng: number | null;
   lastPingAt: string | null;
   initialPings: GpsPing[];
+  origin: LoadStop;
+  destination: LoadStop;
 }
 
 interface LoadTrackingRow {
@@ -44,11 +59,15 @@ export function RealtimeTrackingPanel({
   lastKnownLng,
   lastPingAt,
   initialPings,
+  origin,
+  destination,
 }: RealtimeTrackingPanelProps) {
   const [position, setPosition] = useState({ lat: lastKnownLat, lng: lastKnownLng, at: lastPingAt });
   const [pings, setPings] = useState<GpsPing[]>(initialPings);
   const [copied, setCopied] = useState(false);
   const trackingPath = `/track/${trackingToken}`;
+  const driverLocation =
+    position.lat !== null && position.lng !== null ? { lat: position.lat, lng: position.lng } : null;
 
   useEffect(() => {
     const supabase = createClient();
@@ -90,6 +109,31 @@ export function RealtimeTrackingPanel({
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50 shadow-sm">
+        <div className="absolute top-3 left-3 z-[400] flex items-center gap-1.5 rounded-md bg-white/95 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-slate-800 shadow-sm border border-slate-200/80">
+          <Radio className={`h-3.5 w-3.5 ${driverLocation ? "text-emerald-600" : "text-slate-400"}`} />
+          <span>{driverLocation ? "Live Location" : "Awaiting GPS"}</span>
+        </div>
+        <div className="h-[340px] w-full">
+          <RouteLeafletMap
+            origin={{
+              city: origin.city,
+              state: origin.state,
+              address: origin.address,
+              facilityName: origin.facilityName,
+            }}
+            destination={{
+              city: destination.city,
+              state: destination.state,
+              address: destination.address,
+              facilityName: destination.facilityName,
+            }}
+            driverLocation={driverLocation}
+            className="h-full w-full"
+          />
+        </div>
+      </div>
+
       <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
         <h3 className="text-base font-semibold text-slate-900">Live Driver Telemetry</h3>
         <div className="flex flex-col gap-3 text-sm divide-y divide-slate-100">

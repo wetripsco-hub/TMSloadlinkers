@@ -47,7 +47,7 @@ export default async function LoadTrackingPage({
         }
       />
 
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <RealtimeTrackingPanel
           loadId={load.id}
           trackingToken={load.trackingToken}
@@ -59,6 +59,8 @@ export default async function LoadTrackingPage({
           lastKnownLng={load.lastKnownLng}
           lastPingAt={load.lastPingAt}
           initialPings={pings}
+          origin={load.origin}
+          destination={load.destination}
         />
       </div>
     </div>
