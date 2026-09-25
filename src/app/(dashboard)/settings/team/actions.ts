@@ -6,6 +6,8 @@ import { getAdminContext } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isModuleKey, firstAllowedModulePath, type ModuleKey } from "@/lib/domain/modules";
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from "@/lib/email/resend";
+import { TeamInviteEmail } from "@/lib/email/templates/team-invite-email";
 import type { Database } from "../../../../../types/database";
 
 type Role = Database["public"]["Enums"]["user_role_type"];
@@ -72,8 +74,32 @@ export async function inviteMember(email: string, role: Role, allowedModules: st
 
   if (insertError) throw insertError;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const inviteUrl = `${appUrl}/invite/${token}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const inviteUrl = `${siteUrl}/invite/${token}`;
+
+  const [{ data: organization }, { data: inviterProfile }] = await Promise.all([
+    supabase.from("organizations").select("name").eq("id", admin.orgId).maybeSingle(),
+    supabase.from("profiles").select("full_name").eq("id", admin.userId).maybeSingle(),
+  ]);
+
+  // Best-effort: an email failure must never fail the invite itself --
+  // the invite row already exists and the link is shown in the UI too.
+  try {
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      replyTo: EMAIL_REPLY_TO,
+      to: normalizedEmail,
+      subject: `You're invited to join ${organization?.name ?? "a team"} on Loadlinkers`,
+      react: TeamInviteEmail({
+        organizationName: organization?.name ?? "your team",
+        inviterName: inviterProfile?.full_name ?? "A teammate",
+        role,
+        inviteUrl,
+      }),
+    });
+  } catch (emailError) {
+    console.error("Failed to send team invite email:", emailError);
+  }
 
   revalidatePath("/settings/team");
 

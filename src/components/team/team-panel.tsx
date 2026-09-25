@@ -169,9 +169,12 @@ export function TeamPanel({ team }: { team: TeamOverview }) {
         </form>
         {inviteError && <p className="mt-2 text-sm text-rose-600">{inviteError}</p>}
         {inviteUrl && (
-          <p className="mt-2 break-all text-sm text-emerald-600">
-            Invite created: {inviteUrl}
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-sm font-medium text-emerald-600">
+              Invitation emailed. You can also share the link directly:
+            </p>
+            <p className="break-all text-sm text-slate-600">{inviteUrl}</p>
+          </div>
         )}
       </div>
 
