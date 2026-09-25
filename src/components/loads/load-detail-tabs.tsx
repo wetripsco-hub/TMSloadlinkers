@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   ExternalLink,
   Receipt,
+  Truck,
 } from "lucide-react";
 import { CarrierAssignmentCard } from "@/components/loads/carrier-assignment-card";
 import { DriverDispatchCard } from "@/components/loads/driver-dispatch-card";
@@ -105,7 +106,7 @@ export interface LoadDetailTabsProps {
 // (components/loads/load-notes-panel.tsx).
 const QUOTE_POLL_INTERVAL_MS = 15000;
 
-type TabKey = "summary" | "stops" | "financials" | "documents" | "audit";
+type TabKey = "summary" | "stops" | "driver" | "financials" | "documents" | "audit";
 
 interface TabItem {
   id: TabKey;
@@ -116,6 +117,7 @@ interface TabItem {
 const TABS: TabItem[] = [
   { id: "summary", label: "Summary", icon: LayoutDashboard },
   { id: "stops", label: "Stops & Routing", icon: MapPin },
+  { id: "driver", label: "Driver & Telemetry", icon: Truck },
   { id: "financials", label: "Financials", icon: DollarSign },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "audit", label: "Audit Trail", icon: History },
@@ -252,7 +254,11 @@ export function LoadDetailTabs({
             <StopDetailsCard title="Origin Pickup (Stop 1)" stop={load.origin} isOrigin={true} />
             <StopDetailsCard title="Destination Delivery (Stop 2)" stop={load.destination} isOrigin={false} />
           </div>
+        </div>
+      )}
 
+      {activeTab === "driver" && (
+        <div className="space-y-6">
           <DriverDispatchCard load={load} />
         </div>
       )}

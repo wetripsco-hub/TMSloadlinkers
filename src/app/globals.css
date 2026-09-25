@@ -339,6 +339,20 @@
   background: #49c2f5;
 }
 
+/* The dark scrollbar above is tuned for the marketing site's dark theme.
+   The dashboard app is light, so it gets its own lighter track/thumb --
+   otherwise every scrollable region (sidebar, tab content, notes panel)
+   renders a near-black bar that reads as a broken UI element. */
+.dashboard-shell ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.dashboard-shell ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+.dashboard-shell ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Print Styles for Rate Confirmations, Invoices & Settlement Vouchers */
 @media print {
   :root {
