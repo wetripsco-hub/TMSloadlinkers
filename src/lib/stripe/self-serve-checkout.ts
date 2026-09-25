@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { stripe } from "@/lib/stripe/client";
 import { PLANS, TRIAL_PERIOD_DAYS, type BillingInterval, type PlanTier } from "@/lib/stripe/plans";
 
@@ -31,13 +30,22 @@ async function resolveBaseUrl(): Promise<string> {
  * subscription to the org created during signup is NOT implemented here --
  * see conversation notes. Do not treat a successful redirect as a fully
  * provisioned account.
+ *
+ * Returns the checkout URL instead of calling next/navigation's redirect()
+ * itself: redirect() throws a special NEXT_REDIRECT error that Next.js's
+ * router is supposed to intercept, but this action is invoked imperatively
+ * (a button's onClick promise chain, not a <form action>), and to an
+ * external domain (checkout.stripe.com) -- in that combination the redirect
+ * reliably surfaced as a literal "NEXT_REDIRECT" error in the UI instead of
+ * navigating. Returning the URL and letting the client do
+ * window.location.href sidesteps that entirely.
  */
 export async function startSelfServeCheckout(
   tier: PlanTier,
   mode: SelfServeCheckoutMode,
   email: string,
   billingInterval: BillingInterval
-) {
+): Promise<{ url: string }> {
   if (tier !== "starter" && tier !== "growth" && tier !== "enterprise") {
     throw new Error(`Plan "${tier}" is not self-serve`);
   }
@@ -93,5 +101,5 @@ export async function startSelfServeCheckout(
     throw new Error("Stripe did not return a checkout URL");
   }
 
-  redirect(session.url);
+  return { url: session.url };
 }

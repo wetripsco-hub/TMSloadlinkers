@@ -27,9 +27,13 @@ export function CheckoutModal({
     e.preventDefault();
     setError(null);
     startTransition(() => {
-      startSelfServeCheckout(tier, mode, email, billingInterval).catch((err) => {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      });
+      startSelfServeCheckout(tier, mode, email, billingInterval)
+        .then(({ url }) => {
+          window.location.href = url;
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Something went wrong");
+        });
     });
   };
 
