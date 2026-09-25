@@ -29,7 +29,6 @@ import {
 } from "@/app/track/[token]/actions";
 import { useOfflineActionQueue, type QueueStatus } from "@/lib/tracking/offline-queue";
 import { formatDateTime, formatDate } from "@/lib/format";
-import { buildGoogleMapsNavigationUrl } from "@/lib/maps";
 import { parseCityStateFromAddress, resolveCoordinates } from "@/components/loads/route-utils";
 import type {
   AdvanceTrackingStatusErrorCode,
@@ -37,7 +36,6 @@ import type {
   TrackedDocument,
   TrackedLoad,
   TrackedLoadNote,
-  TrackedLoadStop,
 } from "@/lib/repositories/tracking";
 
 // Full legal forward chain enforced by guard_load_status_transition()
@@ -109,25 +107,6 @@ class TrackingActionError extends Error {
 
 function isTransitionGuardErrorCode(code: string | null): boolean {
   return code === "illegal_transition" || code === "not_whitelisted";
-}
-
-// Google Maps directions need a street address plus city/state to geocode
-// reliably -- facilityName and zip are appended when present but aren't
-// enough on their own, so a stop missing street/city/state is treated as
-// unnavigable rather than sent to Maps as a partial, ambiguous query.
-interface NavigableAddress {
-  text: string;
-  isComplete: boolean;
-}
-
-function buildNavigableAddress(stop: TrackedLoadStop, streetAddress: string | null): NavigableAddress {
-  const parts = [stop.facilityName, streetAddress, stop.city, stop.state, stop.zip].filter(
-    (part): part is string => Boolean(part && part.trim())
-  );
-  return {
-    text: parts.join(", "),
-    isComplete: Boolean(streetAddress && streetAddress.trim() && stop.city && stop.state),
-  };
 }
 
 // The driver has no login, so "last seen" for the Messages unread badge is
@@ -300,27 +279,6 @@ export function DriverCheckin({
     const destination = addressDest || (destParsed.city && destParsed.state ? `${destParsed.city}, ${destParsed.state}` : `${destCoords[0]},${destCoords[1]}`);
     return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
   }, [addressOrigin, addressDest, originParsed, destParsed, originCoords, destCoords]);
-
-  const originNavAddress = useMemo(
-    () => buildNavigableAddress(load.originStop, load.origin),
-    [load.originStop, load.origin]
-  );
-  const destNavAddress = useMemo(
-    () => buildNavigableAddress(load.destinationStop, load.destination),
-    [load.destinationStop, load.destination]
-  );
-  const canOpenNavigation = originNavAddress.isComplete && destNavAddress.isComplete;
-  const navigationDisabledReason = !originNavAddress.isComplete && !destNavAddress.isComplete
-    ? "Origin and destination addresses are incomplete"
-    : !originNavAddress.isComplete
-    ? "Origin address is incomplete"
-    : "Destination address is incomplete";
-
-  function handleOpenNavigation() {
-    if (!canOpenNavigation) return;
-    const url = buildGoogleMapsNavigationUrl(originNavAddress.text, destNavAddress.text);
-    window.open(url, "_blank");
-  }
 
   // Status milestones
   const isPickupArrived = Boolean(load.arrivedAtPickupAt || ["at_pickup", "in_transit", "at_delivery", "delivered", "pod_uploaded", "complete"].includes(load.status));
@@ -604,24 +562,24 @@ export function DriverCheckin({
             </span>
           </button>
 
-          {/* Map -- opens turn-by-turn navigation to the destination in
-              Google Maps (buildGoogleMapsNavigationUrl, lib/maps.ts) rather
-              than the in-app route preview, since a driver tapping this
-              wants their phone's Maps app, not another screen in this PWA. */}
-          <button
-            onClick={handleOpenNavigation}
-            disabled={!canOpenNavigation}
-            title={canOpenNavigation ? "Open turn-by-turn navigation in Google Maps" : navigationDisabledReason}
-            aria-label="Open navigation in Google Maps"
-            className={`flex flex-col items-center gap-1.5 group ${
-              canOpenNavigation ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-            }`}
+          {/* Map -- opens the route in Google Maps using the same lenient
+              city/state-or-address URL as the "Open in Maps" link in the
+              Summary tab (mapsUrl), rather than the stricter street-address
+              check this used to require -- that made the icon disabled
+              whenever a stop only had city/state on file. */}
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open route in Google Maps"
+            aria-label="Open route in Google Maps"
+            className="flex flex-col items-center gap-1.5 cursor-pointer group"
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                 isDark
-                  ? "bg-slate-800/80 text-emerald-400 group-enabled:hover:bg-slate-800"
-                  : "bg-white text-emerald-600 border border-slate-200/80 shadow-xs group-enabled:hover:bg-emerald-50"
+                  ? "bg-slate-800/80 text-emerald-400 hover:bg-slate-800"
+                  : "bg-white text-emerald-600 border border-slate-200/80 shadow-xs hover:bg-emerald-50"
               }`}
             >
               <MapIcon className="w-5 h-5" />
@@ -629,7 +587,7 @@ export function DriverCheckin({
             <span className={`text-[11px] font-semibold tracking-tight ${isDark ? "text-slate-400" : "text-slate-600"}`}>
               Map
             </span>
-          </button>
+          </a>
         </nav>
 
         {/* Scrollable Content Body */}
@@ -1162,7 +1120,7 @@ export function DriverCheckin({
         {/* Floating Action Button (FAB) for Instant GPS Ping -- labeled so
             drivers immediately know what tapping it does, instead of a bare
             icon they have to guess at. */}
-        <div className="sticky bottom-4 right-4 flex justify-end px-4 pointer-events-none">
+        <div className="sticky bottom-4 flex justify-center px-4 pointer-events-none">
           <button
             type="button"
             onClick={handleInstantGpsPing}
