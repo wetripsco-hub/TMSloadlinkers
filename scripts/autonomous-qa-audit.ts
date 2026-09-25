@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { chromium, type Page, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import * as fs from "fs";

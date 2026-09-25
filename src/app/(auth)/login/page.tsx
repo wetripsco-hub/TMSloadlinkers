@@ -15,6 +15,7 @@ import {
   Building2,
   AlertCircle,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -91,13 +92,11 @@ function LoginForm() {
   // Live Clock & Date for Turvo Right Wallpaper Display
   const [timeString, setTimeString] = useState<string>("");
   const [dateString, setDateString] = useState<string>("");
-  const [backgroundImage, setBackgroundImage] = useState<string>("");
+  const [backgroundImage] = useState<string>(
+    () => BACKGROUND_IMAGES[Math.floor(Math.random() * BACKGROUND_IMAGES.length)]
+  );
 
   useEffect(() => {
-    // Select random background image
-    const randomImage = BACKGROUND_IMAGES[Math.floor(Math.random() * BACKGROUND_IMAGES.length)];
-    setBackgroundImage(randomImage);
-
     function updateClock() {
       const now = new Date();
       setTimeString(
@@ -208,6 +207,31 @@ function LoginForm() {
                 Enter your credentials to access your dispatch cockpit
               </p>
             </div>
+
+            {/* Email Verification Status */}
+            {searchParams.get("verified") === "success" && (
+              <div
+                role="status"
+                className="mb-5 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800"
+              >
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                <div className="flex-1 font-medium leading-relaxed">
+                  Your email has been verified. Sign in to continue.
+                </div>
+              </div>
+            )}
+            {searchParams.get("verified") === "invalid" && (
+              <div
+                role="alert"
+                className="mb-5 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
+              >
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-600" />
+                <div className="flex-1 font-medium leading-relaxed">
+                  That verification link is invalid or has expired. Sign in and use the &quot;Resend
+                  verification email&quot; option to get a new one.
+                </div>
+              </div>
+            )}
 
             {/* Error Alert */}
             {formError && (

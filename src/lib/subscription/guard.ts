@@ -1,7 +1,15 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
-export type AccessState = "ok" | "trial_ending" | "past_due" | "locked";
+export type AccessState =
+  | "ok"
+  | "email_pending"
+  | "email_unverified"
+  | "trial_ending"
+  | "past_due"
+  | "locked";
+
+const EMAIL_VERIFICATION_GRACE_DAYS = 7;
 
 export interface AccessStatus {
   state: AccessState;
@@ -28,11 +36,34 @@ export async function getAccessStatus(): Promise<AccessStatus> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("org_id")
+    .select("org_id, email_verified_at, created_at")
     .eq("id", user.id)
     .maybeSingle();
 
   if (!profile?.org_id) return OK_STATUS;
+
+  if (!profile.email_verified_at) {
+    const daysSinceSignup = Math.floor(
+      (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const daysUntilRequired = Math.max(0, EMAIL_VERIFICATION_GRACE_DAYS - daysSinceSignup);
+
+    if (daysSinceSignup >= EMAIL_VERIFICATION_GRACE_DAYS) {
+      return {
+        state: "email_unverified",
+        canWrite: false,
+        daysRemaining: 0,
+        message: "Verify your email address to keep editing. Check your inbox for the verification link, or resend it below.",
+      };
+    }
+
+    return {
+      state: "email_pending",
+      canWrite: true,
+      daysRemaining: daysUntilRequired,
+      message: `Please verify your email address within ${daysUntilRequired} day${daysUntilRequired === 1 ? "" : "s"}. Check your inbox for the verification link, or resend it below.`,
+    };
+  }
 
   const { data: subscription } = await supabase
     .from("subscriptions")

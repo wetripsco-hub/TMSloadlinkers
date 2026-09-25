@@ -11,6 +11,7 @@ interface Fixtures {
 export const test = base.extend<Fixtures>({
   consoleErrors: async ({ page }, use, testInfo) => {
     const errors = captureConsoleErrors(page);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(errors);
     if (errors.length > 0) {
       await testInfo.attach('console-errors', {

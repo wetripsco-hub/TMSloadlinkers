@@ -229,6 +229,41 @@ export type Database = {
           },
         ]
       }
+      email_verification_tokens: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          profile_id: string
+          token: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          profile_id: string
+          token: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          profile_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_verification_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facilities: {
         Row: {
           address: string | null
@@ -1125,6 +1160,7 @@ export type Database = {
           allowed_modules: string[]
           created_at: string
           email: string | null
+          email_verified_at: string | null
           full_name: string | null
           id: string
           is_active: boolean
@@ -1136,6 +1172,7 @@ export type Database = {
           allowed_modules?: string[]
           created_at?: string
           email?: string | null
+          email_verified_at?: string | null
           full_name?: string | null
           id: string
           is_active?: boolean
@@ -1147,6 +1184,7 @@ export type Database = {
           allowed_modules?: string[]
           created_at?: string
           email?: string | null
+          email_verified_at?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean

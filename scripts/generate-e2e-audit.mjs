@@ -23,10 +23,10 @@ function moduleNameForFile(file) {
 const byModule = new Map();
 
 function ensureModule(file) {
-  const module = moduleNameForFile(file);
-  if (!byModule.has(module)) {
-    byModule.set(module, {
-      module,
+  const moduleName = moduleNameForFile(file);
+  if (!byModule.has(moduleName)) {
+    byModule.set(moduleName, {
+      module: moduleName,
       testsRun: 0,
       passed: 0,
       failed: 0,
@@ -35,7 +35,7 @@ function ensureModule(file) {
       failureScreenshots: [],
     });
   }
-  return byModule.get(module);
+  return byModule.get(moduleName);
 }
 
 function walkSuite(suite, file) {

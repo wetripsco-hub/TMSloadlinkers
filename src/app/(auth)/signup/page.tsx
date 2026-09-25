@@ -23,6 +23,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { sendSignupEmails } from "@/app/actions/send-signup-emails";
 import { LoadlinkersLogo } from "@/components/icons";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import {
@@ -229,6 +230,15 @@ function SignupForm() {
       setFormError(onboardingError.message);
       return;
     }
+
+    // Fire-and-forget: email failures must not block the user reaching the dashboard
+    sendSignupEmails({
+      userId,
+      brokerEmail: values.email,
+      brokerName: values.fullName,
+      companyName: values.orgName,
+      selectedPlan: workspaceTypeLabels[values.workspaceType] ?? values.workspaceType,
+    }).catch(() => {});
 
     const redirectTo = searchParams.get("redirectTo") ?? "/overview";
     router.push(redirectTo);
