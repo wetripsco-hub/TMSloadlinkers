@@ -100,9 +100,18 @@ function LoginForm() {
   // Live Clock & Date for Turvo Right Wallpaper Display
   const [timeString, setTimeString] = useState<string>("");
   const [dateString, setDateString] = useState<string>("");
-  const [backgroundImage] = useState<string>(
-    () => BACKGROUND_IMAGES[Math.floor(Math.random() * BACKGROUND_IMAGES.length)]
-  );
+  // Empty on first render (server and client match) -- the actual pick
+  // happens client-only in the effect below. Picking it in a useState
+  // initializer instead would run Math.random() during SSR too, and the
+  // server's pick would almost never match the client's on hydration,
+  // producing a "Hydration failed" mismatch on this element's background
+  // image style.
+  const [backgroundImage, setBackgroundImage] = useState<string>("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above; this must stay in an effect
+    setBackgroundImage(BACKGROUND_IMAGES[Math.floor(Math.random() * BACKGROUND_IMAGES.length)]);
+  }, []);
 
   useEffect(() => {
     function updateClock() {

@@ -77,10 +77,23 @@ export async function inviteMember(email: string, role: Role, allowedModules: st
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const inviteUrl = `${siteUrl}/invite/${token}`;
 
-  const [{ data: organization }, { data: inviterProfile }] = await Promise.all([
-    supabase.from("organizations").select("name").eq("id", admin.orgId).maybeSingle(),
-    supabase.from("profiles").select("full_name").eq("id", admin.userId).maybeSingle(),
-  ]);
+  // Best-effort, same as the send below: the invite row already exists and
+  // its link is shown in the UI regardless, so a transient network blip
+  // fetching the org/profile names for the email copy (seen in practice as
+  // Supabase fetch timeouts) must not fail the whole invite -- fall back to
+  // generic copy instead of throwing.
+  let organizationName = "your team";
+  let inviterName = "A teammate";
+  try {
+    const [{ data: organization }, { data: inviterProfile }] = await Promise.all([
+      supabase.from("organizations").select("name").eq("id", admin.orgId).maybeSingle(),
+      supabase.from("profiles").select("full_name").eq("id", admin.userId).maybeSingle(),
+    ]);
+    organizationName = organization?.name ?? organizationName;
+    inviterName = inviterProfile?.full_name ?? inviterName;
+  } catch (lookupError) {
+    console.error("Failed to load org/profile name for invite email:", lookupError);
+  }
 
   // Best-effort: an email failure must never fail the invite itself --
   // the invite row already exists and the link is shown in the UI too.
@@ -89,10 +102,10 @@ export async function inviteMember(email: string, role: Role, allowedModules: st
       from: EMAIL_FROM,
       replyTo: EMAIL_REPLY_TO,
       to: normalizedEmail,
-      subject: `You're invited to join ${organization?.name ?? "a team"} on Loadlinkers`,
+      subject: `You're invited to join ${organizationName} on Loadlinkers`,
       react: TeamInviteEmail({
-        organizationName: organization?.name ?? "your team",
-        inviterName: inviterProfile?.full_name ?? "A teammate",
+        organizationName,
+        inviterName,
         role,
         inviteUrl,
       }),
