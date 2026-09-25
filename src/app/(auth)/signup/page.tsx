@@ -125,6 +125,7 @@ function SignupForm() {
   const [checkEmail, setCheckEmail] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [submitStep, setSubmitStep] = useState(0);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Live Clock & Date matching Turvo Wallpaper display
   const [timeString, setTimeString] = useState<string>("");
@@ -251,6 +252,12 @@ function SignupForm() {
     }).catch(() => {});
 
     setSubmitStep(2);
+    // Stays true (never reset) so the button holds "Redirecting..." instead
+    // of snapping back to idle the instant this handler returns -- router.push()
+    // doesn't wait for the destination to finish loading, so without this the
+    // button would flash back to the create-account label for the second or
+    // two the dashboard layout takes to resolve, which reads as a frozen page.
+    setIsRedirecting(true);
     // Brief pause so "Redirecting..." is actually visible before navigation
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -441,7 +448,7 @@ function SignupForm() {
                     placeholder="e.g. Apex Logistics Inc."
                     autoComplete="organization"
                     aria-invalid={!!errors.orgName}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRedirecting}
                     className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("orgName")}
                   />
@@ -535,7 +542,7 @@ function SignupForm() {
                     placeholder="e.g. Sarah Jenkins"
                     autoComplete="name"
                     aria-invalid={!!errors.fullName}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRedirecting}
                     className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("fullName")}
                   />
@@ -577,7 +584,7 @@ function SignupForm() {
                     placeholder="name@company.com"
                     autoComplete="email"
                     aria-invalid={!!errors.email}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRedirecting}
                     className="h-10 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("email")}
                   />
@@ -619,7 +626,7 @@ function SignupForm() {
                     placeholder="•••••••••••• (min. 8 characters)"
                     autoComplete="new-password"
                     aria-invalid={!!errors.password}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRedirecting}
                     className="h-10 w-full bg-transparent pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("password")}
                   />
@@ -648,10 +655,10 @@ function SignupForm() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isRedirecting}
                   className="group relative flex h-11 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || isRedirecting ? (
                     <AuthProgressSteps steps={SIGNUP_STEPS} currentStep={submitStep} />
                   ) : (
                     <span>{ctaLabel}</span>

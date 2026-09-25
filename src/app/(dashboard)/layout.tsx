@@ -35,21 +35,25 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
-  const access = await getAccessStatus();
-
-  const { data: organization } = await supabase
-    .from("organizations")
-    .select("name, workspace_type, logo_url")
-    .eq("id", orgId)
-    .maybeSingle();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role, allowed_modules, email")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const messagesUnreadCount = await getUnreadStaffMessageCount();
+  // Independent reads -- run in parallel instead of sequentially so
+  // navigating into the dashboard isn't gated on the sum of all four
+  // round trips (this was the main source of the multi-second blank
+  // screen between login/signup and the dashboard actually painting).
+  const [{ data: organization }, { data: profile }, access, messagesUnreadCount] =
+    await Promise.all([
+      supabase
+        .from("organizations")
+        .select("name, workspace_type, logo_url")
+        .eq("id", orgId)
+        .maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("full_name, role, allowed_modules, email")
+        .eq("id", user.id)
+        .maybeSingle(),
+      getAccessStatus(),
+      getUnreadStaffMessageCount(),
+    ]);
 
   return (
     <SidebarProvider

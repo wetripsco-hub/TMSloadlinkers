@@ -95,6 +95,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [submitStep, setSubmitStep] = useState(0);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Live Clock & Date for Turvo Right Wallpaper Display
   const [timeString, setTimeString] = useState<string>("");
@@ -164,6 +165,12 @@ function LoginForm() {
     }
 
     setSubmitStep(2);
+    // Stays true (never reset) so the button holds "Redirecting..." instead
+    // of snapping back to idle the instant this handler returns -- router.push()
+    // doesn't wait for the destination to finish loading, so without this the
+    // button would flash back to "Sign In to Workspace" for the second or two
+    // the dashboard layout takes to resolve, which reads as the page freezing.
+    setIsRedirecting(true);
     // Brief pause so "Redirecting..." is actually visible before navigation
     await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -290,7 +297,7 @@ function LoginForm() {
                     placeholder="name@company.com"
                     autoComplete="email"
                     aria-invalid={!!errors.email}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRedirecting}
                     className="h-11 w-full bg-transparent pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("email")}
                   />
@@ -332,7 +339,7 @@ function LoginForm() {
                     placeholder="••••••••••••"
                     autoComplete="current-password"
                     aria-invalid={!!errors.password}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRedirecting}
                     className="h-11 w-full bg-transparent pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                     {...register("password")}
                   />
@@ -393,10 +400,10 @@ function LoginForm() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isRedirecting}
                   className="group relative flex h-11 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || isRedirecting ? (
                     <AuthProgressSteps steps={LOGIN_STEPS} currentStep={submitStep} />
                   ) : (
                     <span>Sign In to Workspace</span>
