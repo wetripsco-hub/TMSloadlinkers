@@ -15,7 +15,6 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  Loader2,
   MailCheck,
   ArrowLeft,
   CheckCircle2,
@@ -24,6 +23,13 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { sendSignupEmails } from "@/app/actions/send-signup-emails";
+import { AuthProgressSteps } from "@/components/auth/auth-progress-steps";
+
+const SIGNUP_STEPS = [
+  "Verifying credentials...",
+  "Provisioning dispatch workspace...",
+  "Redirecting to dashboard...",
+] as const;
 import { LoadlinkersLogo } from "@/components/icons";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import {
@@ -118,6 +124,7 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [submitStep, setSubmitStep] = useState(0);
 
   // Live Clock & Date matching Turvo Wallpaper display
   const [timeString, setTimeString] = useState<string>("");
@@ -169,6 +176,7 @@ function SignupForm() {
   async function onSubmit(values: SignupValues) {
     setFormError(null);
     setSubmittedEmail(values.email);
+    setSubmitStep(0);
     const supabase = createClient();
 
     // A retried submission (double-click, or resuming after a prior attempt
@@ -216,6 +224,8 @@ function SignupForm() {
       userId = signUpData.user.id;
     }
 
+    setSubmitStep(1);
+
     // Atomic + idempotent: creates the organization and links this profile
     // to it in one server-side transaction. If a prior attempt already
     // linked an org for this user, it returns that org_id instead of
@@ -239,6 +249,10 @@ function SignupForm() {
       companyName: values.orgName,
       selectedPlan: workspaceTypeLabels[values.workspaceType] ?? values.workspaceType,
     }).catch(() => {});
+
+    setSubmitStep(2);
+    // Brief pause so "Redirecting..." is actually visible before navigation
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const redirectTo = searchParams.get("redirectTo") ?? "/overview";
     router.push(redirectTo);
@@ -635,13 +649,10 @@ function SignupForm() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+                  className="group relative flex h-11 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>Creating account...</span>
-                    </>
+                    <AuthProgressSteps steps={SIGNUP_STEPS} currentStep={submitStep} />
                   ) : (
                     <span>{ctaLabel}</span>
                   )}

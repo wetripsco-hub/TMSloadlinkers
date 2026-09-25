@@ -14,7 +14,6 @@ import {
   Check,
   Building2,
   AlertCircle,
-  Loader2,
   CheckCircle2,
 } from "lucide-react";
 
@@ -23,6 +22,13 @@ import { cn } from "@/lib/utils";
 import { firstAllowedModulePath } from "@/lib/domain/modules";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { LoadlinkersLogo } from "@/components/icons";
+import { AuthProgressSteps } from "@/components/auth/auth-progress-steps";
+
+const LOGIN_STEPS = [
+  "Verifying credentials...",
+  "Loading your workspace...",
+  "Redirecting to dashboard...",
+] as const;
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid work email"),
@@ -88,6 +94,7 @@ function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitStep, setSubmitStep] = useState(0);
 
   // Live Clock & Date for Turvo Right Wallpaper Display
   const [timeString, setTimeString] = useState<string>("");
@@ -129,6 +136,7 @@ function LoginForm() {
 
   async function onSubmit(values: LoginValues) {
     setFormError(null);
+    setSubmitStep(0);
     const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword(values);
 
@@ -136,6 +144,8 @@ function LoginForm() {
       setFormError(error.message);
       return;
     }
+
+    setSubmitStep(1);
 
     // An explicit redirectTo (bounced here from a protected route) is
     // always honored as-is -- it's a deep link, not the restricted-access
@@ -152,6 +162,10 @@ function LoginForm() {
         .maybeSingle();
       redirectTo = firstAllowedModulePath(profile?.allowed_modules, profile?.role);
     }
+
+    setSubmitStep(2);
+    // Brief pause so "Redirecting..." is actually visible before navigation
+    await new Promise((resolve) => setTimeout(resolve, 400));
 
     router.push(redirectTo);
     router.refresh();
@@ -380,13 +394,10 @@ function LoginForm() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+                  className="group relative flex h-11 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-600 hover:shadow-indigo-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>Signing in to workspace...</span>
-                    </>
+                    <AuthProgressSteps steps={LOGIN_STEPS} currentStep={submitStep} />
                   ) : (
                     <span>Sign In to Workspace</span>
                   )}
