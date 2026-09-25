@@ -6,7 +6,6 @@ import { createCheckoutSession } from "@/app/(dashboard)/settings/billing/action
 import type { PlanDefinition } from "@/lib/stripe/plans";
 
 function priceLabel(plan: PlanDefinition): string {
-  if (plan.monthlyPriceUsd === null) return "Custom pricing";
   return `$${plan.monthlyPriceUsd}/mo`;
 }
 

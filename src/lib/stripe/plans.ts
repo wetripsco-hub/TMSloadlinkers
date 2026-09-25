@@ -10,24 +10,17 @@ export interface PlanDefinition {
   tagline: string;
   seatLimit: number;
   seatLabel: string;
-  /** Fixed monthly price in USD, or null for Enterprise's custom pricing. */
-  monthlyPriceUsd: number | null;
-  /** Fixed annual price in USD (~10% off 12x monthly), or null where annual billing isn't offered. */
-  annualPriceUsd: number | null;
-  /** Shown next to the price for tiers where it varies (Enterprise). */
-  priceNote: string | null;
+  monthlyPriceUsd: number;
+  /** ~10% off 12x monthly. */
+  annualPriceUsd: number;
   /** OCR documents/month, or null for unlimited. */
   ocrLimitPerMonth: number | null;
   ocrLimitLabel: string;
   ocrFootnote: string | null;
   prioritySupport: boolean;
-  /** True for Starter and Growth: self-serve checkout, no sales contact. */
-  selfServe: boolean;
   isPopular: boolean;
-  ctaLabel: string;
   features: string[];
   stripePriceId: string | null;
-  /** Stripe price for annual billing, or null where annual billing isn't offered. */
   stripePriceIdAnnual: string | null;
 }
 
@@ -38,16 +31,13 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     tagline: "For small brokerages and single-dispatcher operations.",
     seatLimit: 2,
     seatLabel: "2 seats",
-    monthlyPriceUsd: 49,
-    annualPriceUsd: 529,
-    priceNote: null,
+    monthlyPriceUsd: 80,
+    annualPriceUsd: 864,
     ocrLimitPerMonth: 50,
     ocrLimitLabel: "50 documents / month",
     ocrFootnote: null,
     prioritySupport: false,
-    selfServe: true,
     isPopular: false,
-    ctaLabel: "Get Started",
     features: [
       "2 dispatcher seats",
       "Core load management (create, dispatch, track)",
@@ -65,16 +55,13 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     tagline: "The modern standard for high-volume dispatchers and growing teams.",
     seatLimit: 5,
     seatLabel: "5 seats",
-    monthlyPriceUsd: 89,
-    annualPriceUsd: 961,
-    priceNote: null,
+    monthlyPriceUsd: 100,
+    annualPriceUsd: 1080,
     ocrLimitPerMonth: 250,
     ocrLimitLabel: "250 documents / month",
     ocrFootnote: null,
     prioritySupport: true,
-    selfServe: true,
     isPopular: true,
-    ctaLabel: "Get Started",
     features: [
       "5 dispatcher seats",
       "Everything in Starter",
@@ -92,15 +79,12 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     seatLimit: 50,
     seatLabel: "50+ seats",
     monthlyPriceUsd: 600,
-    annualPriceUsd: null,
-    priceNote: "Price varies based on your requirements",
+    annualPriceUsd: 6480,
     ocrLimitPerMonth: null,
     ocrLimitLabel: "Unlimited*",
     ocrFootnote: "*Fair use policy applies",
     prioritySupport: true,
-    selfServe: false,
     isPopular: false,
-    ctaLabel: "Talk to Us",
     features: [
       "50+ dispatcher seats",
       "Everything in Growth",
@@ -109,12 +93,12 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       "Dedicated priority support",
     ],
     stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE ?? null,
-    stripePriceIdAnnual: null,
+    stripePriceIdAnnual: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL ?? null,
   },
 };
 
-/** Tiers that go through Stripe Checkout directly (no sales contact). */
-export const CHECKOUTABLE_PLANS: PlanDefinition[] = [PLANS.starter, PLANS.growth];
+/** All three tiers go through Stripe Checkout directly (self-serve, no sales contact). */
+export const CHECKOUTABLE_PLANS: PlanDefinition[] = [PLANS.starter, PLANS.growth, PLANS.enterprise];
 
 export function tierForPriceId(priceId: string): PlanTier | null {
   const match = Object.values(PLANS).find(

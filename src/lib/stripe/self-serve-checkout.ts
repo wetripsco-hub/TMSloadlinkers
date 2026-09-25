@@ -19,13 +19,11 @@ async function resolveBaseUrl(): Promise<string> {
 }
 
 /**
- * Pre-signup Stripe Checkout for Starter/Growth/Enterprise. Unlike
- * createCheckoutSession (dashboard, requires an existing org admin), this
- * has no authenticated org to attach to yet -- Stripe creates the customer
- * from `email` directly.
- *
- * Enterprise has no self-serve trial (it's sales-assisted); only
- * mode "buy_now" is valid for it.
+ * Pre-signup Stripe Checkout for Starter/Growth/Enterprise -- all three are
+ * self-serve (Enterprise included) with the same trial/buy-now and
+ * monthly/annual options. Unlike createCheckoutSession (dashboard, requires
+ * an existing org admin), this has no authenticated org to attach to yet --
+ * Stripe creates the customer from `email` directly.
  *
  * NOTE: the checkout.session.completed webhook currently no-ops when it
  * can't resolve an org_id (see src/app/api/stripe/webhook/route.ts), and no
@@ -42,10 +40,6 @@ export async function startSelfServeCheckout(
 ) {
   if (tier !== "starter" && tier !== "growth" && tier !== "enterprise") {
     throw new Error(`Plan "${tier}" is not self-serve`);
-  }
-
-  if (tier === "enterprise" && mode !== "buy_now") {
-    throw new Error("Enterprise doesn't offer a self-serve trial");
   }
 
   const trimmedEmail = email.trim();

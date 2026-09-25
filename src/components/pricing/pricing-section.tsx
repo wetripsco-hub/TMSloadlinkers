@@ -156,7 +156,7 @@ export function PricingSection() {
             Transparent Brokerage Plans
           </h2>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-            Choose the right plan for your dispatch operations. Starter and Growth include a{" "}
+            Choose the right plan for your dispatch operations. Every plan includes a{" "}
             {TRIAL_PERIOD_DAYS}-day free trial — no credit card required.
           </p>
 
@@ -204,7 +204,7 @@ export function PricingSection() {
         {/* 3 Pricing Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
           {plans.map((plan) => {
-            const isAnnual = billingInterval === "annual" && plan.annualPriceUsd !== null;
+            const isAnnual = billingInterval === "annual";
             const displayPrice = isAnnual ? plan.annualPriceUsd : plan.monthlyPriceUsd;
             const priceUnit = isAnnual ? "year" : "month";
 
@@ -242,14 +242,12 @@ export function PricingSection() {
                   <div className="my-6 pb-6 border-b border-slate-100">
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-                        {displayPrice !== null ? `$${displayPrice}` : "Custom"}
+                        ${displayPrice}
                       </span>
-                      {displayPrice !== null && (
-                        <span className="text-slate-600 font-medium text-sm">/ {priceUnit}</span>
-                      )}
+                      <span className="text-slate-600 font-medium text-sm">/ {priceUnit}</span>
                     </div>
                     <div className="text-xs text-slate-500 mt-1 font-medium">
-                      {plan.priceNote ?? (isAnnual ? ANNUAL_DISCOUNT_LABEL : "Billed monthly")}
+                      {isAnnual ? ANNUAL_DISCOUNT_LABEL : "Billed monthly"}
                     </div>
                   </div>
 
@@ -272,58 +270,30 @@ export function PricingSection() {
                   </div>
                 </div>
 
-                {/* CTAs */}
+                {/* CTAs -- all three tiers are self-serve */}
                 <div className="pt-8 mt-6 border-t border-slate-100 space-y-2">
-                  {plan.selfServe ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setModal({ kind: "checkout", tier: plan.tier, mode: "trial" })}
-                        className={`w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm ${
-                          plan.isPopular
-                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-800"
-                        }`}
-                      >
-                        <span>Start Free Trial</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setModal({ kind: "checkout", tier: plan.tier, mode: "buy_now" })}
-                        className="w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5 transition-all border border-slate-200 text-slate-700 hover:bg-slate-50"
-                      >
-                        <span>Buy Now</span>
-                      </button>
-                      <p className="text-center text-[11px] text-slate-500 pt-1 font-medium">
-                        {TRIAL_PERIOD_DAYS}-day free trial · No card required · Cancel anytime
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setModal({ kind: "checkout", tier: plan.tier, mode: "buy_now" })
-                          }
-                          className="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm bg-slate-100 hover:bg-slate-200 text-slate-800"
-                        >
-                          <span>Buy Now</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setModal({ kind: "enterprise" })}
-                          className="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50"
-                        >
-                          <span>{plan.ctaLabel}</span>
-                        </button>
-                      </div>
-                      <p className="text-center text-[11px] text-slate-500 pt-1 font-medium">
-                        You can also book a call with our team after purchase to help you get set up
-                      </p>
-                    </>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setModal({ kind: "checkout", tier: plan.tier, mode: "trial" })}
+                    className={`w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+                      plan.isPopular
+                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-800"
+                    }`}
+                  >
+                    <span>Start Free Trial</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModal({ kind: "checkout", tier: plan.tier, mode: "buy_now" })}
+                    className="w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5 transition-all border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  >
+                    <span>Buy Now</span>
+                  </button>
+                  <p className="text-center text-[11px] text-slate-500 pt-1 font-medium">
+                    {TRIAL_PERIOD_DAYS}-day free trial · No card required · Cancel anytime
+                  </p>
                 </div>
               </div>
             );
@@ -379,7 +349,7 @@ export function PricingSection() {
         <CheckoutModal
           tier={modal.tier}
           mode={modal.mode}
-          billingInterval={modal.tier === "enterprise" ? "monthly" : billingInterval}
+          billingInterval={billingInterval}
           onClose={() => setModal(null)}
         />
       )}
