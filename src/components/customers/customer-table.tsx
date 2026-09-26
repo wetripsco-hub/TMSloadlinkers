@@ -9,26 +9,30 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { Search, Building2, Mail, Phone, MapPin, Package, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Search, Building2, Mail, Phone, MapPin, Package, ArrowRight, CheckCircle2, Pencil } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddCustomerModal } from "@/components/customers/add-customer-modal";
+import { EditCustomerModal } from "@/components/customers/edit-customer-modal";
 import type { CustomerRecord } from "@/lib/repositories/customers";
 
 export interface CustomerTableProps {
   customers: CustomerRecord[];
   activeLoadsCountByCustomer: Record<string, number>;
   onAddCustomer?: () => void;
+  isOwner?: boolean;
 }
 
 export function CustomerTable({
   customers,
   activeLoadsCountByCustomer,
   onAddCustomer,
+  isOwner = false,
 }: CustomerTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerRecord | null>(null);
 
   const handleAddCustomer = onAddCustomer || (() => setIsAddModalOpen(true));
 
@@ -203,15 +207,28 @@ export function CustomerTable({
                     {formatDate(customer.createdAt)}
                   </TableCell>
 
-                  {/* Actions Link */}
+                  {/* Actions */}
                   <TableCell className="py-3.5 px-4 text-right">
-                    <Link
-                      href={`/loads?customerId=${customer.id}`}
-                      className="text-blue-600 hover:text-blue-700 font-medium text-xs inline-flex items-center gap-1 transition-colors"
-                    >
-                      <span>View Loads</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingCustomer(customer)}
+                          aria-label={`Edit ${customer.name}`}
+                          className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium text-xs transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                      <Link
+                        href={`/loads?customerId=${customer.id}`}
+                        className="text-blue-600 hover:text-blue-700 font-medium text-xs inline-flex items-center gap-1 transition-colors"
+                      >
+                        <span>View Loads</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -230,6 +247,21 @@ export function CustomerTable({
         }}
         trigger={null}
       />
+
+      {editingCustomer && (
+        <EditCustomerModal
+          customer={editingCustomer}
+          isOpen={!!editingCustomer}
+          onOpenChange={(open) => {
+            if (!open) setEditingCustomer(null);
+          }}
+          onSuccess={() => {
+            setEditingCustomer(null);
+            setSuccessMessage("Customer updated successfully");
+            setTimeout(() => setSuccessMessage(null), 4000);
+          }}
+        />
+      )}
     </div>
   );
 }

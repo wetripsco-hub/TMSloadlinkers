@@ -22,7 +22,8 @@ import {
   type CarrierComplianceValues,
 } from "@/lib/validations/carrier";
 import { parseCents } from "@/lib/money";
-import type { CarrierVerificationResult } from "../../../../types/domain";
+import { getOwnerContext } from "@/lib/auth/require-admin";
+import type { CarrierVerificationResult, UUID } from "../../../../types/domain";
 
 export async function previewCarrierVerification(rawInput: {
   dotNumber?: string;
@@ -87,6 +88,36 @@ export async function onboardCarrier(
       verifiedAt: verification.fetchedAt,
     });
   }
+
+  revalidatePath("/carriers");
+
+  return carrier;
+}
+
+// Edits an existing carrier's core identity/contact fields -- name, DOT/MC,
+// contact email/phone. Separate from verification (verifyCarrier) and
+// compliance (updateCarrierCompliance), which are unrestricted; this one is
+// scoped to "owner" since it can rewrite a carrier's identifying details on
+// a live account.
+export async function updateCarrierAction(
+  carrierId: UUID,
+  values: CarrierOnboardValues
+): Promise<CarrierRecord> {
+  const owner = await getOwnerContext();
+  if (!owner) {
+    throw new Error("Only the organization owner can edit a carrier record");
+  }
+
+  const parsed = carrierOnboardSchema.parse(values);
+
+  const carrier = await upsertCarrier({
+    id: carrierId,
+    name: parsed.companyName,
+    dotNumber: parsed.dotNumber || null,
+    mcNumber: parsed.mcNumber || null,
+    contactEmail: parsed.contactEmail || null,
+    contactPhone: parsed.contactPhone || null,
+  });
 
   revalidatePath("/carriers");
 

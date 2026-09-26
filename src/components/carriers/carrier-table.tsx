@@ -10,9 +10,10 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/tailadmin/table";
-import { Search, Truck, Mail, Phone, ShieldAlert, CheckCircle2, X } from "lucide-react";
+import { Search, Truck, Mail, Phone, ShieldAlert, CheckCircle2, X, Pencil } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CarrierOnboardDialog } from "@/components/carriers/carrier-onboard-dialog";
+import { CarrierEditDialog } from "@/components/carriers/carrier-edit-dialog";
 import { CarrierComplianceDialog } from "@/components/carriers/carrier-compliance-dialog";
 import { VerifyCarrierSafetyButton } from "@/components/carriers/verify-carrier-safety-button";
 import type { CarrierRecord } from "@/lib/repositories/carriers";
@@ -23,6 +24,7 @@ export interface CarrierTableProps {
   onOnboardCarrier?: () => void;
   initialInsuranceExpiredOnly?: boolean;
   initialComplianceFilter?: string;
+  isOwner?: boolean;
 }
 
 export function CarrierTable({
@@ -31,6 +33,7 @@ export function CarrierTable({
   onOnboardCarrier,
   initialInsuranceExpiredOnly,
   initialComplianceFilter,
+  isOwner = false,
 }: CarrierTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [complianceFilter, setComplianceFilter] = useState(initialComplianceFilter ?? "ALL");
@@ -39,6 +42,7 @@ export function CarrierTable({
   );
   const [isOnboardDialogOpen, setIsOnboardDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [editingCarrier, setEditingCarrier] = useState<CarrierRecord | null>(null);
 
   const handleOnboardCarrier = onOnboardCarrier || (() => setIsOnboardDialogOpen(true));
 
@@ -256,6 +260,17 @@ export function CarrierTable({
                   {/* Actions */}
                   <TableCell className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-3">
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingCarrier(carrier)}
+                          aria-label={`Edit ${carrier.companyName}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors focus:outline-none focus:underline"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                      )}
                       <CarrierComplianceDialog
                         carrier={carrier}
                         coiSignedUrl={carrier.coiFileUrl ? coiSignedUrlByPath[carrier.coiFileUrl] ?? null : null}
@@ -290,6 +305,21 @@ export function CarrierTable({
         }}
         trigger={null}
       />
+
+      {editingCarrier && (
+        <CarrierEditDialog
+          carrier={editingCarrier}
+          open={!!editingCarrier}
+          onOpenChange={(open) => {
+            if (!open) setEditingCarrier(null);
+          }}
+          onSuccess={() => {
+            setEditingCarrier(null);
+            setSuccessMessage("Carrier updated successfully");
+            setTimeout(() => setSuccessMessage(null), 4000);
+          }}
+        />
+      )}
     </div>
   );
 }

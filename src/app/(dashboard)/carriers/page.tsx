@@ -6,6 +6,7 @@ import { CarrierOnboardDialog } from "@/components/carriers/carrier-onboard-dial
 import { PageHeader } from "@/components/layout/page-header";
 import { MetricCard } from "@/components/ui/tailadmin/metric-card";
 import { deriveStoredComplianceBadge } from "@/components/carriers/compliance-badge";
+import { isOwnerRole } from "@/lib/auth/admin-role";
 import { Truck, ShieldCheck, AlertTriangle, ShieldX } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,14 @@ export default async function CarriersPage({
   // not a URL -- same convention as load_documents.file_url) needs signing
   // before it can be linked to, same pattern as documents/page.tsx.
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const isOwner = isOwnerRole(profile?.role);
+
   const coiPaths = carriers.map((c) => c.coiFileUrl).filter((p): p is string => !!p);
   const coiSignedUrlByPath: Record<string, string> = {};
   if (coiPaths.length > 0) {
@@ -122,6 +131,7 @@ export default async function CarriersPage({
         initialComplianceFilter={
           compliance && COMPLIANCE_FILTER_VALUES.has(compliance) ? compliance : undefined
         }
+        isOwner={isOwner}
       />
     </div>
   );

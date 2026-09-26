@@ -175,3 +175,31 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
 
   return mapRowToCustomer(data as unknown as CustomerRow);
 }
+
+export type UpdateCustomerInput = CreateCustomerInput;
+
+export async function updateCustomer(
+  id: UUID,
+  input: UpdateCustomerInput
+): Promise<CustomerRecord> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("customers")
+    .update({
+      name: input.name,
+      contact_name: input.contactName ?? null,
+      email: input.email ?? null,
+      phone: input.phone ?? null,
+      billing_address: input.billingAddress ?? null,
+    })
+    .eq("id", id)
+    .select(CUSTOMER_COLUMNS)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowToCustomer(data as unknown as CustomerRow);
+}

@@ -6,6 +6,8 @@ import { AddCustomerModal } from "@/components/customers/add-customer-modal";
 import { PageHeader } from "@/components/layout/page-header";
 import { MetricCard } from "@/components/ui/tailadmin/metric-card";
 import { formatMoney } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
+import { isOwnerRole } from "@/lib/auth/admin-role";
 import { Building2, Users, Package, DollarSign } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +17,15 @@ export const metadata: Metadata = {
 };
 
 export default async function CustomersPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const isOwner = isOwnerRole(profile?.role);
+
   const [customersResult, loadsResult] = await Promise.all([
     listCustomers({}, { page: 1, pageSize: 100 }),
     listLoads({}, { page: 1, pageSize: 150 }),
@@ -110,6 +121,7 @@ export default async function CustomersPage() {
       <CustomerTable
         customers={customers}
         activeLoadsCountByCustomer={activeLoadsCountByCustomer}
+        isOwner={isOwner}
       />
     </div>
   );
